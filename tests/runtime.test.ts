@@ -3,6 +3,7 @@ import test from 'node:test';
 import type { MatchupAnalysisProvider } from '../server/analysis/MatchupAnalysisProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../server/analysis/types.js';
 import { AIProviderConfigurationError } from '../server/analysis/providers/ai-provider-config.js';
+import type { LogFields, Logger } from '../server/logging/Logger.js';
 import { createRuntimeApp } from '../server/runtime.js';
 
 const requestBody = {
@@ -177,6 +178,35 @@ test('AI_PROVIDER=gemini selects Gemini without falling back to OpenAI', async (
   assert.equal((await postMatchup(app)).status, 200);
   assert.equal(configuredModel, 'test-gemini');
   assert.equal(openAICalls, 0);
+});
+
+test('configured runtime logs only the selected provider name and model', () => {
+  const entries: Array<{ event: string; fields: LogFields }> = [];
+  const logger: Logger = {
+    debug() {},
+    info(event, fields = {}) { entries.push({ event, fields }); },
+    warn() {},
+    error() {},
+  };
+  const provider: MatchupAnalysisProvider = {
+    async analyze() { throw new Error('not called'); },
+  };
+
+  createRuntimeApp({
+    environment: {
+      AI_PROVIDER: 'gemini',
+      GEMINI_API_KEY: 'must-not-appear',
+      GEMINI_MODEL: 'gemini-test-model',
+    },
+    logger,
+    geminiProviderFactory() { return provider; },
+  });
+
+  assert.deepEqual(entries, [{
+    event: 'analysis_provider_configured',
+    fields: { provider: 'gemini', model: 'gemini-test-model' },
+  }]);
+  assert.doesNotMatch(JSON.stringify(entries), /must-not-appear/);
 });
 
 test('selected provider without its key stays unconfigured and never falls back', async () => {
