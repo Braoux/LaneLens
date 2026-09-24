@@ -130,19 +130,21 @@ de déploiement, TLS et reverse proxy sont hors périmètre de LAN-001.
 
 ## Configuration et sécurité
 
-Variables documentées pour un éventuel `OpenClawProvider`, mais **non consommées actuellement** :
+Le backend charge automatiquement le fichier local `.env` au démarrage. La
+configuration du provider OpenAI est documentée dans `.env.example` :
 
 ```dotenv
-OPENCLAW_URL=
-OPENCLAW_API_KEY=
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-6-sol
+OPENAI_TIMEOUT_MS=30000
 ```
 
-Le socle fonctionne sans `.env`. Aucun chargement applicatif de configuration
-provider ni appel à un moteur d'analyse n'est implémenté.
+Sans clé, le serveur et le health check restent disponibles, tandis que
+`POST /api/matchup` répond `ANALYSIS_NOT_CONFIGURED`. Avec une clé, la composition
+runtime instancie `OpenAIProvider` derrière `MatchupAnalysisService`.
 
-- Les secrets de tout provider devront rester exclusivement côté serveur.
-- `OPENCLAW_URL` et `OPENCLAW_API_KEY` ne concernent qu'un éventuel
-  `OpenClawProvider` et ne sont pas une configuration obligatoire de LaneLens.
+- Les secrets de tout provider restent exclusivement côté serveur.
+- `.env.example` ne contient jamais de valeur secrète.
 - Aucun secret ne doit être placé dans `src/`, `public/` ou une variable `VITE_*`.
 - `.gitignore` exclut `.env`, `.env.*` sauf `.env.example`, ainsi que les fichiers
   `*.local`, les dépendances, les builds et les journaux.

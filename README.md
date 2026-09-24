@@ -146,13 +146,21 @@ Aucune clé n'est nécessaire pour démarrer l'application ou utiliser
 
 Pour activer une analyse réelle :
 
+```powershell
+Copy-Item .env.example .env
+```
+
+Puis renseigner la clé uniquement dans le fichier local `.env` :
+
 ```env
-OPENAI_API_KEY=
+OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-6-sol
 OPENAI_TIMEOUT_MS=30000
 ```
 
 `OPENAI_MODEL` et `OPENAI_TIMEOUT_MS` sont facultatifs.
+Le backend charge automatiquement `.env` au démarrage. Le fichier est ignoré
+par Git ; `.env.example` doit toujours rester sans secret.
 
 Sans `OPENAI_API_KEY` :
 
@@ -225,7 +233,7 @@ Voir [Maintenance des contextes de patch](docs/patch-context.md).
 
 ## Test manuel de l'analyse
 
-Définir `OPENAI_API_KEY` uniquement dans l'environnement local du processus, puis :
+Renseigner `OPENAI_API_KEY` dans le fichier local `.env`, puis redémarrer le serveur :
 
 ```sh
 npm run dev:server

@@ -57,10 +57,10 @@ export function isCompleteSelection(selection: DraftSelection): selection is Mat
 export function snapshotSelection(selection: DraftSelection): MatchupSelection | undefined {
   if (!isCompleteSelection(selection)) return undefined;
   return Object.freeze({
-    allyCarry: selection.allyCarry,
-    allySupport: selection.allySupport,
-    enemyCarry: selection.enemyCarry,
-    enemySupport: selection.enemySupport,
+    allyCarry: Object.freeze({ ...selection.allyCarry }),
+    allySupport: Object.freeze({ ...selection.allySupport }),
+    enemyCarry: Object.freeze({ ...selection.enemyCarry }),
+    enemySupport: Object.freeze({ ...selection.enemySupport }),
   });
 }
 
