@@ -63,6 +63,20 @@ h1 { margin: 0; font-family: Manrope, sans-serif; font-size: clamp(36px, 5vw, 58
 .loading-spinner { display: inline-block; width: 24px; height: 24px; border: 2px solid #31514e; border-top-color: #70d8c0; border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.history-section { margin-top: 52px; padding-top: 30px; border-top: 1px solid #213638; }
+.history-heading .eyebrow { margin-bottom: 7px; }
+.history-heading h2 { margin: 0; font: 600 21px Manrope, sans-serif; }
+.history-empty { margin: 16px 0 0; color: #718783; font-size: 13px; }
+.history-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 17px; }
+.history-card { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid #263f40; border-radius: 11px; padding: 16px 17px; background: rgba(13, 29, 31, .86); text-align: left; cursor: pointer; transition: border-color .2s, background .2s, transform .2s; }
+.history-card:hover { border-color: #4b8176; background: #122d2d; transform: translateY(-1px); }
+.history-matchup, .history-metadata { min-width: 0; display: flex; flex-direction: column; }
+.history-matchup { gap: 3px; }
+.history-matchup strong { overflow: hidden; color: #e0ece9; font: 600 13px Manrope, sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.history-matchup small { color: #748985; font-size: 10px; text-transform: uppercase; }
+.history-metadata { flex: 0 0 auto; align-items: flex-end; gap: 5px; color: #809590; font-size: 10px; }
+.history-metadata > span { color: #c8ad70; }
+
 #result-view { padding: 58px 0 20px; }
 .result-header { text-align: center; }
 .result-matchup { display: grid; grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr); align-items: center; gap: 24px; }
@@ -72,6 +86,8 @@ h1 { margin: 0; font-family: Manrope, sans-serif; font-size: clamp(36px, 5vw, 58
 .portrait-result { width: 88px; height: 88px; box-shadow: 0 12px 30px rgba(0,0,0,.3); }
 .result-vs { color: #b99f69; font: 600 13px Manrope, sans-serif; letter-spacing: 2px; }
 .result-patch { display: inline-block; margin: 22px 0 0; padding: 7px 13px; border: 1px solid #355251; border-radius: 99px; color: #acd0c8; font-size: 12px; }
+.saved-analysis-meta { width: fit-content; margin: 14px auto 0; display: flex; flex-direction: column; gap: 3px; color: #859b97; font-size: 11px; }
+.saved-analysis-meta strong { color: #d9c083; font: 600 12px Manrope, sans-serif; }
 .quick-overlay, .full-analysis { margin-top: 42px; }
 .section-heading { margin-bottom: 14px; color: #b99f69; font: 700 10px Manrope, sans-serif; letter-spacing: 2.8px; }
 .analysis-grid { display: grid; gap: 12px; margin-top: 12px; }
@@ -133,6 +149,7 @@ footer { margin-top: auto; padding-top: 62px; color: #596d6a; font-size: 10px; l
   .team-heading.enemy { justify-content: flex-start; }
   .champion-slot { min-height: 190px; }
   .champion-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .history-list { grid-template-columns: 1fr; }
   .result-matchup { gap: 14px; }
   .quick-window, .trww-grid, .details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -148,6 +165,9 @@ footer { margin-top: auto; padding-top: 62px; color: #596d6a; font-size: 10px; l
   .portrait-slot { width: 72px; height: 72px; }
   .actions { align-items: stretch; flex-direction: column-reverse; }
   .mirror-button, .analyze-button { width: 100%; }
+  .history-section { margin-top: 40px; padding-top: 24px; }
+  .history-card { align-items: flex-start; flex-direction: column; gap: 11px; }
+  .history-metadata { align-items: flex-start; }
   .picker-header { padding: 20px 18px 15px; }
   .search { margin: 0 18px; }
   .picker-hint { margin-left: 19px; }

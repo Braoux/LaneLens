@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   buildMatchupRequest,
+  invalidateActiveAnalysisRequest,
   isActiveAnalysisRequest,
   isAnalysisContextResponse,
   isMatchupAnalysis,
@@ -103,6 +104,15 @@ test('Quick Overlay follows the exact field-by-field mapping without a Late sect
 test('stale responses are rejected by the monotonic request token', () => {
   assert.equal(isActiveAnalysisRequest(4, 4), true);
   assert.equal(isActiveAnalysisRequest(3, 4), false);
+});
+
+test('history navigation aborts and invalidates the active analysis request', () => {
+  const controller = new AbortController();
+  const nextRequestId = invalidateActiveAnalysisRequest(4, controller);
+
+  assert.equal(controller.signal.aborted, true);
+  assert.equal(nextRequestId, 5);
+  assert.equal(isActiveAnalysisRequest(4, nextRequestId), false);
 });
 
 test('cheat sheet serialization uses exactly one newline between entries', () => {

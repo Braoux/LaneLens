@@ -142,3 +142,11 @@ export function serializeCheatSheet(cheatSheet: readonly string[]): string {
 export function isActiveAnalysisRequest(requestId: number, activeRequestId: number): boolean {
   return requestId === activeRequestId;
 }
+
+export function invalidateActiveAnalysisRequest(
+  activeRequestId: number,
+  controller?: AbortController,
+): number {
+  controller?.abort();
+  return activeRequestId + 1;
+}
