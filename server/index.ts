@@ -1,7 +1,7 @@
 import { serve } from '@hono/node-server';
-import { createApp } from './app.js';
+import { createRuntimeApp } from './runtime.js';
 
-const app = createApp();
+const app = createRuntimeApp();
 
 const server = serve({ fetch: app.fetch, hostname: '127.0.0.1', port: 3000 }, (info) => {
   console.log(`LaneLens API : http://127.0.0.1:${info.port}`);

@@ -17,6 +17,7 @@ priorité, fenêtres de trade, gestion de wave, cible prioritaire et décisions 
 - [Cahier des charges](docs/cahier-des-charges.md)
 - [Architecture technique](docs/architecture.md)
 - [ADR-001 — Rendre OpenClaw remplaçable dans le runtime LaneLens](docs/decisions/ADR-001-remplacer-openclaw-runtime.md)
+- [Maintenance des contextes de patch](docs/patch-context.md)
 
 ## Démarrage local
 
@@ -35,11 +36,12 @@ La page affiche « Service disponible » lorsque cet appel réussit.
 
 ## Configuration et secrets
 
-Aucun fichier `.env`, identifiant ou provider d'analyse actif n'est nécessaire
-pour l'état actuellement livré. `.env.example` réserve `OPENCLAW_URL` et
-`OPENCLAW_API_KEY` uniquement à un éventuel `OpenClawProvider` ; ces variables ne
-sont pas consommées. Les futurs providers pourront posséder leur propre
-configuration, qui devra rester exclusivement côté serveur.
+Aucun fichier `.env` ni identifiant n'est nécessaire pour démarrer le serveur ou
+appeler `/api/health`. Sans `OPENAI_API_KEY`, `POST /api/matchup` retourne
+`503 ANALYSIS_NOT_CONFIGURED`. Avec une clé valide, le runtime utilise le provider
+OpenAI, le modèle `OPENAI_MODEL` (par défaut `gpt-6-sol`) et le timeout
+`OPENAI_TIMEOUT_MS` (par défaut 30 secondes). Ces variables restent exclusivement
+côté serveur. Les variables OpenClaw de `.env.example` ne sont pas consommées.
 Ne jamais placer une clé dans `src/`, `public/` ou une variable `VITE_*`.
 Les fichiers `.env` et leurs variantes locales sont ignorés par Git,
 à l'exception du modèle `.env.example`, qui ne contient aucun secret.
@@ -61,12 +63,12 @@ le déploiement est hors périmètre.
 ## État actuellement implémenté
 
 - `src/` : frontend TypeScript sans framework, catalogue, règles de matchup et interface de sélection.
-- `server/` : serveur Hono exposant uniquement `GET /api/health` et types serveur.
+- `server/` : serveur Hono, moteur provider-agnostic, provider OpenAI et contexte de patch versionné.
 - `public/` : futurs assets publics, sans secrets.
 - `tsconfig.server.json` : configuration distincte pour compiler le backend Node.js.
 - `server/openclaw.ts` et `server/prompt.ts` restent des modules réservés et vides.
-- `POST /api/matchup`, `MatchupAnalysisService`, `MatchupAnalysisProvider` et les
-  providers concrets ne sont pas encore implémentés.
+- `POST /api/matchup` utilise `MatchupAnalysisService`, `MatchupAnalysisProvider`
+  et le contexte versionné `26.19-v1`. La route reste non configurée sans clé OpenAI.
 
 ## Architecture cible acceptée
 
@@ -77,8 +79,30 @@ d'un moteur concret.
 
 OpenClaw pourra rester un outil de développement ou être encapsulé temporairement
 dans un `OpenClawProvider`. Il ne sera pas une dépendance runtime obligatoire.
-Le provider et le modèle de production, la source exacte du patch et les détails
-du cache restent des décisions futures.
+Le provider et le modèle de production définitifs, l'automatisation des contextes
+de patch et les détails du cache restent des décisions futures.
+
+## Test manuel de l'analyse
+
+Définir `OPENAI_API_KEY` uniquement dans l'environnement local du processus, puis
+lancer `npm run dev:server`. `OPENAI_MODEL` et `OPENAI_TIMEOUT_MS` sont facultatifs.
+Aucun secret ne doit être commité.
+
+```sh
+curl -X POST http://127.0.0.1:3000/api/matchup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "allyCarry": "Ziggs",
+    "allySupport": "Galio",
+    "enemyCarry": "Jinx",
+    "enemySupport": "Swain",
+    "patch": "26.19"
+  }'
+```
+
+Avec une configuration OpenAI valide, la réponse attendue est un
+`MatchupAnalysis` avec HTTP 200. Ce test est optionnel et n'est jamais exécuté par
+`npm test`.
 
 ## Catalogue des champions — LAN-002
 
