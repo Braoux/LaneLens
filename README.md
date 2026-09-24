@@ -6,6 +6,11 @@ LaneLens est une application d’analyse de matchups botlane League of Legends.
 Sélectionnez les quatre champions et obtenez un plan de lane concret :
 priorité, fenêtres de trade, gestion de wave, cible prioritaire et décisions clés.
 
+<p align="center">
+  <img src="docs/assets/lanelens-home.png"
+       alt="LaneLens — sélection d'un matchup botlane League of Legends"
+       width="1200">
+</p>
 
 ## Documentation
 
