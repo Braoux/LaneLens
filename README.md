@@ -6,6 +6,7 @@ Application d'analyse de matchups botlane League of Legends.
 
 - [Cahier des charges](docs/cahier-des-charges.md)
 - [Architecture technique](docs/architecture.md)
+- [ADR-001 — Rendre OpenClaw remplaçable dans le runtime LaneLens](docs/decisions/ADR-001-remplacer-openclaw-runtime.md)
 
 ## Démarrage local
 
@@ -24,9 +25,11 @@ La page affiche « Service disponible » lorsque cet appel réussit.
 
 ## Configuration et secrets
 
-Aucun fichier `.env`, identifiant ou service OpenClaw actif n'est nécessaire
-pour ce ticket. `.env.example` réserve les variables `OPENCLAW_URL` et
-`OPENCLAW_API_KEY` à la future intégration serveur ; elles ne sont pas encore consommées.
+Aucun fichier `.env`, identifiant ou provider d'analyse actif n'est nécessaire
+pour l'état actuellement livré. `.env.example` réserve `OPENCLAW_URL` et
+`OPENCLAW_API_KEY` uniquement à un éventuel `OpenClawProvider` ; ces variables ne
+sont pas consommées. Les futurs providers pourront posséder leur propre
+configuration, qui devra rester exclusivement côté serveur.
 Ne jamais placer une clé dans `src/`, `public/` ou une variable `VITE_*`.
 Les fichiers `.env` et leurs variantes locales sont ignorés par Git,
 à l'exception du modèle `.env.example`, qui ne contient aucun secret.
@@ -45,13 +48,27 @@ La compilation génère `dist/client/` et `dist/server/`.
 de développement avant). Cette commande ne sert pas le frontend compilé :
 le déploiement est hors périmètre.
 
-## Structure et périmètre
+## État actuellement implémenté
 
 - `src/` : frontend TypeScript sans framework, catalogue, règles de matchup et interface de sélection.
-- `server/` : serveur Hono et types serveur.
+- `server/` : serveur Hono exposant uniquement `GET /api/health` et types serveur.
 - `public/` : futurs assets publics, sans secrets.
 - `tsconfig.server.json` : configuration distincte pour compiler le backend Node.js.
-- Les modules openclaw et prompt restent réservés, sans intégration fonctionnelle.
+- `server/openclaw.ts` et `server/prompt.ts` restent des modules réservés et vides.
+- `POST /api/matchup`, `MatchupAnalysisService`, `MatchupAnalysisProvider` et les
+  providers concrets ne sont pas encore implémentés.
+
+## Architecture cible acceptée
+
+[ADR-001](docs/decisions/ADR-001-remplacer-openclaw-runtime.md) définit le futur
+moteur d'analyse derrière une abstraction provider : le contrôleur appellera
+`MatchupAnalysisService`, qui dépendra de `MatchupAnalysisProvider` plutôt que
+d'un moteur concret.
+
+OpenClaw pourra rester un outil de développement ou être encapsulé temporairement
+dans un `OpenClawProvider`. Il ne sera pas une dépendance runtime obligatoire.
+Le provider et le modèle de production, la source exacte du patch et les détails
+du cache restent des décisions futures.
 
 ## Catalogue des champions — LAN-002
 
@@ -98,7 +115,7 @@ recherche vide et portrait indisponible. La version affichée est explicitement
 libellée `Data Dragon <version>` et n'est pas présentée comme un patch joueur.
 Voir le [rapport LAN-003](docs/LAN-003/verification.md).
 
-Pas d'authentification, base de données, Riot API, intégration OpenClaw fonctionnelle,
+Pas d'authentification, base de données, Riot API ou provider d'analyse fonctionnel,
 CI/CD, Docker ou déploiement dans ce socle.
 
 Références : [Vite](https://vite.dev/guide/),

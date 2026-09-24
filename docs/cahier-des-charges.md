@@ -12,7 +12,9 @@ L'objectif du projet est de créer une petite application capable de répondre r
 
 L'application doit produire un plan de lane concret, directement utilisable pendant la partie, plutôt qu'une simple description générale des quatre champions.
 
-L'analyse sera générée par un agent IA accessible via **OpenClaw**.
+L'analyse est générée par un moteur d'analyse IA appelé par le backend LaneLens
+derrière une abstraction `MatchupAnalysisProvider`. Le provider concret reste
+remplaçable et ne constitue pas une exigence fonctionnelle du produit.
 
 ---
 
@@ -100,11 +102,26 @@ Exemple :
 Patch : 26.19
 ```
 
-Le patch est transmis à OpenClaw afin que l'analyse puisse être contextualisée.
+LaneLens détermine, prépare, versionne et transmet le contexte de patch au moteur
+d'analyse. Le LLM n'est pas une source de vérité du patch courant et la version
+technique Data Dragon ne doit pas être assimilée automatiquement au patch joueur.
 
 Le numéro de patch ne doit pas être codé en dur.
 
 Une valeur de fallback peut néanmoins être configurée si la récupération automatique échoue.
+La source de vérité exacte du patch reste une décision différée.
+
+Le contexte doit être préparé et réutilisé par patch, sans recherche web à chaque analyse :
+
+```text
+nouveau patch
+     ↓
+actualisation du contexte LaneLens
+     ↓
+validation et mise en cache
+     ↓
+réutilisation pour les analyses du patch
+```
 
 ---
 
@@ -128,7 +145,9 @@ Exemple :
 }
 ```
 
-Le backend construit ensuite la requête destinée à OpenClaw.
+Le contrôleur Node / Hono transmet la demande à `MatchupAnalysisService`. Le
+service prépare le contexte LaneLens, puis invoque un `MatchupAnalysisProvider`
+sans dépendre d'un provider, d'un SDK LLM ou d'un modèle précis.
 
 ---
 
@@ -136,7 +155,9 @@ Le backend construit ensuite la requête destinée à OpenClaw.
 
 La réponse IA doit suivre une structure stable afin de pouvoir être correctement affichée graphiquement.
 
-Il est préférable qu'OpenClaw retourne du JSON plutôt qu'un long texte Markdown libre.
+Le provider produit une réponse destinée à respecter le contrat attendu. LaneLens
+valide le JSON et le contrat avant de l'exposer au frontend comme
+`MatchupAnalysis`. Ce contrat reste indépendant du provider concret.
 
 Exemple de structure :
 
@@ -601,34 +622,27 @@ GET /api/patch
 # 17. Architecture globale
 
 ```text
-┌──────────────────────┐
-│      FRONTEND        │
-│                      │
-│ Vite + Vanilla TS    │
-└──────────┬───────────┘
-           │
-           │ POST /api/matchup
-           ▼
-┌──────────────────────┐
-│       BACKEND        │
-│                      │
-│ Node + Hono + TS     │
-└──────────┬───────────┘
-           │
-           │ prompt
-           ▼
-┌──────────────────────┐
-│       OPENCLAW       │
-│                      │
-│ Matchup Agent        │
-└──────────┬───────────┘
-           │
-           │ JSON
-           ▼
-┌──────────────────────┐
-│ MatchupAnalysis JSON │
-└──────────────────────┘
+Frontend
+   ↓
+POST /api/matchup
+   ↓
+Controller Node / Hono
+   ↓
+MatchupAnalysisService
+   ↓
+MatchupAnalysisProvider
+   ↓
+Provider LLM concret
+   ↓
+validation LaneLens
+   ↓
+MatchupAnalysis
 ```
+
+Le contrôleur gère le transport HTTP et la traduction des erreurs. Le service
+orchestre le cas d'usage, le contexte, le cache éventuel, l'appel au provider et
+la validation. Le provider constitue la frontière avec le moteur d'inférence et
+encapsule l'authentification, le protocole et les détails propres au moteur.
 
 ---
 
@@ -668,11 +682,19 @@ Cette séparation permet au cœur de l'application de fonctionner même sans cl�
 
 ---
 
-# 20. OpenClaw
+# 20. Moteur d'analyse IA
 
-OpenClaw constitue le moteur d'analyse.
+LaneLens ne dépend d'aucun moteur unique. `MatchupAnalysisProvider` constitue la
+frontière entre les couches métier et le provider d'analyse concret.
 
-Le backend transmet un contexte structuré.
+OpenClaw peut rester un outil de développement ou, si cela facilite le MVP, être
+encapsulé dans un `OpenClawProvider` temporaire. Les concepts propres à OpenClaw,
+notamment Gateway, session et profil, ne doivent pas se propager dans les
+contrôleurs ou les couches métier et ne sont jamais une condition de
+fonctionnement du produit.
+
+Le backend transmet au provider sélectionné un contexte structuré préparé par
+LaneLens.
 
 Exemple conceptuel :
 
@@ -740,6 +762,10 @@ Elle doit particulièrement identifier :
 
 Lorsqu'une information dépend fortement du patch, l'agent doit connaître le patch demandé.
 
+Ce patch et son contexte sont fournis par LaneLens. Le moteur d'analyse ne doit
+pas déduire seul le patch courant ni déclencher une recherche web systématique
+pour chaque matchup.
+
 Il doit différencier :
 
 * mécanique permanente d'un champion ;
@@ -773,7 +799,7 @@ Pas d'animation complexe.
 
 Cas prévus :
 
-### OpenClaw inaccessible
+### Service d'analyse indisponible
 
 ```text
 Impossible de générer l'analyse.
@@ -795,7 +821,9 @@ Patch estimé : 26.19
 
 ### Réponse IA invalide
 
-Le backend tente de valider le JSON.
+LaneLens valide le JSON et le contrat `MatchupAnalysis` retournés par le provider.
+Les erreurs propres au provider restent internes au backend et ne font pas partie
+du contrat fonctionnel exposé au frontend.
 
 Si le format est invalide :
 
@@ -822,6 +850,26 @@ pour mémoriser éventuellement :
 * dernière botlane jouée ;
 * derniers matchups recherchés ;
 * préférences utilisateur.
+
+Le cache des analyses appartient à LaneLens et reste indépendant du provider.
+Une clé déterministe peut comprendre au minimum :
+
+```text
+patch
++ carry allié
++ support allié
++ carry adverse
++ support adverse
+```
+
+Exemple conceptuel :
+
+```text
+26.19:ziggs:galio:jinx:swain
+```
+
+La normalisation, le stockage, la durée de vie et la politique d'invalidation de
+ce cache seront définis ultérieurement.
 
 ---
 
@@ -857,9 +905,11 @@ Le desktop reste néanmoins la cible principale du MVP.
 
 # 28. Sécurité
 
-Les secrets ne doivent jamais être présents dans le frontend.
+Les secrets ne doivent jamais être présents dans le frontend. Les secrets du
+provider d'analyse et les éventuelles clés Riot restent exclusivement côté
+serveur ; leur configuration dépend du provider concret.
 
-En particulier :
+Par exemple, selon le provider retenu :
 
 ```text
 OPENCLAW_API_KEY
@@ -883,6 +933,10 @@ OPENCLAW_API_KEY=
 RIOT_API_KEY=
 ```
 
+`OPENCLAW_URL` et `OPENCLAW_API_KEY` peuvent être utilisés uniquement par un
+éventuel `OpenClawProvider`. Ils ne constituent pas une configuration obligatoire
+de LaneLens.
+
 La clé Riot reste facultative dans le MVP.
 
 ---
@@ -900,7 +954,7 @@ changement de champion : immédiat
 bundle frontend : minimal
 ```
 
-Le principal temps d'attente sera celui de l'analyse OpenClaw.
+Le principal temps d'attente sera celui de la génération de l'analyse IA.
 
 ---
 
@@ -928,7 +982,11 @@ botlane-matchup/
 │
 ├── server/
 │   ├── index.ts
-│   ├── openclaw.ts
+│   ├── analysis/
+│   │   ├── MatchupAnalysisService.ts
+│   │   ├── MatchupAnalysisProvider.ts
+│   │   └── providers/
+│   │       └── ...
 │   ├── prompt.ts
 │   └── types.ts
 │
@@ -939,6 +997,10 @@ botlane-matchup/
 ├── tsconfig.json
 └── vite.config.ts
 ```
+
+Cette structure est une cible documentaire. Elle ne signifie pas que le service,
+l'interface provider, les providers concrets ou `POST /api/matchup` sont déjà
+implémentés.
 
 Les composants ne sont pas des composants React.
 
@@ -1020,8 +1082,8 @@ Le MVP est considéré fonctionnel lorsque :
 3. les portraits sont affichés ;
 4. les quatre champions peuvent être sélectionnés ;
 5. le bouton Analyser appelle le backend ;
-6. le backend appelle OpenClaw ;
-7. OpenClaw retourne une analyse structurée ;
+6. le backend obtient une réponse via `MatchupAnalysisProvider` ;
+7. LaneLens valide une `MatchupAnalysis` structurée avant de la retourner ;
 8. l'analyse est affichée graphiquement ;
 9. le patch utilisé est visible ;
 10. une cheat sheet est générée ;

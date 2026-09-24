@@ -1,7 +1,7 @@
 # ADR-001 — Rendre OpenClaw remplaçable dans le runtime LaneLens
 
 - **Date:** 2026-09-24
-- **Status:** Proposed
+- **Status:** Accepted
 
 ## Contexte
 
@@ -94,22 +94,21 @@ MatchupAnalysisProvider
 
 ## Précédence documentaire
 
-Le présent ADR a le statut `Proposed`. Il décrit donc une architecture cible
-proposée et ne remplace pas encore formellement les prescriptions historiques du
-cahier des charges qui présentent OpenClaw comme moteur runtime direct.
+Le présent ADR est `Accepted`. Il remplace les prescriptions architecturales
+historiques qui présentaient OpenClaw comme moteur runtime direct et obligatoire.
+Le cahier des charges reste la référence fonctionnelle du produit, mais
+l’intégration du moteur d’analyse est désormais régie par cet ADR.
 
-Les contradictions connues concernent notamment :
+Les documents principaux ont été alignés lors de LAN-011 afin de généraliser :
 
-- le flux backend → OpenClaw ;
-- la construction d’une requête directement destinée à OpenClaw ;
-- les erreurs présentées comme spécifiques à OpenClaw ;
-- le critère MVP imposant un appel backend vers OpenClaw.
+- le flux backend vers `MatchupAnalysisService` et `MatchupAnalysisProvider` ;
+- la construction d’une entrée destinée à un provider interchangeable ;
+- la validation des réponses par LaneLens ;
+- les erreurs fonctionnelles du service d’analyse ;
+- les critères MVP auparavant spécifiques à OpenClaw.
 
-Si cet ADR passe à `Accepted`, le cahier des charges et les autres documents
-historiques contradictoires devront être alignés. Cette synchronisation pourra
-être réalisée dans un ticket documentaire distinct. Tant que l’ADR reste
-`Proposed`, l’existence de ces divergences est volontaire et ne doit pas être
-interprétée comme l’état du code livré.
+Toute documentation future doit respecter cette séparation entre contrat produit
+et implémentation du provider.
 
 ## Architecture cible
 
@@ -392,7 +391,6 @@ Les sujets suivants nécessitent des tickets séparés :
 - le corpus, les seuils et le protocole du benchmark ;
 - le choix du provider et du modèle par défaut ;
 - les politiques de retry, fallback, observabilité et maîtrise des coûts ;
-- l’alignement de la documentation historique après acceptation de cet ADR.
 
 ## Alternatives considérées
 

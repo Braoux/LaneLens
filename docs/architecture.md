@@ -1,12 +1,15 @@
 # Architecture — LaneLens
 
-État documenté : socle LAN-001, catalogue LAN-002 et sélection de matchup LAN-003,
-au 24 septembre 2026.
+État documenté : socle LAN-001, catalogue LAN-002, sélection de matchup LAN-003
+et architecture cible acceptée par ADR-001, au 24 septembre 2026.
 
 Ce document décrit le code effectivement livré. Le [cahier des charges](cahier-des-charges.md)
-décrit la cible produit ; les fonctionnalités futures ne sont pas encore implémentées.
+décrit la cible produit et
+[ADR-001](decisions/ADR-001-remplacer-openclaw-runtime.md) définit la cible du
+moteur d'analyse. Les sections ci-dessous séparent explicitement l'état livré de
+cette architecture future.
 
-## Vue d'ensemble
+## Architecture actuellement livrée
 
 Application web TypeScript légère, sans React, Angular ou Vue, composée d'un
 frontend servi par Vite et d'un backend Node.js avec Hono. Le frontend charge
@@ -44,13 +47,13 @@ Les deux services écoutent uniquement sur l'interface locale.
 | `src/components/` | Répertoire réservé aux futurs modules DOM, conservé via `.gitkeep`. |
 | `server/index.ts` | Création de l'application Hono, route de santé et serveur HTTP via `@hono/node-server`. |
 | `server/types.ts` | Type serveur `HealthResponse`, dont `status` est le littéral `'ok'`. |
-| `server/openclaw.ts` | Module réservé à une future intégration exclusivement serveur. |
+| `server/openclaw.ts` | Module réservé et vide ; aucune intégration OpenClaw runtime n'est livrée. |
 | `server/prompt.ts` | Module réservé aux futurs prompts. |
 | `public/` | Répertoire réservé aux assets publics, actuellement sans asset applicatif. |
 | `vite.config.ts` | Adresse frontend, port fixe, proxy API et sortie du build frontend. |
 | `tsconfig.json` | Vérification du frontend et de la configuration Vite. |
 | `tsconfig.server.json` | Vérification et compilation du backend Node.js. |
-| `.env.example` | Documentation des futures variables OpenClaw, sans valeurs secrètes. |
+| `.env.example` | Variables réservées à un éventuel `OpenClawProvider`, non consommées actuellement. |
 | `package.json` / `package-lock.json` | Dépendances, commandes et verrouillage des versions installées. |
 
 Le frontend n'importe aucun module serveur. Il vérifie la réponse JSON à
@@ -70,8 +73,8 @@ Réponse : HTTP **200**, contenu JSON exactement :
 {"status":"ok"}
 ```
 
-Cette route indique que le serveur répond. Elle ne teste ni OpenClaw ni un autre
-service et ne nécessite aucune configuration externe.
+Cette route indique que le serveur répond. Elle ne teste aucun provider d'analyse
+ni autre service externe et ne nécessite aucune configuration externe.
 
 1. Au chargement de la page, `refreshHealth()` désactive temporairement le bouton.
 2. `checkHealth()` appelle `/api/health` avec `fetch` et un délai maximal de 5 secondes.
@@ -127,7 +130,7 @@ de déploiement, TLS et reverse proxy sont hors périmètre de LAN-001.
 
 ## Configuration et sécurité
 
-Variables documentées, mais **non consommées actuellement** :
+Variables documentées pour un éventuel `OpenClawProvider`, mais **non consommées actuellement** :
 
 ```dotenv
 OPENCLAW_URL=
@@ -135,9 +138,11 @@ OPENCLAW_API_KEY=
 ```
 
 Le socle fonctionne sans `.env`. Aucun chargement applicatif de configuration
-OpenClaw ni appel à ce service n'est implémenté.
+provider ni appel à un moteur d'analyse n'est implémenté.
 
-- La future clé OpenClaw devra rester exclusivement côté serveur.
+- Les secrets de tout provider devront rester exclusivement côté serveur.
+- `OPENCLAW_URL` et `OPENCLAW_API_KEY` ne concernent qu'un éventuel
+  `OpenClawProvider` et ne sont pas une configuration obligatoire de LaneLens.
 - Aucun secret ne doit être placé dans `src/`, `public/` ou une variable `VITE_*`.
 - `.gitignore` exclut `.env`, `.env.*` sauf `.env.example`, ainsi que les fichiers
   `*.local`, les dépendances, les builds et les journaux.
@@ -150,10 +155,66 @@ L'application ne comporte aucune base de données, authentification, API Riot
 authentifiée, CI/CD, Docker ou fonctionnalité de déploiement. La seule persistance
 applicative livrée est le cache local du catalogue.
 
-Le cahier des charges prévoit ensuite le contexte de patch de l'analyse,
-OpenClaw et l'affichage des résultats.
+Le cahier des charges prévoit ensuite le contexte de patch, un moteur d'analyse
+derrière une abstraction provider et l'affichage des résultats.
 La version technique du catalogue est connue mais ne constitue pas une détection
-du patch du client régional. Les modules OpenClaw et prompt restent réservés.
+du patch du client régional. Les modules OpenClaw et prompt restent réservés et vides.
+
+## Architecture cible acceptée — ADR-001
+
+Cette section décrit une cible, **pas du code actuellement livré**. À ce jour,
+`POST /api/matchup`, `MatchupAnalysisService`, `MatchupAnalysisProvider` et les
+providers concrets n'existent pas dans le dépôt.
+
+```text
+Frontend
+   ↓
+POST /api/matchup
+   ↓
+Controller Node / Hono
+   ↓
+MatchupAnalysisService
+   ↓
+MatchupAnalysisProvider
+   ↓
+Provider LLM concret
+   ↓
+validation LaneLens
+   ↓
+MatchupAnalysis
+```
+
+### Responsabilités cibles
+
+- **Controller** : transport HTTP, validation de la requête et traduction des erreurs.
+- **MatchupAnalysisService** : orchestration du cas d'usage, préparation du
+  contexte, consultation éventuelle du cache, invocation du provider et validation.
+- **MatchupAnalysisProvider** : frontière abstraite avec le moteur d'inférence.
+- **Provider concret** : authentification, protocole, timeout et détails propres
+  au moteur utilisé.
+- **LaneLens** : contrat `MatchupAnalysis`, validation du résultat, contexte de
+  patch et cache applicatif.
+
+### Invariants
+
+- Le contrôleur ne connaît ni OpenClaw, ni SDK LLM, ni modèle précis.
+- Le service dépend de `MatchupAnalysisProvider`, jamais d'une implémentation concrète.
+- `MatchupAnalysis` et ses consommateurs restent indépendants du provider.
+- OpenClaw peut être un outil de développement ou un `OpenClawProvider`
+  temporaire, mais pas une dépendance runtime obligatoire.
+- Le contexte de patch et le cache d'analyse appartiennent à LaneLens.
+- Le LLM n'est pas la source de vérité du patch et la version Data Dragon ne vaut
+  pas automatiquement patch joueur.
+- Un contexte préparé, validé et mis en cache par patch doit être réutilisé plutôt
+  qu'une recherche web effectuée pour chaque analyse.
+- Le provider et le modèle de production, la source exacte du patch, le stockage
+  et le TTL du cache, les politiques de retry/fallback et le benchmark restent
+  des décisions différées.
+
+Le cache d'analyse pourra utiliser une clé déterministe comprenant au minimum le
+patch et les quatre champions dans l'ordre de leurs rôles, par exemple
+`26.19:ziggs:galio:jinx:swain`. Sa normalisation et sa politique d'invalidation
+ne sont pas définies par LAN-011.
 
 ## Catalogue Data Dragon — LAN-002
 
@@ -237,8 +298,8 @@ requête OpenClaw, navigation résultat ou détermination de patch n'est déclen
 
 ### Limites
 
-Pas de Champion Picker, filtrage par rôle, cache binaire des portraits ni nouvelle
-route backend. Aucun service worker : l'application elle-même doit déjà être
+Pas de filtrage par rôle, cache binaire des portraits ni nouvelle route backend.
+Aucun service worker : l'application elle-même doit déjà être
 chargée pour utiliser le catalogue hors connexion. La provenance Data Dragon
 et l'absence de clé ne changent pas la frontière des secrets serveur.
 
