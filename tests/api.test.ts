@@ -276,3 +276,20 @@ test('GET /api/health remains unchanged with and without analysis dependencies',
     assert.deepEqual(await response.json(), { status: 'ok' });
   }
 });
+
+test('GET /api/analysis-context exposes injected normalized metadata', async () => {
+  const app = createApp({
+    analysisContext: { patch: ' 26.19 ', contextVersion: ' 26.19-v1 ' },
+  });
+  const response = await app.request('/api/analysis-context');
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { patch: '26.19', contextVersion: '26.19-v1' });
+});
+
+test('GET /api/analysis-context safely rejects absent and invalid metadata', async () => {
+  await expectApiError(await createApp().request('/api/analysis-context'), 503, 'PATCH_CONTEXT_UNAVAILABLE');
+  const invalid = createApp({
+    analysisContext: { patch: '   ', contextVersion: 'v1' },
+  });
+  await expectApiError(await invalid.request('/api/analysis-context'), 500, 'PATCH_CONTEXT_INVALID');
+});

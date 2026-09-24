@@ -5,11 +5,18 @@ import type { MatchupAnalysisService } from './analysis/MatchupAnalysisService.j
 import type { MatchupAnalysisInput } from './analysis/types.js';
 import { isValidPatchContext } from './analysis/validation.js';
 import type { PatchContextResolver, PatchContextResolution } from './patch-context/PatchContextResolver.js';
-import type { ApiErrorCode, ApiErrorResponse, HealthResponse, MatchupRequest } from './types.js';
+import type {
+  AnalysisContextResponse,
+  ApiErrorCode,
+  ApiErrorResponse,
+  MatchupRequest,
+} from '../shared/analysis-contract.js';
+import type { HealthResponse } from './types.js';
 
 export interface AppDependencies {
   readonly analysisService?: Pick<MatchupAnalysisService, 'analyze'>;
   readonly patchContextResolver?: PatchContextResolver;
+  readonly analysisContext?: AnalysisContextResponse;
 }
 
 type ApiErrorStatus = 400 | 415 | 422 | 500 | 502 | 503;
@@ -47,6 +54,14 @@ function errorResponse(c: Context, status: ApiErrorStatus, code: ApiErrorCode) {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isAnalysisContextResponse(value: unknown): value is AnalysisContextResponse {
+  return isRecord(value)
+    && typeof value.patch === 'string'
+    && value.patch.trim().length > 0
+    && typeof value.contextVersion === 'string'
+    && value.contextVersion.trim().length > 0;
 }
 
 function normalizeMatchupRequest(value: unknown): MatchupRequest | undefined {
@@ -101,6 +116,20 @@ export function createApp(dependencies: AppDependencies = {}): Hono {
   const app = new Hono();
 
   app.get('/api/health', (c) => c.json({ status: 'ok' } satisfies HealthResponse));
+
+  app.get('/api/analysis-context', (c) => {
+    const { analysisContext } = dependencies;
+    if (analysisContext === undefined) {
+      return errorResponse(c, 503, 'PATCH_CONTEXT_UNAVAILABLE');
+    }
+    if (!isAnalysisContextResponse(analysisContext)) {
+      return errorResponse(c, 500, 'PATCH_CONTEXT_INVALID');
+    }
+    return c.json({
+      patch: analysisContext.patch.trim(),
+      contextVersion: analysisContext.contextVersion.trim(),
+    } satisfies AnalysisContextResponse);
+  });
 
   app.post('/api/matchup', async (c) => {
     if (!hasJsonContentType(c.req.header('content-type'))) {

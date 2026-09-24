@@ -8,8 +8,8 @@
     "strict": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
-    "rootDir": "server",
-    "outDir": "dist/server"
+    "rootDir": ".",
+    "outDir": "dist"
   },
-  "include": ["server"]
+  "include": ["server", "shared"]
 }

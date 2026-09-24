@@ -18,42 +18,10 @@ export interface MatchupAnalysisInput {
   readonly patchContext: PatchContext;
 }
 
-export interface MatchupAnalysisSource {
-  readonly name: string;
-  readonly url?: string;
-}
-
-export interface MatchupAnalysis {
-  matchup: {
-    allyCarry: string;
-    allySupport: string;
-    enemyCarry: string;
-    enemySupport: string;
-    patch: string;
-  };
-  lanePlan: string;
-  threatResponseWindow: {
-    threat: string;
-    response: string;
-    window: string;
-    winCondition: string;
-  };
-  earlyLevels: {
-    level1: string;
-    level2: string;
-    level3: string;
-  };
-  wavePlan: string;
-  targetPriority: {
-    primaryTarget: string;
-    explanation: string;
-  };
-  postLevel6: string;
-  roamPlan: string;
-  cheatSheet: string[];
-  goldenRule: string;
-  sources?: MatchupAnalysisSource[];
-}
+export type {
+  MatchupAnalysis,
+  MatchupAnalysisSource,
+} from '../../shared/analysis-contract.js';
 
 export interface MatchupAnalysisProviderRequest {
   readonly input: MatchupAnalysisInput;

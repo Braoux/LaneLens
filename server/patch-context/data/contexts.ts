@@ -24,3 +24,5 @@ export const PATCH_CONTEXTS: readonly PatchContext[] = [
     ],
   },
 ];
+
+export const ACTIVE_PATCH_CONTEXT = PATCH_CONTEXTS[0]!;

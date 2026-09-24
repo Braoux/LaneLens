@@ -27,6 +27,10 @@ test('runtime starts without an OpenAI key and leaves analysis unconfigured', as
   assert.equal(health.status, 200);
   assert.deepEqual(await health.json(), { status: 'ok' });
 
+  const context = await app.request('/api/analysis-context');
+  assert.equal(context.status, 200);
+  assert.deepEqual(await context.json(), { patch: '26.19', contextVersion: '26.19-v1' });
+
   const matchup = await postMatchup(app);
   assert.equal(matchup.status, 503);
   assert.equal((await matchup.json() as { error: { code: string } }).error.code, 'ANALYSIS_NOT_CONFIGURED');

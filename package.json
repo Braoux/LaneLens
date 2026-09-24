@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
+    "dotenv": "^18.0.3",
     "hono": "^4.13.9",
     "openai": "^7.23.0"
   },
