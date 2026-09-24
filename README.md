@@ -98,7 +98,7 @@ dashboard complexe pour répondre à une question de lane.
 Frontend    TypeScript · Vite · HTML · CSS
 Backend     Node.js · Hono
 Data        Riot Data Dragon
-AI          MatchupAnalysisProvider · OpenAI
+AI          MatchupAnalysisProvider · OpenAI · Google Gemini
 Tests       TypeScript · Node.js
 ```
 
@@ -150,9 +150,28 @@ Pour activer une analyse réelle :
 Copy-Item .env.example .env
 ```
 
-Puis renseigner la clé uniquement dans le fichier local `.env` :
+Puis sélectionner un provider et renseigner sa clé uniquement dans le fichier
+local `.env`.
+
+### Gemini
 
 ```env
+AI_PROVIDER=gemini
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.8-flash
+GEMINI_TIMEOUT_MS=30000
+```
+
+`GEMINI_MODEL` et `GEMINI_TIMEOUT_MS` sont facultatifs. Le niveau sans frais de
+Gemini reste soumis aux quotas, aux conditions d'utilisation et à la politique
+de traitement des données de Google associée au free tier. LaneLens envoie
+uniquement les quatre noms de champions, le patch, le contexte de patch et les
+instructions tactiques nécessaires à l'analyse.
+
+### OpenAI
+
+```env
+AI_PROVIDER=openai
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-6-sol
 OPENAI_TIMEOUT_MS=30000
@@ -162,7 +181,7 @@ OPENAI_TIMEOUT_MS=30000
 Le backend charge automatiquement `.env` au démarrage. Le fichier est ignoré
 par Git ; `.env.example` doit toujours rester sans secret.
 
-Sans `OPENAI_API_KEY` :
+Sans clé exploitable pour le provider sélectionné :
 
 ```text
 POST /api/matchup
@@ -201,7 +220,10 @@ validation LaneLens
 MatchupAnalysis
 ```
 
-Le provider actuellement intégré utilise OpenAI.
+Les providers actuellement intégrés sont OpenAI et Google Gemini. Le provider
+est sélectionné avec `AI_PROVIDER=openai` ou `AI_PROVIDER=gemini`. Une valeur
+absente conserve OpenAI pour compatibilité avec les configurations existantes.
+Il n'existe aucun fallback automatique entre providers.
 
 Changer de modèle ou de provider ne doit pas nécessiter de modifier :
 
@@ -233,7 +255,8 @@ Voir [Maintenance des contextes de patch](docs/patch-context.md).
 
 ## Test manuel de l'analyse
 
-Renseigner `OPENAI_API_KEY` dans le fichier local `.env`, puis redémarrer le serveur :
+Renseigner la clé du provider sélectionné dans le fichier local `.env`, puis
+redémarrer le serveur :
 
 ```sh
 npm run dev:server

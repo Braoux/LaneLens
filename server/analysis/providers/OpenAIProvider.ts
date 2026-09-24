@@ -3,8 +3,12 @@ import type { MatchupAnalysisProvider } from '../MatchupAnalysisProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
 import { loadOpenAIConfig } from './openai-config.js';
 import type { OpenAIConfig } from './openai-config.js';
+import {
+  MATCHUP_ANALYSIS_JSON_SCHEMA,
+} from './matchup-analysis-schema.js';
+import type { JsonSchema } from './matchup-analysis-schema.js';
 
-type JsonSchema = Readonly<Record<string, unknown>>;
+export { MATCHUP_ANALYSIS_JSON_SCHEMA } from './matchup-analysis-schema.js';
 
 export interface OpenAIResponseRequest {
   readonly model: string;
@@ -48,53 +52,6 @@ export class OpenAIProviderError extends Error {
     this.name = 'OpenAIProviderError';
   }
 }
-
-const stringSchema = Object.freeze({ type: 'string' });
-
-function strictObject(
-  properties: Readonly<Record<string, JsonSchema>>,
-): JsonSchema {
-  return Object.freeze({
-    type: 'object',
-    properties,
-    required: Object.keys(properties),
-    additionalProperties: false,
-  });
-}
-
-export const MATCHUP_ANALYSIS_JSON_SCHEMA: JsonSchema = strictObject({
-  matchup: strictObject({
-    allyCarry: stringSchema,
-    allySupport: stringSchema,
-    enemyCarry: stringSchema,
-    enemySupport: stringSchema,
-    patch: stringSchema,
-  }),
-  lanePlan: stringSchema,
-  threatResponseWindow: strictObject({
-    threat: stringSchema,
-    response: stringSchema,
-    window: stringSchema,
-    winCondition: stringSchema,
-  }),
-  earlyLevels: strictObject({
-    level1: stringSchema,
-    level2: stringSchema,
-    level3: stringSchema,
-  }),
-  wavePlan: stringSchema,
-  targetPriority: strictObject({
-    primaryTarget: stringSchema,
-    explanation: stringSchema,
-  }),
-  postLevel6: stringSchema,
-  roamPlan: stringSchema,
-  cheatSheet: Object.freeze({
-    type: 'array',
-    items: stringSchema,
-  }),
-  goldenRule: stringSchema,
-});
 
 const defaultClientFactory: OpenAIClientFactory = (options) => {
   const client = new OpenAI(options);

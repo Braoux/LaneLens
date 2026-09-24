@@ -16,6 +16,7 @@
     "start:server": "node dist/server/index.js"
   },
   "dependencies": {
+    "@google/genai": "^2.24.0",
     "@hono/node-server": "^2.1.1",
     "dotenv": "^18.0.3",
     "hono": "^4.13.9",
