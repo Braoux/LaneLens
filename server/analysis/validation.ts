@@ -24,7 +24,7 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
-function isValidPatchContext(value: unknown): value is PatchContext {
+export function isValidPatchContext(value: unknown): value is PatchContext {
   if (!isRecord(value)) return false;
   if (!isNonBlankString(value.patch) || !isNonBlankString(value.contextVersion)) return false;
   if (!Array.isArray(value.facts) || value.facts.length === 0) return false;
