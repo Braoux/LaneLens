@@ -35,6 +35,7 @@ Les fichiers `.env` et leurs variantes locales sont ignorés par Git,
 
 ```sh
 npm run typecheck
+npm test
 npm run build
 ```
 
@@ -50,8 +51,34 @@ le déploiement est hors périmètre.
 - `server/` : serveur Hono et types serveur.
 - `public/` : futurs assets publics, sans secrets.
 - `tsconfig.server.json` : configuration distincte pour compiler le backend Node.js.
-- Les modules champions, storage, openclaw et prompt sont des emplacements réservés,
-  sans comportement métier pour l'instant.
+- Les modules openclaw et prompt restent réservés, sans intégration fonctionnelle.
+
+## Catalogue des champions — LAN-002
+
+Le démarrage déclenche automatiquement le chargement Data Dragon, indépendamment
+du contrôle de santé du backend. La dernière version globale est recherchée à
+chaque démarrage, puis le catalogue `fr_FR` est récupéré si nécessaire.
+Il ne s'agit pas d'une détection du patch régional du joueur.
+
+Le dernier catalogue valide est conservé dans `localStorage`, sous la clé
+`lanelens.champion-catalog.v1`. Un cache à jour évite le téléchargement complet ;
+en cas de panne, il reste utilisable avec `source: 'cache'` et `stale: true`.
+Sans cache exploitable, le résultat est une erreur contrôlée. Aucune clé Riot,
+aucun service OpenClaw et aucune liste manuelle ne sont utilisés.
+
+Les futurs composants peuvent importer `initializeChampionCatalog()` depuis
+`src/catalog-state.ts` et attendre sa promesse partagée, ou consulter
+`getChampionCatalogState()`. Les états sont `idle`, `loading`, `ready` ou `error`.
+Un résultat `ready` expose `catalog` et `persistence` (`saved` ou `unavailable`
+si le navigateur refuse l'écriture). Les données réseau restent utilisables même
+si la persistance échoue. Aucun sélecteur ou écran d'erreur n'est ajouté ici.
+
+Seules les URLs de portraits sont stockées, pas les images : leurs fichiers ne
+sont pas garantis hors ligne. Le code frontend doit d'abord avoir été chargé ;
+LAN-002 n'ajoute pas de service worker ni de fonctionnement hors ligne de l'application entière.
+
+`npm test` couvre les scénarios nominal, cache, mise à jour et pannes avec
+réseau et stockage contrôlés. Voir le [rapport LAN-002](docs/LAN-002/verification.md).
 
 Pas d'authentification, base de données, Riot API, intégration OpenClaw fonctionnelle,
 CI/CD, Docker ou déploiement dans ce socle.
