@@ -6,12 +6,15 @@ import {
 } from './api';
 import {
   buildMatchupRequest,
+  invalidateActiveAnalysisRequest,
   isActiveAnalysisRequest,
   serializeCheatSheet,
   toQuickOverlay,
 } from './analysis';
 import { initializeChampionCatalog } from './catalog-state';
 import type { Champion, ChampionCatalog } from './champions';
+import { MatchupHistoryStore } from './history';
+import type { MatchupHistoryEntry } from './history';
 import {
   SLOT_IDS,
   championUnavailableReason,
@@ -41,6 +44,9 @@ let catalog: ChampionCatalog | undefined;
 let analysisContext: AnalysisContextResponse | undefined;
 let isAnalyzing = false;
 let activeRequestId = 0;
+let activeAnalysisController: AbortController | undefined;
+const historyStore = new MatchupHistoryStore();
+let historyEntries = historyStore.getEntries();
 
 app.innerHTML = `
   <header class="topbar">
@@ -81,6 +87,14 @@ app.innerHTML = `
         <h2>Analyse du matchup...</h2>
         <p id="loading-matchup"></p>
       </section>
+      <section class="history-section" id="history-section" aria-labelledby="history-title">
+        <div class="history-heading">
+          <p class="eyebrow">HISTORIQUE LOCAL</p>
+          <h2 id="history-title">Dernières analyses</h2>
+        </div>
+        <p class="history-empty" id="history-empty">Aucune analyse récente.</p>
+        <div class="history-list" id="history-list"></div>
+      </section>
     </div>
     <div id="result-view" hidden></div>
   </main>
@@ -108,6 +122,8 @@ const mirrorButton = document.querySelector<HTMLButtonElement>('#mirror')!;
 const analyzeButton = document.querySelector<HTMLButtonElement>('#analyze')!;
 const catalogMessage = document.querySelector<HTMLParagraphElement>('#catalog-message')!;
 const analysisMessage = document.querySelector<HTMLParagraphElement>('#analysis-message')!;
+const historyList = document.querySelector<HTMLDivElement>('#history-list')!;
+const historyEmpty = document.querySelector<HTMLParagraphElement>('#history-empty')!;
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -232,10 +248,21 @@ function labeledCard(label: string, value: string, className = ''): HTMLElement 
   return card;
 }
 
-function renderResult(snapshot: MatchupSelection, analysis: MatchupAnalysis): void {
+function formatHistoryDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
+function renderResult(
+  snapshot: MatchupSelection,
+  analysis: MatchupAnalysis,
+  historical?: { readonly generatedAt: string },
+): void {
   resultView.replaceChildren();
   const header = element('section', 'result-header');
-  header.append(element('p', 'eyebrow', 'MATCHUP ANALYSIS'));
+  header.append(element('p', 'eyebrow', historical ? 'ANALYSE SAUVEGARDÉE' : 'MATCHUP ANALYSIS'));
   const matchup = element('div', 'result-matchup');
   const allies = element('div', 'result-team');
   allies.append(resultChampion(snapshot.allyCarry), resultChampion(snapshot.allySupport));
@@ -243,6 +270,14 @@ function renderResult(snapshot: MatchupSelection, analysis: MatchupAnalysis): vo
   enemies.append(resultChampion(snapshot.enemyCarry), resultChampion(snapshot.enemySupport));
   matchup.append(allies, element('b', 'result-vs', 'VS'), enemies);
   header.append(matchup, element('p', 'result-patch', `Patch ${analysis.matchup.patch.trim()}`));
+  if (historical) {
+    const saved = element('div', 'saved-analysis-meta');
+    saved.append(
+      element('strong', undefined, 'Analyse sauvegardée'),
+      element('span', undefined, `Générée le ${formatHistoryDate(historical.generatedAt)}`),
+    );
+    header.append(saved);
+  }
   resultView.append(header);
 
   const quick = toQuickOverlay(analysis);
@@ -329,11 +364,15 @@ function renderResult(snapshot: MatchupSelection, analysis: MatchupAnalysis): vo
   const newAnalysis = element('button', 'new-analysis-button', 'Nouvelle analyse');
   newAnalysis.type = 'button';
   newAnalysis.addEventListener('click', () => {
-    activeRequestId += 1;
+    activeRequestId = invalidateActiveAnalysisRequest(activeRequestId, activeAnalysisController);
+    activeAnalysisController = undefined;
+    isAnalyzing = false;
+    loadingView.hidden = true;
     resultView.hidden = true;
     resultView.replaceChildren();
     selectionView.hidden = false;
     analysisMessage.textContent = '';
+    renderControls();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
   const resultActions = element('div', 'result-actions');
@@ -341,11 +380,52 @@ function renderResult(snapshot: MatchupSelection, analysis: MatchupAnalysis): vo
   resultView.append(resultActions);
 }
 
+function showHistoricalAnalysis(entry: MatchupHistoryEntry): void {
+  activeRequestId = invalidateActiveAnalysisRequest(activeRequestId, activeAnalysisController);
+  activeAnalysisController = undefined;
+  isAnalyzing = false;
+  loadingView.hidden = true;
+  if (picker.open) picker.close();
+  analysisMessage.textContent = '';
+  renderControls();
+  renderResult(entry.selection, entry.analysis, { generatedAt: entry.generatedAt });
+  selectionView.hidden = true;
+  resultView.hidden = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderHistory(): void {
+  historyList.replaceChildren();
+  historyEmpty.hidden = historyEntries.length > 0;
+  for (const entry of historyEntries) {
+    const button = element('button', 'history-card');
+    button.type = 'button';
+    const matchup = element('span', 'history-matchup');
+    matchup.append(
+      element('strong', undefined, `${entry.selection.allyCarry.name} + ${entry.selection.allySupport.name}`),
+      element('small', undefined, 'vs'),
+      element('strong', undefined, `${entry.selection.enemyCarry.name} + ${entry.selection.enemySupport.name}`),
+    );
+    const metadata = element('span', 'history-metadata');
+    const savedAt = element('time', undefined, `Sauvegardée le ${formatHistoryDate(entry.generatedAt)}`);
+    savedAt.dateTime = entry.generatedAt;
+    metadata.append(
+      element('span', undefined, `Patch ${entry.patch.trim()}`),
+      savedAt,
+    );
+    button.append(matchup, metadata);
+    button.addEventListener('click', () => showHistoricalAnalysis(entry));
+    historyList.append(button);
+  }
+}
+
 async function submitAnalysis(): Promise<void> {
   const snapshot = snapshotSelection(selection);
   if (!snapshot || !analysisContext || isAnalyzing) return;
   const request = buildMatchupRequest(snapshot, analysisContext.patch);
   const requestId = ++activeRequestId;
+  const controller = new AbortController();
+  activeAnalysisController = controller;
   isAnalyzing = true;
   analysisMessage.textContent = '';
   document.querySelector('#loading-matchup')!.textContent = `${request.allyCarry} + ${request.allySupport} vs ${request.enemyCarry} + ${request.enemySupport}`;
@@ -353,11 +433,13 @@ async function submitAnalysis(): Promise<void> {
   renderControls();
 
   try {
-    const analysis = await analyzeMatchup(request);
+    const analysis = await analyzeMatchup(request, controller.signal);
     if (!isActiveAnalysisRequest(requestId, activeRequestId)) return;
     renderResult(snapshot, analysis);
     selectionView.hidden = true;
     resultView.hidden = false;
+    historyEntries = historyStore.add(snapshot, analysis);
+    renderHistory();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (error) {
     if (!isActiveAnalysisRequest(requestId, activeRequestId)) return;
@@ -365,6 +447,7 @@ async function submitAnalysis(): Promise<void> {
     analysisMessage.dataset.state = 'error';
   } finally {
     if (isActiveAnalysisRequest(requestId, activeRequestId)) {
+      if (activeAnalysisController === controller) activeAnalysisController = undefined;
       isAnalyzing = false;
       loadingView.hidden = true;
       renderControls();
@@ -390,6 +473,7 @@ analyzeButton.addEventListener('click', () => void submitAnalysis());
 
 async function start(): Promise<void> {
   renderSlots();
+  renderHistory();
   const [catalogResult, contextResult] = await Promise.allSettled([
     initializeChampionCatalog(),
     getAnalysisContext(),
