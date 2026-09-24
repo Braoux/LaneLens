@@ -1,4 +1,5 @@
 import { checkHealth } from './api';
+import { initializeChampionCatalog } from './catalog-state';
 import './styles/main.css';
 
 const app = document.querySelector<HTMLElement>('#app');
@@ -39,3 +40,4 @@ async function refreshHealth(): Promise<void> {
 
 retry.addEventListener('click', () => void refreshHealth());
 void refreshHealth();
+void initializeChampionCatalog();
