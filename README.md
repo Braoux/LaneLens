@@ -1,6 +1,11 @@
 # LaneLens
-Know the matchup before it knows you.
-Application d'analyse de matchups botlane League of Legends.
+
+> Know the matchup before it knows you.
+
+LaneLens est une application d’analyse de matchups botlane League of Legends.
+Sélectionnez les quatre champions et obtenez un plan de lane concret :
+priorité, fenêtres de trade, gestion de wave, cible prioritaire et décisions clés.
+
 
 ## Documentation
 
