@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
-    "hono": "^4.13.9"
+    "hono": "^4.13.9",
+    "openai": "^7.23.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
