@@ -13,6 +13,8 @@ import { createApp } from './app.js';
 import type { PatchContextResolver } from './patch-context/PatchContextResolver.js';
 import { VersionedPatchContextResolver } from './patch-context/VersionedPatchContextResolver.js';
 import { ACTIVE_PATCH_CONTEXT } from './patch-context/data/contexts.js';
+import { NOOP_LOGGER } from './logging/Logger.js';
+import type { Logger } from './logging/Logger.js';
 
 export interface RuntimeCompositionOptions {
   readonly environment?: AIEnvironment;
@@ -20,10 +22,12 @@ export interface RuntimeCompositionOptions {
   readonly geminiProviderFactory?: (config: GeminiConfig) => MatchupAnalysisProvider;
   readonly patchContextResolver?: PatchContextResolver;
   readonly analysisContext?: AnalysisContextResponse;
+  readonly logger?: Logger;
 }
 
 export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
   const environment = options.environment ?? process.env;
+  const logger = options.logger ?? NOOP_LOGGER;
   const providerName = resolveAIProvider(environment.AI_PROVIDER);
   const apiKey = providerName === 'gemini'
     ? environment.GEMINI_API_KEY?.trim() ?? ''
@@ -35,11 +39,31 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
     contextVersion: ACTIVE_PATCH_CONTEXT.contextVersion,
   };
 
-  if (apiKey.length === 0) return createApp({ patchContextResolver, analysisContext });
+  if (apiKey.length === 0) {
+    return createApp({ patchContextResolver, analysisContext, logger });
+  }
 
-  const provider = providerName === 'gemini'
-    ? (options.geminiProviderFactory ?? createGeminiProvider)(loadGeminiConfig(environment))
-    : (options.openAIProviderFactory ?? createOpenAIProvider)(loadOpenAIConfig(environment));
+  let provider: MatchupAnalysisProvider;
+  let model: string;
+  if (providerName === 'gemini') {
+    const config = loadGeminiConfig(environment);
+    provider = (options.geminiProviderFactory ?? createGeminiProvider)(config);
+    model = config.model;
+  } else {
+    const config = loadOpenAIConfig(environment);
+    provider = (options.openAIProviderFactory ?? createOpenAIProvider)(config);
+    model = config.model;
+  }
+  logger.info('analysis_provider_configured', {
+    provider: providerName,
+    model,
+  });
   const analysisService = new MatchupAnalysisService(provider);
-  return createApp({ analysisService, patchContextResolver, analysisContext });
+  return createApp({
+    analysisService,
+    patchContextResolver,
+    analysisContext,
+    logger,
+    analysisProviderName: providerName,
+  });
 }

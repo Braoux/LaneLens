@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { MatchupAnalysisError } from './analysis/errors.js';
@@ -12,11 +13,24 @@ import type {
   MatchupRequest,
 } from '../shared/analysis-contract.js';
 import type { HealthResponse } from './types.js';
+import { NOOP_LOGGER } from './logging/Logger.js';
+import type { Logger } from './logging/Logger.js';
+import { serializeError } from './logging/redaction.js';
+
+interface AppBindings {
+  Variables: {
+    requestId: string;
+  };
+}
+
+type AppContext = Context<AppBindings>;
 
 export interface AppDependencies {
   readonly analysisService?: Pick<MatchupAnalysisService, 'analyze'>;
   readonly patchContextResolver?: PatchContextResolver;
   readonly analysisContext?: AnalysisContextResponse;
+  readonly logger?: Logger;
+  readonly analysisProviderName?: string;
 }
 
 type ApiErrorStatus = 400 | 415 | 422 | 500 | 502 | 503;
@@ -43,7 +57,7 @@ const ERROR_MESSAGES: Record<ApiErrorCode, string> = {
   INTERNAL_ERROR: 'Une erreur interne est survenue.',
 };
 
-function errorResponse(c: Context, status: ApiErrorStatus, code: ApiErrorCode) {
+function errorResponse(c: AppContext, status: ApiErrorStatus, code: ApiErrorCode) {
   return c.json({
     error: {
       code,
@@ -101,19 +115,47 @@ function isValidResolution(value: unknown): value is PatchContextResolution {
   return value.status === 'ready' && 'context' in value;
 }
 
-function mapAnalysisError(c: Context, error: MatchupAnalysisError) {
+function analysisErrorStatus(error: MatchupAnalysisError): 500 | 502 | 503 {
   switch (error.code) {
     case 'ANALYSIS_PROVIDER_UNAVAILABLE':
-      return errorResponse(c, 503, error.code);
+      return 503;
     case 'INVALID_ANALYSIS_RESPONSE':
-      return errorResponse(c, 502, error.code);
+      return 502;
     case 'ANALYSIS_FAILED':
-      return errorResponse(c, 500, error.code);
+      return 500;
   }
 }
 
-export function createApp(dependencies: AppDependencies = {}): Hono {
-  const app = new Hono();
+function requestLogLevel(status: number): 'info' | 'warn' | 'error' {
+  if (status >= 500) return 'error';
+  if (status >= 400) return 'warn';
+  return 'info';
+}
+
+export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings> {
+  const app = new Hono<AppBindings>();
+  const logger = dependencies.logger ?? NOOP_LOGGER;
+
+  app.use('*', async (c, next) => {
+    const requestId = randomUUID();
+    const startedAt = performance.now();
+    let status = 500;
+    c.set('requestId', requestId);
+    c.header('X-Request-Id', requestId);
+
+    try {
+      await next();
+      status = c.res.status;
+    } finally {
+      logger[requestLogLevel(status)]('http_request_completed', {
+        requestId,
+        method: c.req.method,
+        path: c.req.path,
+        status,
+        durationMs: Math.max(0, Math.round(performance.now() - startedAt)),
+      });
+    }
+  });
 
   app.get('/api/health', (c) => c.json({ status: 'ok' } satisfies HealthResponse));
 
@@ -148,34 +190,70 @@ export function createApp(dependencies: AppDependencies = {}): Hono {
       return errorResponse(c, 422, 'INVALID_MATCHUP_REQUEST');
     }
 
+    const requestId = c.get('requestId');
+    const analysisStartedAt = performance.now();
+    logger.info('matchup_analysis_started', {
+      requestId,
+      allyCarry: request.allyCarry,
+      allySupport: request.allySupport,
+      enemyCarry: request.enemyCarry,
+      enemySupport: request.enemySupport,
+      patch: request.patch,
+    });
+
+    const failAnalysis = (
+      status: ApiErrorStatus,
+      code: ApiErrorCode,
+      error?: unknown,
+    ) => {
+      const fields: Record<string, unknown> = {
+        requestId,
+        patch: request.patch,
+        errorCode: code,
+      };
+      if (error !== undefined) fields.error = serializeError(error, status >= 500);
+      logger[status >= 500 ? 'error' : 'warn']('matchup_analysis_failed', fields);
+      if (
+        code === 'ANALYSIS_PROVIDER_UNAVAILABLE'
+        && dependencies.analysisProviderName !== undefined
+      ) {
+        logger.error('analysis_provider_failed', {
+          requestId,
+          provider: dependencies.analysisProviderName,
+          errorCode: code,
+        });
+      }
+      return errorResponse(c, status, code);
+    };
+
     const { analysisService, patchContextResolver } = dependencies;
     if (analysisService === undefined || patchContextResolver === undefined) {
-      return errorResponse(c, 503, 'ANALYSIS_NOT_CONFIGURED');
+      return failAnalysis(503, 'ANALYSIS_NOT_CONFIGURED');
     }
 
     let resolution: PatchContextResolution;
     try {
       const resolved: unknown = await patchContextResolver.resolve(request.patch);
       if (!isValidResolution(resolved)) {
-        return errorResponse(c, 500, 'PATCH_CONTEXT_INVALID');
+        return failAnalysis(500, 'PATCH_CONTEXT_INVALID');
       }
       resolution = resolved;
-    } catch {
-      return errorResponse(c, 500, 'INTERNAL_ERROR');
+    } catch (error) {
+      return failAnalysis(500, 'INTERNAL_ERROR', error);
     }
 
     if (resolution.status === 'not-found') {
-      return errorResponse(c, 422, 'PATCH_CONTEXT_NOT_FOUND');
+      return failAnalysis(422, 'PATCH_CONTEXT_NOT_FOUND');
     }
     if (resolution.status === 'unavailable') {
-      return errorResponse(c, 503, 'PATCH_CONTEXT_UNAVAILABLE');
+      return failAnalysis(503, 'PATCH_CONTEXT_UNAVAILABLE');
     }
 
     if (
       !isValidPatchContext(resolution.context)
       || resolution.context.patch.trim() !== request.patch
     ) {
-      return errorResponse(c, 500, 'PATCH_CONTEXT_INVALID');
+      return failAnalysis(500, 'PATCH_CONTEXT_INVALID');
     }
 
     const input: MatchupAnalysisInput = {
@@ -184,10 +262,18 @@ export function createApp(dependencies: AppDependencies = {}): Hono {
     };
 
     try {
-      return c.json(await analysisService.analyze(input), 200);
+      const result = await analysisService.analyze(input);
+      logger.info('matchup_analysis_completed', {
+        requestId,
+        patch: request.patch,
+        durationMs: Math.max(0, Math.round(performance.now() - analysisStartedAt)),
+      });
+      return c.json(result, 200);
     } catch (error) {
-      if (error instanceof MatchupAnalysisError) return mapAnalysisError(c, error);
-      return errorResponse(c, 500, 'INTERNAL_ERROR');
+      if (error instanceof MatchupAnalysisError) {
+        return failAnalysis(analysisErrorStatus(error), error.code);
+      }
+      return failAnalysis(500, 'INTERNAL_ERROR', error);
     }
   });
 

@@ -139,6 +139,35 @@ retourne :
 }
 ```
 
+## Logs backend
+
+Le serveur écrit des logs structurés JSON Lines dans un répertoire local créé
+automatiquement au démarrage. Par défaut :
+
+```text
+./logs/lanelens-YYYY-MM-DD.log
+```
+
+Configuration disponible dans `.env` :
+
+```env
+LOG_DIR=./logs
+LOG_LEVEL=info
+LOG_RETENTION_DAYS=14
+```
+
+- `LOG_DIR` est résolu depuis le répertoire de travail du processus ;
+- `LOG_LEVEL` accepte `debug`, `info`, `warn` ou `error` ;
+- `LOG_RETENTION_DAYS` contrôle la rétention locale au démarrage ;
+- un nouveau fichier est utilisé chaque jour UTC, toujours en mode append ;
+- chaque requête reçoit un `X-Request-Id` corrélé aux événements serveur ;
+- les clés, tokens, cookies, mots de passe et secrets sont masqués ;
+- les bodies, prompts, contextes de patch et réponses LLM ne sont pas journalisés.
+
+Les logs restent exclusivement sur la machine hôte. Le dossier `logs/` est
+ignoré par Git et ne doit jamais être envoyé vers un service externe. Si le
+logger persistant ne peut pas être initialisé, le serveur refuse de démarrer.
+
 ## Configuration de l'analyse IA
 
 Aucune clé n'est nécessaire pour démarrer l'application ou utiliser
