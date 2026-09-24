@@ -1,0 +1,32 @@
+:root { font-family: Inter, "Segoe UI", sans-serif; color: #eaf0f2; background: #0b141a; font-synthesis: none; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 280px; background: radial-gradient(ellipse at 85% 30%, #133332 0, transparent 55%); }
+#app { max-width: 1120px; min-height: 100svh; margin: auto; padding: 40px 48px 28px; display: flex; flex-direction: column; }
+header, footer, .connection { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand { color: #eef4f4; text-decoration: none; font-size: 22px; font-weight: 800; letter-spacing: 2px; }
+.brand span, h1 span { color: #8cd9ca; }
+.brand-mark { margin-left: 12px; }
+.badge { font-size: 10px; letter-spacing: 2px; border: 1px solid #38514f; border-radius: 30px; padding: 9px 12px; color: #b8cfca; }
+.intro { padding: 110px 0 68px; }
+.eyebrow { color: #b9a77f; font-size: 11px; letter-spacing: 3px; font-weight: 600; }
+h1 { font-size: clamp(36px, 5.5vw, 64px); letter-spacing: -2px; line-height: 1.12; margin: 26px 0; }
+.description { color: #a7b8be; line-height: 1.8; font-size: 16px; }
+.connection { border: 1px solid #2b4148; border-radius: 12px; padding: 24px; background: #102027; }
+h2 { font-size: 15px; margin: 0 0 10px; font-weight: 600; }
+#health { color: #b4c6cc; font-size: 14px; margin: 0; line-height: 1.5; }
+#health::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 9px; }
+#health[data-state="ok"] { color: #8cd9ca; }
+#health[data-state="error"] { color: #ffb8a4; }
+button { font: inherit; font-size: 13px; background: #1a393b; color: #daf5ed; border: 1px solid #456d68; padding: 12px 18px; border-radius: 6px; cursor: pointer; }
+button:hover:not(:disabled) { background: #274c4c; }
+button:focus-visible, a:focus-visible { outline: 2px solid #8cd9ca; outline-offset: 5px; }
+button:disabled { opacity: .55; cursor: wait; }
+footer { margin-top: auto; padding-top: 70px; color: #94a9b1; font-size: 10px; letter-spacing: 2px; }
+footer span { letter-spacing: 0; font-size: 12px; }
+@media (max-width: 600px) {
+  #app { padding: 24px; }
+  header { flex-wrap: wrap; }
+  .intro { padding: 72px 0 40px; }
+  .connection, footer { align-items: flex-start; flex-direction: column; }
+  footer { gap: 12px; padding-top: 48px; }
+}
