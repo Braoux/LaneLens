@@ -47,7 +47,7 @@ le déploiement est hors périmètre.
 
 ## Structure et périmètre
 
-- `src/` : frontend TypeScript sans framework, styles et appel de santé.
+- `src/` : frontend TypeScript sans framework, catalogue, règles de matchup et interface de sélection.
 - `server/` : serveur Hono et types serveur.
 - `public/` : futurs assets publics, sans secrets.
 - `tsconfig.server.json` : configuration distincte pour compiler le backend Node.js.
@@ -66,12 +66,12 @@ en cas de panne, il reste utilisable avec `source: 'cache'` et `stale: true`.
 Sans cache exploitable, le résultat est une erreur contrôlée. Aucune clé Riot,
 aucun service OpenClaw et aucune liste manuelle ne sont utilisés.
 
-Les futurs composants peuvent importer `initializeChampionCatalog()` depuis
+Les composants peuvent importer `initializeChampionCatalog()` depuis
 `src/catalog-state.ts` et attendre sa promesse partagée, ou consulter
 `getChampionCatalogState()`. Les états sont `idle`, `loading`, `ready` ou `error`.
 Un résultat `ready` expose `catalog` et `persistence` (`saved` ou `unavailable`
 si le navigateur refuse l'écriture). Les données réseau restent utilisables même
-si la persistance échoue. Aucun sélecteur ou écran d'erreur n'est ajouté ici.
+si la persistance échoue.
 
 Seules les URLs de portraits sont stockées, pas les images : leurs fichiers ne
 sont pas garantis hors ligne. Le code frontend doit d'abord avoir été chargé ;
@@ -79,6 +79,24 @@ LAN-002 n'ajoute pas de service worker ni de fonctionnement hors ligne de l'appl
 
 `npm test` couvre les scénarios nominal, cache, mise à jour et pannes avec
 réseau et stockage contrôlés. Voir le [rapport LAN-002](docs/LAN-002/verification.md).
+
+## Sélection du matchup — LAN-003
+
+L'écran principal présente exactement quatre slots (carry/support alliés et
+adverses). Chaque slot ouvre un picker avec portraits et recherche insensible à
+la casse. Les sélections restent modifiables et le bouton Analyser n'est actif
+qu'une fois les quatre choix remplis.
+
+Les doublons sont bloqués par défaut. Le mode Mirror autorise le même champion
+une fois dans chaque équipe, mais jamais deux fois dans une équipe ni plus de
+deux fois dans le matchup. Le clic sur Analyser émet localement l'événement
+`lanelens:analyze` sur `#app` et rend le dernier instantané disponible via
+`getLastAnalyzedSelection()` ; aucun appel backend ou OpenClaw n'est réalisé.
+
+L'interface restitue chargement, erreur catalogue, cache potentiellement obsolète,
+recherche vide et portrait indisponible. La version affichée est explicitement
+libellée `Data Dragon <version>` et n'est pas présentée comme un patch joueur.
+Voir le [rapport LAN-003](docs/LAN-003/verification.md).
 
 Pas d'authentification, base de données, Riot API, intégration OpenClaw fonctionnelle,
 CI/CD, Docker ou déploiement dans ce socle.

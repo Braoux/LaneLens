@@ -1,6 +1,7 @@
 # Architecture — LaneLens
 
-État documenté : socle LAN-001 et catalogue Data Dragon LAN-002, au 24 septembre 2026.
+État documenté : socle LAN-001, catalogue LAN-002 et sélection de matchup LAN-003,
+au 24 septembre 2026.
 
 Ce document décrit le code effectivement livré. Le [cahier des charges](cahier-des-charges.md)
 décrit la cible produit ; les fonctionnalités futures ne sont pas encore implémentées.
@@ -32,11 +33,12 @@ Les deux services écoutent uniquement sur l'interface locale.
 | Fichier ou répertoire | Responsabilité actuelle |
 |---|---|
 | `index.html` | Entrée HTML, métadonnées, conteneur `#app`, chargement de `src/main.ts`. |
-| `src/main.ts` | Construction du DOM, santé du backend et déclenchement du catalogue au démarrage. |
+| `src/main.ts` | Écran de sélection, Champion Picker, restitution des états catalogue, santé backend et événement local d'analyse. |
 | `src/api.ts` | Appel HTTP de santé, délai maximal de 5 secondes et validation minimale de la réponse. |
 | `src/styles/main.css` | Présentation sombre et responsive, styles des états et du focus clavier. |
 | `src/champions.ts` | Contrats du catalogue, récupération Data Dragon, validation, normalisation, cache et repli. |
 | `src/catalog-state.ts` | État partagé et promesse d'initialisation unique par chargement de l'application. |
+| `src/matchup.ts` | Contrat `MatchupSelection`, recherche, complétude et règles de doublons/Mirror sans dépendance au DOM. |
 | `src/storage.ts` | Accès JSON à localStorage, protégé contre les erreurs de lecture et d'écriture. |
 | `tests/champions.test.ts` | Tests des parcours catalogue, validation du cache, pannes et état partagé. |
 | `src/components/` | Répertoire réservé aux futurs modules DOM, conservé via `.gitkeep`. |
@@ -148,8 +150,8 @@ L'application ne comporte aucune base de données, authentification, API Riot
 authentifiée, CI/CD, Docker ou fonctionnalité de déploiement. La seule persistance
 applicative livrée est le cache local du catalogue.
 
-Le cahier des charges prévoit ensuite la sélection de champions (LAN-003),
-le contexte de patch de l'analyse, OpenClaw et l'affichage des résultats.
+Le cahier des charges prévoit ensuite le contexte de patch de l'analyse,
+OpenClaw et l'affichage des résultats.
 La version technique du catalogue est connue mais ne constitue pas une détection
 du patch du client régional. Les modules OpenClaw et prompt restent réservés.
 
@@ -207,6 +209,32 @@ Les objets du catalogue exposé, les champions et leur tableau sont gelés pour
 reste testable avec un transport et un stockage injectés ; en usage normal il
 utilise `fetch` et le `localStorage` du navigateur.
 
+## Sélection de matchup — LAN-003
+
+`main.ts` construit quatre slots fixes et attend la promesse partagée de LAN-002.
+Avant le résultat, les slots restent indisponibles avec « Chargement des champions... ».
+Une erreur sans catalogue affiche « Impossible de charger les champions. » ; un
+catalogue obsolète reste utilisable avec l'indication « Données en cache ».
+La version technique est affichée telle quelle sous `Data Dragon <version>`.
+
+Le module `matchup.ts` ne dépend pas du navigateur. Il porte les quatre identifiants
+de slots, filtre les noms de manière insensible à la casse et décide si un champion
+est sélectionnable. Sans Mirror, toute autre occurrence est bloquée. Avec Mirror,
+une occurrence opposée est admise ; une occurrence dans la même équipe et une
+troisième occurrence restent interdites. Le slot édité est exclu du calcul, ce qui
+permet de conserver ou remplacer sa sélection sans déplacer les autres.
+
+Le picker est un `dialog` natif. Les champions indisponibles restent visibles et
+grisés. Le survol d'un champion bloqué uniquement parce qu'il est dans l'équipe
+opposée met en évidence le bouton Mirror. Une image en erreur est retirée et laisse
+un placeholder avec l'initiale, sans invalider le champion.
+
+Quand les quatre slots sont remplis, Analyser devient actif. Son clic crée un
+instantané `MatchupSelection`, le conserve pour `getLastAnalyzedSelection()` et
+émet un `CustomEvent<MatchupSelection>` nommé `lanelens:analyze` sur `#app`.
+Cette frontière locale est destinée aux tickets futurs : aucune route matchup,
+requête OpenClaw, navigation résultat ou détermination de patch n'est déclenchée.
+
 ### Limites
 
 Pas de Champion Picker, filtrage par rôle, cache binaire des portraits ni nouvelle
@@ -218,5 +246,6 @@ et l'absence de clé ne changent pas la frontière des secrets serveur.
 
 Les contrôles effectués et leurs limites sont consignés dans le
 [rapport de vérification LAN-001](LAN-001/verification.md) et le
-[rapport de vérification LAN-002](LAN-002/verification.md).
+[rapport de vérification LAN-002](LAN-002/verification.md), ainsi que dans le
+[rapport de vérification LAN-003](LAN-003/verification.md).
 Les instructions de démarrage sont dans le [README](../README.md).
