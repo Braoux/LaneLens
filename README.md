@@ -62,14 +62,14 @@ Le parcours principal est déjà fonctionnel :
     ↓
 analyse
     ↓
-Quick Overlay
+résumé tactique
     ↓
 analyse détaillée
     ↓
 historique local
 ```
 
-Les travaux actuels portent principalement sur la qualité et la conformité gameplay des analyses, le polish UX final, la conformité Riot et le déploiement de l'alpha.
+Le parcours principal, l'interface responsive et le socle d'internationalisation sont désormais en place. Les travaux actuels portent principalement sur la conformité gameplay des analyses, la conformité Riot, la remontée de feedback testeur et la préparation du déploiement de l'alpha.
 
 ## Fonctionnalités
 
@@ -85,7 +85,7 @@ Les travaux actuels portent principalement sur la qualité et la conformité gam
 - API `POST /api/matchup` ;
 - endpoint `GET /api/analysis-context` ;
 - validation structurelle des analyses avant affichage ;
-- Quick Overlay tactique ;
+- résumé tactique ;
 - analyse détaillée du matchup ;
 - cheat sheet copiable ;
 - historique local des dix dernières analyses ;
@@ -97,8 +97,8 @@ Les travaux actuels portent principalement sur la qualité et la conformité gam
 ### En cours
 
 - garde-fous de conformité gameplay des analyses ;
-- polish UX et responsive final du MVP ;
 - conformité Riot avant ouverture de l'alpha ;
+- remontée de bugs et d'analyses incorrectes par les testeurs ;
 - préparation du déploiement de la première alpha.
 
 > La validation actuellement livrée garantit le contrat et la cohérence structurelle de la réponse. Les garde-fous destinés à détecter des impossibilités gameplay déterministes sont encore en cours de développement.
@@ -356,8 +356,8 @@ Les analyses valides affichées peuvent être conservées localement dans le nav
 L'historique :
 
 - conserve au maximum dix entrées ;
-- mémorise un snapshot des quatre champions, le patch, l'analyse et la date de génération ;
-- remplace une entrée existante pour le même matchup/patch ;
+- mémorise un snapshot des quatre champions, le patch, la locale, l'analyse et la date de génération ;
+- remplace une entrée existante pour le même matchup/patch/locale ;
 - reste consultable sans dépendre du catalogue Data Dragon courant ;
 - ne nécessite aucune base de données.
 
