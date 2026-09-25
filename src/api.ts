@@ -4,6 +4,7 @@ import type {
   MatchupAnalysis,
   MatchupRequest,
 } from '../shared/analysis-contract';
+import type { FeedbackAcceptedResponse, FeedbackRequest } from '../shared/feedback-contract';
 import { isAnalysisContextResponse, isMatchupAnalysis } from './analysis';
 
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -24,6 +25,7 @@ const API_ERROR_CODES = new Set<ApiErrorCode>([
   'UNSUPPORTED_MEDIA_TYPE',
   'INVALID_JSON',
   'INVALID_MATCHUP_REQUEST',
+  'INVALID_FEEDBACK_REQUEST',
   'PATCH_CONTEXT_NOT_FOUND',
   'PATCH_CONTEXT_UNAVAILABLE',
   'PATCH_CONTEXT_INVALID',
@@ -31,6 +33,8 @@ const API_ERROR_CODES = new Set<ApiErrorCode>([
   'ANALYSIS_PROVIDER_UNAVAILABLE',
   'INVALID_ANALYSIS_RESPONSE',
   'ANALYSIS_FAILED',
+  'FEEDBACK_NOT_CONFIGURED',
+  'FEEDBACK_UNAVAILABLE',
   'INTERNAL_ERROR',
 ]);
 
@@ -97,6 +101,19 @@ export async function analyzeMatchup(
   signal?: AbortSignal,
   fetchImpl: typeof fetch = globalThis.fetch,
 ): Promise<MatchupAnalysis> {
+  return (await analyzeMatchupWithMetadata(request, signal, fetchImpl)).analysis;
+}
+
+export interface AnalyzedMatchup {
+  readonly analysis: MatchupAnalysis;
+  readonly requestId?: string;
+}
+
+export async function analyzeMatchupWithMetadata(
+  request: MatchupRequest,
+  signal?: AbortSignal,
+  fetchImpl: typeof fetch = globalThis.fetch,
+): Promise<AnalyzedMatchup> {
   const response = await fetchImpl('/api/matchup', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -119,5 +136,47 @@ export async function analyzeMatchup(
     throw new InvalidAnalysisResponseError();
   }
   if (!isMatchupAnalysis(body, request)) throw new InvalidAnalysisResponseError();
-  return body;
+  return {
+    analysis: body,
+    requestId: response.headers.get('x-request-id')?.trim() || undefined,
+  };
+}
+
+export class FeedbackRequestError extends Error {
+  constructor() {
+    super('Impossible d’envoyer le signalement pour le moment.');
+    this.name = 'FeedbackRequestError';
+  }
+}
+
+export async function sendFeedback(
+  request: FeedbackRequest,
+  fetchImpl: typeof fetch = globalThis.fetch,
+): Promise<FeedbackAcceptedResponse> {
+  let response: Response;
+  try {
+    response = await fetchImpl('/api/feedback', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(request),
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    throw new FeedbackRequestError();
+  }
+  if (!response.ok) throw new FeedbackRequestError();
+  try {
+    const body: unknown = await response.json();
+    if (
+      typeof body !== 'object'
+      || body === null
+      || Object.keys(body).length !== 1
+      || !('status' in body)
+      || body.status !== 'accepted'
+    ) throw new FeedbackRequestError();
+    return { status: 'accepted' };
+  } catch (error) {
+    if (error instanceof FeedbackRequestError) throw error;
+    throw new FeedbackRequestError();
+  }
 }

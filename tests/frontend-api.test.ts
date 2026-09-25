@@ -4,6 +4,7 @@ import {
   AnalysisRequestError,
   InvalidAnalysisResponseError,
   analyzeMatchup,
+  analyzeMatchupWithMetadata,
   getAnalysisContext,
 } from '../src/api';
 import type { MatchupAnalysis, MatchupRequest } from '../shared/analysis-contract';
@@ -57,6 +58,14 @@ test('analyzeMatchup sends the exact public DTO and returns a validated analysis
   assert.equal(init?.method, 'POST');
   assert.deepEqual(JSON.parse(String(init?.body)), request);
   assert.deepEqual(Object.keys(JSON.parse(String(init?.body))).sort(), Object.keys(request).sort());
+});
+
+test('analysis metadata preserves the safe request ID for feedback correlation', async () => {
+  const correlatedRequestId = 'f66dd1f0-b690-4d6d-b28d-725da9d96506';
+  const result = await analyzeMatchupWithMetadata(request, undefined, async () => Response.json(analysis, {
+    headers: { 'x-request-id': correlatedRequestId },
+  }));
+  assert.deepEqual(result, { analysis, requestId: correlatedRequestId });
 });
 
 test('analyzeMatchup rejects invalid HTTP 200 bodies with a dedicated safe error', async () => {
