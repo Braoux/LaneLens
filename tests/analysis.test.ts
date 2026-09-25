@@ -259,6 +259,74 @@ test('LaneLens instructions are explicitly transmitted with every required tacti
   }
   assert.match(instructions, /aucune recherche web/i);
   assert.match(instructions, /26\.19/);
+  assert.match(instructions, /jamais une capacité avant son niveau de disponibilité/i);
+  assert.match(instructions, /shield de dégâts ne bloque pas un contrôle/i);
+  assert.match(instructions, /aucun reset, refund, refresh/i);
+  assert.match(instructions, /jamais de valeur exacte de cooldown, durée, portée, dégâts, vitesse ou pourcentage/i);
+  assert.match(instructions, /N’estime jamais une valeur numérique de gameplay/i);
+  assert.match(instructions, /formulation qualitative/i);
+  assert.match(instructions, /fenêtre relative et actionnable/i);
+  assert.match(instructions, /interaction mécanique uniquement à partir des catégories générales/i);
+  assert.match(instructions, /damage shield, spell shield, CC immunity, unstoppable, cleanse et tenacity/i);
+  assert.match(instructions, /représentent des niveaux de champion, jamais des timestamps/i);
+  assert.match(instructions, /Ne fusionne jamais les effets/i);
+  assert.match(instructions, /self-centered comme une zone librement placée/i);
+  assert.match(instructions, /raisonnement tactique concret et actionnable/i);
+  assert.match(instructions, /lanePlan, wavePlan, winCondition, goldenRule et cheatSheet/i);
+  assert.match(instructions, /jamais un lethal ou un kill garanti/i);
+  assert.match(instructions, /Data Dragon 16\.19\.1/);
+  assert.match(instructions, /Jinx[\s\S]*R Super Mega Death Rocket/i);
+});
+
+test('common instructions favor qualitative cooldown windows for Caitlyn Morgana versus Ashe Leona', async () => {
+  const caitlynInput: MatchupAnalysisInput = {
+    ...input,
+    allyCarry: 'Caitlyn',
+    allySupport: 'Morgana',
+    enemyCarry: 'Ashe',
+    enemySupport: 'Leona',
+  };
+  const response = validAnalysis();
+  response.matchup = {
+    allyCarry: 'Caitlyn',
+    allySupport: 'Morgana',
+    enemyCarry: 'Ashe',
+    enemySupport: 'Leona',
+    patch: '26.19',
+  };
+  response.lanePlan = 'Punir les engagements manqués sans inventer de mesure.';
+  response.threatResponseWindow = {
+    threat: 'Leona peut engager une cible avancée.',
+    response: 'Garder un outil défensif disponible puis se replacer.',
+    window: 'Avancer après qu’un outil d’engage important a été utilisé.',
+    winCondition: 'Maintenir une pression à distance actionnable.',
+  };
+  response.earlyLevels = {
+    level1: 'Au niveau 1, préserver les PV.',
+    level2: 'Au niveau 2, respecter la menace d’engage.',
+    level3: 'Au niveau 3, coordonner les sorts disponibles.',
+  };
+  response.wavePlan = 'Adapter la vague à la position de Leona.';
+  response.targetPriority = {
+    primaryTarget: 'Ashe',
+    explanation: 'Punir Ashe lorsqu’elle est accessible sans s’exposer.',
+  };
+  response.postLevel6 = 'Respecter les outils d’engage à longue portée.';
+  response.roamPlan = 'Morgana peut roam après avoir sécurisé la vague.';
+  response.cheatSheet = ['Engage adverse utilisé → reprendre la pression'];
+  response.goldenRule = 'Rester concret tactiquement sans inventer une interaction mécanique.';
+
+  let instructions = '';
+  await new MatchupAnalysisService({
+    async analyze(request) {
+      instructions = request.instructions;
+      return response;
+    },
+  }).analyze(caitlynInput);
+
+  assert.match(instructions, /après qu’un outil d’engage important a été utilisé/i);
+  assert.match(instructions, /jamais pendant un nombre inventé de secondes/i);
+  assert.doesNotMatch(instructions, /pendant les 12 secondes de cooldown/i);
 });
 
 test('French locale instructions explicitly prohibit English explanations', async () => {
