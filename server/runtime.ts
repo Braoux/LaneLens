@@ -25,6 +25,7 @@ import {
   loadGitHubFeedbackTrackerConfig,
   type GitHubFeedbackTrackerConfig,
 } from './feedback/github-config.js';
+import { attachProductionFrontend } from './frontend.js';
 
 export interface RuntimeCompositionOptions {
   readonly environment?: AIEnvironment;
@@ -35,6 +36,8 @@ export interface RuntimeCompositionOptions {
   readonly analysisContext?: AnalysisContextResponse;
   readonly logger?: Logger;
   readonly feedbackTrackerFactory?: (config: GitHubFeedbackTrackerConfig) => FeedbackTracker;
+  readonly clientDirectory?: string;
+  readonly workingDirectory?: string;
 }
 
 export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
@@ -65,7 +68,12 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
   }
 
   if (apiKey.length === 0) {
-    return createApp({ patchContextResolver, analysisContext, logger, feedbackService });
+    const app = createApp({ patchContextResolver, analysisContext, logger, feedbackService });
+    return attachProductionFrontend(app, {
+      environment,
+      clientDirectory: options.clientDirectory,
+      workingDirectory: options.workingDirectory,
+    });
   }
 
   let provider: MatchupAnalysisProvider;
@@ -95,7 +103,7 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
     model,
   });
   const analysisService = new MatchupAnalysisService(provider);
-  return createApp({
+  const app = createApp({
     analysisService,
     patchContextResolver,
     analysisContext,
@@ -103,5 +111,10 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
     analysisProviderName: providerName,
     analysisProviderModel: model,
     feedbackService,
+  });
+  return attachProductionFrontend(app, {
+    environment,
+    clientDirectory: options.clientDirectory,
+    workingDirectory: options.workingDirectory,
   });
 }

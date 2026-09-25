@@ -24,6 +24,7 @@ import {
   createFileLogger,
   LoggerInitializationError,
 } from '../server/logging/FileLogger.js';
+import { createConsoleLogger } from '../server/logging/ConsoleLogger.js';
 import type { LogFields, Logger, LogLevel } from '../server/logging/Logger.js';
 
 const NOW = new Date('2026-09-24T14:31:12.482Z');
@@ -276,6 +277,53 @@ test('nested secrets and credential-shaped strings are redacted before persisten
   const serialized = JSON.stringify(readEntries(directory)[0]);
   assert.doesNotMatch(serialized, /top-secret|nested-secret|credential-value|access-value|refresh-value|session=value|session=other|password-value|secret-value|should-not-survive/);
   assert.match(serialized, /\[REDACTED\]/);
+});
+
+test('console logger writes structured redacted JSON to the appropriate stream', () => {
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const logger = createConsoleLogger({
+    level: 'debug',
+    now: () => NOW,
+    stdout: (line) => stdout.push(line),
+    stderr: (line) => stderr.push(line),
+  });
+
+  logger.debug('debug_event', { token: 'debug-secret' });
+  logger.info('server_started', { port: 10_000 });
+  logger.warn('warning_event', { authorization: 'Bearer warning-secret' });
+  logger.error('failure_event', { error: new Error('api_key=hidden-secret') });
+
+  assert.equal(stdout.length, 3);
+  assert.equal(stderr.length, 1);
+  const entries = [...stdout, ...stderr].map((line) => JSON.parse(line) as Record<string, unknown>);
+  assert.deepEqual(entries.map((entry) => entry.level), ['debug', 'info', 'warn', 'error']);
+  assert.ok(entries.every((entry) => entry.timestamp === NOW.toISOString()));
+  assert.equal(entries[1]?.event, 'server_started');
+  assert.equal(entries[1]?.port, 10_000);
+  const serialized = JSON.stringify(entries);
+  assert.match(serialized, /\[REDACTED\]/);
+  assert.doesNotMatch(serialized, /debug-secret|warning-secret|hidden-secret/);
+});
+
+test('console logger applies the configured level threshold', () => {
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const logger = createConsoleLogger({
+    level: 'warn',
+    stdout: (line) => stdout.push(line),
+    stderr: (line) => stderr.push(line),
+  });
+
+  logger.debug('ignored_debug');
+  logger.info('ignored_info');
+  logger.warn('kept_warning');
+  logger.error('kept_error');
+
+  assert.equal(stdout.length, 1);
+  assert.equal(stderr.length, 1);
+  assert.equal((JSON.parse(stdout[0]!) as { event: string }).event, 'kept_warning');
+  assert.equal((JSON.parse(stderr[0]!) as { event: string }).event, 'kept_error');
 });
 
 test('request IDs are server-generated and correlate HTTP and successful analysis logs', async () => {
