@@ -1,14 +1,14 @@
 # LaneLens
 
-> Know the matchup before it knows you.
+> Le plan de jeu de ta botlane avant que les sbires arrivent.
 
 LaneLens aide les joueurs de League of Legends à comprendre **comment jouer un matchup botlane précis à partir des quatre champions présents**.
 
 Choisissez votre carry, votre support et la botlane adverse. LaneLens transforme les interactions entre les quatre kits en un plan de jeu concret : quoi respecter, quand avancer, qui cibler, comment gérer la wave et quelles erreurs éviter.
 
 <p align="center">
-  <img src="docs/assets/HomePicker.png"
-       alt="LaneLens — sélection d'un matchup botlane League of Legends"
+  <img src="docs/assets/lanelens-analysis.png"
+       alt="LaneLens — analyse tactique de Miss Fortune et Leona contre Jinx et Soraka"
        width="1200">
 </p>
 
@@ -22,9 +22,13 @@ Entre les timings de niveaux, les cooldowns, la wave, les fenêtres d'engage et 
 
 LaneLens est conçu pour répondre à cette question avec une analyse structurée, actionnable et centrée sur le **2v2 complet**, pas uniquement sur un duel champion contre champion.
 
+## Comment ça marche ?
+
+Sélectionnez les deux champions de votre botlane et les deux champions adverses, puis lancez l'analyse. LaneLens transforme ce 2v2 en un plan de jeu lisible avant d'entrer en partie.
+
 <p align="center">
-  <img src="docs/assets/HomeAnalysisTop.png"
-       alt="LaneLens — sélection d'un matchup botlane League of Legends"
+  <img src="docs/assets/lanelens-picker.png"
+       alt="LaneLens — sélection de Miss Fortune et Leona contre Jinx et Soraka"
        width="1200">
 </p>
 
@@ -65,7 +69,7 @@ analyse détaillée
 historique local
 ```
 
-Les travaux actuels portent principalement sur la qualité et la conformité gameplay des analyses, l'UX finale, la cohérence linguistique et le déploiement de l'alpha.
+Les travaux actuels portent principalement sur la qualité et la conformité gameplay des analyses, le polish UX final, la conformité Riot et le déploiement de l'alpha.
 
 ## Fonctionnalités
 
@@ -86,13 +90,15 @@ Les travaux actuels portent principalement sur la qualité et la conformité gam
 - cheat sheet copiable ;
 - historique local des dix dernières analyses ;
 - logs backend structurés avec `X-Request-Id` ;
-- diagnostic sécurisé des erreurs provider.
+- diagnostic sécurisé des erreurs provider ;
+- interface française par défaut avec architecture i18n `fr-FR` ;
+- locale propagée jusqu'au provider et validation de la cohérence linguistique des analyses.
 
 ### En cours
 
-- refonte UX et responsive final du MVP ;
 - garde-fous de conformité gameplay des analyses ;
-- interface entièrement française et architecture i18n ;
+- polish UX et responsive final du MVP ;
+- conformité Riot avant ouverture de l'alpha ;
 - préparation du déploiement de la première alpha.
 
 > La validation actuellement livrée garantit le contrat et la cohérence structurelle de la réponse. Les garde-fous destinés à détecter des impossibilités gameplay déterministes sont encore en cours de développement.
@@ -304,7 +310,8 @@ curl -X POST http://127.0.0.1:3000/api/matchup \
     "allySupport": "Galio",
     "enemyCarry": "Jinx",
     "enemySupport": "Swain",
-    "patch": "26.19"
+    "patch": "26.19",
+    "locale": "fr-FR"
   }'
 ```
 
@@ -357,7 +364,7 @@ L'historique :
 Clé actuelle :
 
 ```text
-lanelens.matchup-history.v1
+lanelens.matchup-history.v2
 ```
 
 ## Logs backend
