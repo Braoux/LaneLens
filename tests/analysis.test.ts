@@ -96,7 +96,7 @@ test('provider errors become safe LaneLens errors without leaking provider detai
     assert.ok(error instanceof MatchupAnalysisError);
     assert.equal(error.code, 'ANALYSIS_PROVIDER_UNAVAILABLE');
     assert.doesNotMatch(error.message, /secret-value|private|token/i);
-    assert.equal(error.cause, undefined);
+    assert.ok(error.cause instanceof Error);
     return true;
   });
 });

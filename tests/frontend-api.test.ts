@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  AnalysisRequestError,
   InvalidAnalysisResponseError,
   analyzeMatchup,
   getAnalysisContext,
@@ -74,9 +75,35 @@ test('analyzeMatchup rejects invalid HTTP 200 bodies with a dedicated safe error
 
 test('analyzeMatchup exposes no backend error body to its caller', async () => {
   const secret = 'provider-secret-token';
-  const fetchImpl = async () => Response.json({ error: { code: 'INTERNAL_ERROR', message: secret } }, { status: 500 });
+  const fetchImpl = async () => Response.json(
+    { error: { code: 'INTERNAL_ERROR', message: secret } },
+    { status: 500, headers: { 'x-request-id': 'request-correlation-id' } },
+  );
   await assert.rejects(
     analyzeMatchup(request, undefined, fetchImpl as typeof fetch),
-    (error: unknown) => error instanceof Error && !error.message.includes(secret),
+    (error: unknown) => {
+      assert.ok(error instanceof AnalysisRequestError);
+      assert.equal(error.status, 500);
+      assert.equal(error.code, 'INTERNAL_ERROR');
+      assert.equal(error.requestId, 'request-correlation-id');
+      assert.doesNotMatch(error.message, new RegExp(secret));
+      return true;
+    },
+  );
+});
+
+test('analyzeMatchup keeps request correlation safe when an error body is malformed', async () => {
+  const fetchImpl = async () => new Response('external provider dump', {
+    status: 503,
+    headers: { 'x-request-id': 'safe-request-id' },
+  });
+
+  await assert.rejects(
+    analyzeMatchup(request, undefined, fetchImpl as typeof fetch),
+    (error: unknown) => error instanceof AnalysisRequestError
+      && error.status === 503
+      && error.code === undefined
+      && error.requestId === 'safe-request-id'
+      && !error.message.includes('external provider dump'),
   );
 });

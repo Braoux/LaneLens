@@ -290,9 +290,13 @@ test('blocked, absent, empty, and malformed Gemini output return controlled inva
 });
 
 test('Gemini client failures become safe provider and LaneLens errors', async () => {
+  const sdkError = Object.assign(
+    new Error('429 quota exceeded api_key=secret-key provider-path=C:\\private'),
+    { status: 429 },
+  );
   const client: GeminiClient = {
     async generate() {
-      throw new Error('x-goog-api-key: secret-key provider-path=C:\\private');
+      throw sdkError;
     },
   };
   const provider = new GeminiProvider(client, 'gemini-3.8-flash', 30_000);
@@ -300,7 +304,14 @@ test('Gemini client failures become safe provider and LaneLens errors', async ()
   await assert.rejects(provider.analyze(providerRequest), (error: unknown) => {
     assert.ok(error instanceof GeminiProviderError);
     assert.equal(error.message, 'Le provider Gemini est indisponible.');
+    assert.equal(error.provider, 'gemini');
+    assert.equal(error.model, 'gemini-3.8-flash');
+    assert.equal(error.category, 'rate_limit');
+    assert.equal(error.status, 429);
     assert.equal(error.cause, undefined);
+    assert.equal(error.errorName, 'Error');
+    assert.match(error.errorMessage ?? '', /\[REDACTED\]/);
+    assert.doesNotMatch(error.errorMessage ?? '', /secret-key|private/i);
     assert.doesNotMatch(error.message, /secret|x-goog|private/i);
     return true;
   });
@@ -308,6 +319,7 @@ test('Gemini client failures become safe provider and LaneLens errors', async ()
   await assert.rejects(new MatchupAnalysisService(provider).analyze(input), (error: unknown) => {
     assert.ok(error instanceof MatchupAnalysisError);
     assert.equal(error.code, 'ANALYSIS_PROVIDER_UNAVAILABLE');
+    assert.ok(error.cause instanceof GeminiProviderError);
     assert.doesNotMatch(error.message, /secret|x-goog|private/i);
     return true;
   });

@@ -6,6 +6,9 @@ import type { GeminiConfig } from './analysis/providers/gemini-config.js';
 import { createOpenAIProvider } from './analysis/providers/OpenAIProvider.js';
 import { loadOpenAIConfig } from './analysis/providers/openai-config.js';
 import type { OpenAIConfig } from './analysis/providers/openai-config.js';
+import { createGroqProvider } from './analysis/providers/GroqProvider.js';
+import { loadGroqConfig } from './analysis/providers/groq-config.js';
+import type { GroqConfig } from './analysis/providers/groq-config.js';
 import { resolveAIProvider } from './analysis/providers/ai-provider-config.js';
 import type { AIEnvironment } from './analysis/providers/ai-provider-config.js';
 import type { AnalysisContextResponse } from '../shared/analysis-contract.js';
@@ -20,6 +23,7 @@ export interface RuntimeCompositionOptions {
   readonly environment?: AIEnvironment;
   readonly openAIProviderFactory?: (config: OpenAIConfig) => MatchupAnalysisProvider;
   readonly geminiProviderFactory?: (config: GeminiConfig) => MatchupAnalysisProvider;
+  readonly groqProviderFactory?: (config: GroqConfig) => MatchupAnalysisProvider;
   readonly patchContextResolver?: PatchContextResolver;
   readonly analysisContext?: AnalysisContextResponse;
   readonly logger?: Logger;
@@ -29,9 +33,11 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
   const environment = options.environment ?? process.env;
   const logger = options.logger ?? NOOP_LOGGER;
   const providerName = resolveAIProvider(environment.AI_PROVIDER);
-  const apiKey = providerName === 'gemini'
-    ? environment.GEMINI_API_KEY?.trim() ?? ''
-    : environment.OPENAI_API_KEY?.trim() ?? '';
+  const apiKey = {
+    openai: environment.OPENAI_API_KEY,
+    gemini: environment.GEMINI_API_KEY,
+    groq: environment.GROQ_API_KEY,
+  }[providerName]?.trim() ?? '';
   const patchContextResolver = options.patchContextResolver
     ?? new VersionedPatchContextResolver();
   const analysisContext = options.analysisContext ?? {
@@ -45,14 +51,25 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
 
   let provider: MatchupAnalysisProvider;
   let model: string;
-  if (providerName === 'gemini') {
-    const config = loadGeminiConfig(environment);
-    provider = (options.geminiProviderFactory ?? createGeminiProvider)(config);
-    model = config.model;
-  } else {
-    const config = loadOpenAIConfig(environment);
-    provider = (options.openAIProviderFactory ?? createOpenAIProvider)(config);
-    model = config.model;
+  switch (providerName) {
+    case 'gemini': {
+      const config = loadGeminiConfig(environment);
+      provider = (options.geminiProviderFactory ?? createGeminiProvider)(config);
+      model = config.model;
+      break;
+    }
+    case 'groq': {
+      const config = loadGroqConfig(environment);
+      provider = (options.groqProviderFactory ?? createGroqProvider)(config);
+      model = config.model;
+      break;
+    }
+    case 'openai': {
+      const config = loadOpenAIConfig(environment);
+      provider = (options.openAIProviderFactory ?? createOpenAIProvider)(config);
+      model = config.model;
+      break;
+    }
   }
   logger.info('analysis_provider_configured', {
     provider: providerName,
@@ -65,5 +82,6 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
     analysisContext,
     logger,
     analysisProviderName: providerName,
+    analysisProviderModel: model,
   });
 }

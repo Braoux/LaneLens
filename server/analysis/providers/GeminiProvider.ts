@@ -7,6 +7,10 @@ import {
   MATCHUP_ANALYSIS_JSON_SCHEMA,
 } from './matchup-analysis-schema.js';
 import type { JsonSchema } from './matchup-analysis-schema.js';
+import {
+  ProviderFailureError,
+  providerFailureDetails,
+} from '../ProviderFailure.js';
 
 export interface GeminiRequest {
   readonly model: string;
@@ -77,9 +81,12 @@ export interface GeminiSDKClient {
 
 export type GeminiSDKFactory = (options: GeminiSDKOptions) => GeminiSDKClient;
 
-export class GeminiProviderError extends Error {
-  constructor() {
-    super('Le provider Gemini est indisponible.');
+export class GeminiProviderError extends ProviderFailureError {
+  constructor(model: string, cause: unknown) {
+    super(
+      providerFailureDetails('gemini', model, cause),
+      'Le provider Gemini est indisponible.',
+    );
     this.name = 'GeminiProviderError';
   }
 }
@@ -146,8 +153,8 @@ export class GeminiProvider implements MatchupAnalysisProvider {
         store: false,
         timeoutMs: this.timeoutMs,
       });
-    } catch {
-      throw new GeminiProviderError();
+    } catch (error) {
+      throw new GeminiProviderError(this.model, error);
     }
 
     if (typeof response.outputText !== 'string' || response.outputText.length === 0) {

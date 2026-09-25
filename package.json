@@ -19,6 +19,7 @@
     "@google/genai": "^2.24.0",
     "@hono/node-server": "^2.1.1",
     "dotenv": "^18.0.3",
+    "groq-sdk": "^1.6.0",
     "hono": "^4.13.9",
     "openai": "^7.23.0"
   },

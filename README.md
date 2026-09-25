@@ -98,7 +98,7 @@ dashboard complexe pour répondre à une question de lane.
 Frontend    TypeScript · Vite · HTML · CSS
 Backend     Node.js · Hono
 Data        Riot Data Dragon
-AI          MatchupAnalysisProvider · OpenAI · Google Gemini
+AI          MatchupAnalysisProvider · OpenAI · Google Gemini · Groq
 Tests       TypeScript · Node.js
 ```
 
@@ -207,6 +207,20 @@ OPENAI_TIMEOUT_MS=30000
 ```
 
 `OPENAI_MODEL` et `OPENAI_TIMEOUT_MS` sont facultatifs.
+
+### Groq
+
+```env
+AI_PROVIDER=groq
+GROQ_API_KEY=
+GROQ_MODEL=openai/gpt-oss-120b
+GROQ_TIMEOUT_MS=30000
+```
+
+`GROQ_MODEL` et `GROQ_TIMEOUT_MS` sont facultatifs. LaneLens utilise Chat
+Completions avec un JSON Schema strict, `reasoning_effort=medium`, aucun outil
+et aucun retry SDK. La sortie reste validée par LaneLens avant d'être exposée.
+
 Le backend charge automatiquement `.env` au démarrage. Le fichier est ignoré
 par Git ; `.env.example` doit toujours rester sans secret.
 
@@ -249,9 +263,10 @@ validation LaneLens
 MatchupAnalysis
 ```
 
-Les providers actuellement intégrés sont OpenAI et Google Gemini. Le provider
-est sélectionné avec `AI_PROVIDER=openai` ou `AI_PROVIDER=gemini`. Une valeur
-absente conserve OpenAI pour compatibilité avec les configurations existantes.
+Les providers actuellement intégrés sont OpenAI, Google Gemini et Groq. Le
+provider est sélectionné avec `AI_PROVIDER=openai`, `AI_PROVIDER=gemini` ou
+`AI_PROVIDER=groq`. Une valeur absente conserve OpenAI pour compatibilité avec
+les configurations existantes.
 Il n'existe aucun fallback automatique entre providers.
 
 Changer de modèle ou de provider ne doit pas nécessiter de modifier :
