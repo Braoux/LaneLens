@@ -95,7 +95,7 @@ Les travaux actuels portent principalement sur la qualité et la conformité gam
 - refonte UX et responsive final du MVP ;
 - garde-fous de conformité gameplay des analyses ;
 - interface entièrement française et architecture i18n ;
-- déploiement de l'alpha publique et système de crédits LaneLens.
+- préparation du déploiement de la première alpha.
 
 > La validation actuellement livrée garantit le contrat et la cohérence structurelle de la réponse. Les garde-fous destinés à détecter des impossibilités gameplay déterministes sont encore en cours de développement.
 
@@ -414,11 +414,8 @@ Le MVP reste volontairement léger :
 - pas de déploiement public livré à ce stade ;
 - pas d'analytics produit détaillée.
 
-Le déploiement public et la protection de la consommation d'analyses sont prévus dans LAN-021.
-
 ## Documentation
 
-- [Cahier des charges](docs/cahier-des-charges.md)
 - [Architecture technique](docs/architecture.md)
 - [ADR-001 — Rendre OpenClaw remplaçable dans le runtime](docs/decisions/ADR-001-remplacer-openclaw-runtime.md)
 - [Maintenance des contextes de patch](docs/patch-context.md)
