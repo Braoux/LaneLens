@@ -21,7 +21,7 @@ export class LogConfigurationError extends Error {
   }
 }
 
-function parseLevel(rawValue: string | undefined): LogLevel {
+export function loadLogLevel(rawValue: string | undefined): LogLevel {
   const value = rawValue?.trim().toLowerCase() ?? '';
   if (value.length === 0) return DEFAULT_LOG_LEVEL;
   if ((LOG_LEVELS as readonly string[]).includes(value)) return value as LogLevel;
@@ -46,7 +46,7 @@ export function loadLogConfig(
 
   return Object.freeze({
     directory: resolve(workingDirectory, configuredDirectory || DEFAULT_LOG_DIR),
-    level: parseLevel(environment.LOG_LEVEL),
+    level: loadLogLevel(environment.LOG_LEVEL),
     retentionDays: parseRetention(environment.LOG_RETENTION_DAYS),
   });
 }

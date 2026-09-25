@@ -4,40 +4,45 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { serve } from '@hono/node-server';
 import { createRuntimeApp } from './runtime.js';
-import { loadLogConfig } from './logging/config.js';
+import { loadLogConfig, loadLogLevel } from './logging/config.js';
 import type { LogEnvironment } from './logging/config.js';
 import { createFileLogger } from './logging/FileLogger.js';
+import { createConsoleLogger } from './logging/ConsoleLogger.js';
 import type { Logger } from './logging/Logger.js';
 import { serializeError } from './logging/redaction.js';
-
-const SERVER_HOSTNAME = '127.0.0.1';
-const SERVER_PORT = 3000;
+import { loadServerConfig } from './server-config.js';
 
 export function startServer(environment: LogEnvironment = process.env) {
-  const logConfig = loadLogConfig(environment);
-  const logger = createFileLogger(logConfig);
+  const serverConfig = loadServerConfig(environment);
+  const logLevel = loadLogLevel(environment.LOG_LEVEL);
+  const logConfig = serverConfig.production ? undefined : loadLogConfig(environment);
+  const logger = serverConfig.production
+    ? createConsoleLogger({ level: logLevel })
+    : createFileLogger(logConfig!);
+  const logFields = {
+    logLevel,
+    ...(logConfig === undefined ? {} : { logDirectory: logConfig.directory }),
+  };
 
   try {
     logger.info('server_starting', {
-      port: SERVER_PORT,
+      port: serverConfig.port,
       hostname: getHostname(),
-      bindAddress: SERVER_HOSTNAME,
+      bindAddress: serverConfig.hostname,
       nodeEnvironment: environment.NODE_ENV?.trim() || undefined,
-      logLevel: logConfig.level,
-      logDirectory: logConfig.directory,
+      ...logFields,
     });
 
     const app = createRuntimeApp({ environment, logger });
     const server = serve(
-      { fetch: app.fetch, hostname: SERVER_HOSTNAME, port: SERVER_PORT },
+      { fetch: app.fetch, hostname: serverConfig.hostname, port: serverConfig.port },
       (info) => {
         logger.info('server_started', {
           port: info.port,
           hostname: getHostname(),
-          bindAddress: SERVER_HOSTNAME,
+          bindAddress: serverConfig.hostname,
           nodeEnvironment: environment.NODE_ENV?.trim() || undefined,
-          logLevel: logConfig.level,
-          logDirectory: logConfig.directory,
+          ...logFields,
         });
       },
     );
