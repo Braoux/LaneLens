@@ -18,6 +18,13 @@ import { VersionedPatchContextResolver } from './patch-context/VersionedPatchCon
 import { ACTIVE_PATCH_CONTEXT } from './patch-context/data/contexts.js';
 import { NOOP_LOGGER } from './logging/Logger.js';
 import type { Logger } from './logging/Logger.js';
+import { FeedbackService } from './feedback/FeedbackService.js';
+import { createGitHubFeedbackTracker } from './feedback/GitHubFeedbackTracker.js';
+import type { FeedbackTracker } from './feedback/types.js';
+import {
+  loadGitHubFeedbackTrackerConfig,
+  type GitHubFeedbackTrackerConfig,
+} from './feedback/github-config.js';
 
 export interface RuntimeCompositionOptions {
   readonly environment?: AIEnvironment;
@@ -27,6 +34,7 @@ export interface RuntimeCompositionOptions {
   readonly patchContextResolver?: PatchContextResolver;
   readonly analysisContext?: AnalysisContextResponse;
   readonly logger?: Logger;
+  readonly feedbackTrackerFactory?: (config: GitHubFeedbackTrackerConfig) => FeedbackTracker;
 }
 
 export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
@@ -44,9 +52,20 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
     patch: ACTIVE_PATCH_CONTEXT.patch,
     contextVersion: ACTIVE_PATCH_CONTEXT.contextVersion,
   };
+  let feedbackService: FeedbackService | undefined;
+  try {
+    const feedbackConfig = loadGitHubFeedbackTrackerConfig(environment);
+    if (feedbackConfig !== undefined) {
+      const tracker = (options.feedbackTrackerFactory ?? createGitHubFeedbackTracker)(feedbackConfig);
+      feedbackService = new FeedbackService(tracker);
+      logger.info('feedback_tracker_configured');
+    }
+  } catch {
+    logger.error('feedback_tracker_configuration_invalid');
+  }
 
   if (apiKey.length === 0) {
-    return createApp({ patchContextResolver, analysisContext, logger });
+    return createApp({ patchContextResolver, analysisContext, logger, feedbackService });
   }
 
   let provider: MatchupAnalysisProvider;
@@ -83,5 +102,6 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
     logger,
     analysisProviderName: providerName,
     analysisProviderModel: model,
+    feedbackService,
   });
 }

@@ -17,6 +17,7 @@ export interface MatchupHistoryEntry {
   readonly locale: AppLocale;
   readonly analysis: MatchupAnalysis;
   readonly generatedAt: string;
+  readonly requestId?: string;
 }
 
 interface StoredMatchupHistory {
@@ -117,14 +118,21 @@ function requestFromEntry(
 }
 
 export function isMatchupHistoryEntry(value: unknown): value is MatchupHistoryEntry {
+  const expectedKeys = value && isRecord(value) && value.requestId !== undefined
+    ? ['selection', 'patch', 'locale', 'analysis', 'generatedAt', 'requestId']
+    : ['selection', 'patch', 'locale', 'analysis', 'generatedAt'];
   if (
     !isRecord(value)
-    || !hasExactKeys(value, ['selection', 'patch', 'locale', 'analysis', 'generatedAt'])
+    || !hasExactKeys(value, expectedKeys)
     || !isSelectionSnapshot(value.selection)
     || !nonBlank(value.patch)
     || !isAppLocale(value.locale)
     || !isCanonicalIsoDate(value.generatedAt)
     || !hasStrictAnalysisShape(value.analysis)
+    || (value.requestId !== undefined && (
+      typeof value.requestId !== 'string'
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value.requestId)
+    ))
   ) return false;
 
   return isMatchupAnalysis(
@@ -182,6 +190,7 @@ export function addMatchupHistoryEntry(
   selection: MatchupSelection,
   analysis: MatchupAnalysis,
   generatedAt = new Date().toISOString(),
+  requestId?: string,
 ): readonly MatchupHistoryEntry[] {
   const entry = immutableCopy({
     selection,
@@ -189,6 +198,7 @@ export function addMatchupHistoryEntry(
     locale,
     analysis,
     generatedAt,
+    ...(requestId === undefined ? {} : { requestId }),
   });
   if (!isMatchupHistoryEntry(entry)) return Object.freeze(entries.map(immutableCopy));
 
@@ -216,13 +226,18 @@ export class MatchupHistoryStore {
     return Object.freeze(this.entries.map(immutableCopy));
   }
 
-  add(selection: MatchupSelection, analysis: MatchupAnalysis): readonly MatchupHistoryEntry[] {
+  add(
+    selection: MatchupSelection,
+    analysis: MatchupAnalysis,
+    requestId?: string,
+  ): readonly MatchupHistoryEntry[] {
     this.entries = addMatchupHistoryEntry(
       this.entries,
       this.locale,
       selection,
       analysis,
       this.now().toISOString(),
+      requestId,
     );
     const stored: StoredMatchupHistory = {
       version: MATCHUP_HISTORY_VERSION,

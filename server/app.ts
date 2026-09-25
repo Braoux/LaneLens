@@ -19,6 +19,9 @@ import { serializeError } from './logging/redaction.js';
 import { findProviderFailure } from './analysis/ProviderFailure.js';
 import { isAppLocale } from '../shared/locale.js';
 import { findAnalysisConformanceFailure } from './analysis/AnalysisConformanceValidator.js';
+import type { FeedbackAcceptedResponse } from '../shared/feedback-contract.js';
+import type { FeedbackServiceLike } from './feedback/types.js';
+import { normalizeFeedbackRequest } from './feedback/validation.js';
 
 interface AppBindings {
   Variables: {
@@ -35,6 +38,7 @@ export interface AppDependencies {
   readonly logger?: Logger;
   readonly analysisProviderName?: string;
   readonly analysisProviderModel?: string;
+  readonly feedbackService?: FeedbackServiceLike;
 }
 
 type ApiErrorStatus = 400 | 415 | 422 | 500 | 502 | 503;
@@ -52,6 +56,7 @@ const ERROR_MESSAGES: Record<ApiErrorCode, string> = {
   UNSUPPORTED_MEDIA_TYPE: 'Le contenu de la requête doit être au format JSON.',
   INVALID_JSON: 'Le corps JSON est absent ou invalide.',
   INVALID_MATCHUP_REQUEST: 'La requête de matchup est invalide.',
+  INVALID_FEEDBACK_REQUEST: 'Le signalement est invalide.',
   PATCH_CONTEXT_NOT_FOUND: 'Le contexte du patch demandé est introuvable.',
   PATCH_CONTEXT_UNAVAILABLE: 'Le contexte de patch est indisponible.',
   PATCH_CONTEXT_INVALID: 'Le contexte de patch est invalide.',
@@ -59,6 +64,8 @@ const ERROR_MESSAGES: Record<ApiErrorCode, string> = {
   ANALYSIS_PROVIDER_UNAVAILABLE: 'Le service d’analyse est indisponible.',
   INVALID_ANALYSIS_RESPONSE: 'Le service d’analyse a retourné une réponse invalide.',
   ANALYSIS_FAILED: 'Impossible de générer l’analyse.',
+  FEEDBACK_NOT_CONFIGURED: 'Le service de signalement n’est pas configuré.',
+  FEEDBACK_UNAVAILABLE: 'Le service de signalement est indisponible.',
   INTERNAL_ERROR: 'Une erreur interne est survenue.',
 };
 
@@ -186,6 +193,57 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
       patch: analysisContext.patch.trim(),
       contextVersion: analysisContext.contextVersion.trim(),
     } satisfies AnalysisContextResponse);
+  });
+
+  app.post('/api/feedback', async (c) => {
+    if (!hasJsonContentType(c.req.header('content-type'))) {
+      return errorResponse(c, 415, 'UNSUPPORTED_MEDIA_TYPE');
+    }
+
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return errorResponse(c, 400, 'INVALID_JSON');
+    }
+
+    const feedback = normalizeFeedbackRequest(body);
+    if (feedback === undefined) {
+      return errorResponse(c, 422, 'INVALID_FEEDBACK_REQUEST');
+    }
+
+    const requestId = c.get('requestId');
+    const { feedbackService } = dependencies;
+    if (feedbackService === undefined) {
+      logger.warn('feedback_submission_failed', {
+        requestId,
+        kind: feedback.kind,
+        category: feedback.category,
+        view: feedback.client.view,
+        errorCode: 'FEEDBACK_NOT_CONFIGURED',
+      });
+      return errorResponse(c, 503, 'FEEDBACK_NOT_CONFIGURED');
+    }
+
+    try {
+      await feedbackService.submit(feedback);
+      logger.info('feedback_submission_completed', {
+        requestId,
+        kind: feedback.kind,
+        category: feedback.category,
+        view: feedback.client.view,
+      });
+      return c.json({ status: 'accepted' } satisfies FeedbackAcceptedResponse, 202);
+    } catch {
+      logger.error('feedback_submission_failed', {
+        requestId,
+        kind: feedback.kind,
+        category: feedback.category,
+        view: feedback.client.view,
+        errorCode: 'FEEDBACK_UNAVAILABLE',
+      });
+      return errorResponse(c, 503, 'FEEDBACK_UNAVAILABLE');
+    }
   });
 
   app.post('/api/matchup', async (c) => {
