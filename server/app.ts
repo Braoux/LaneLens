@@ -18,6 +18,7 @@ import type { Logger } from './logging/Logger.js';
 import { serializeError } from './logging/redaction.js';
 import { findProviderFailure } from './analysis/ProviderFailure.js';
 import { isAppLocale } from '../shared/locale.js';
+import { findAnalysisConformanceFailure } from './analysis/AnalysisConformanceValidator.js';
 
 interface AppBindings {
   Variables: {
@@ -229,6 +230,17 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
         fields.error = serializeError(error, code === 'INTERNAL_ERROR');
       }
       logger[status >= 500 ? 'error' : 'warn']('matchup_analysis_failed', fields);
+      if (code === 'INVALID_ANALYSIS_RESPONSE') {
+        const conformanceFailure = findAnalysisConformanceFailure(error);
+        if (conformanceFailure !== undefined) {
+          logger.error('matchup_analysis_conformance_failed', {
+            requestId,
+            patch: request.patch,
+            violationCodes: conformanceFailure.violationCodes,
+            violationPaths: conformanceFailure.violationPaths,
+          });
+        }
+      }
       if (
         code === 'ANALYSIS_PROVIDER_UNAVAILABLE'
         && dependencies.analysisProviderName !== undefined
