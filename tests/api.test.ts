@@ -11,6 +11,7 @@ const requestBody = {
   enemyCarry: 'Jinx',
   enemySupport: 'Swain',
   patch: '26.19',
+  locale: 'fr-FR',
 };
 
 const patchContext = (patch = '26.19'): PatchContext => ({
@@ -20,7 +21,7 @@ const patchContext = (patch = '26.19'): PatchContext => ({
 });
 
 const analysis = (): MatchupAnalysis => ({
-  matchup: { ...requestBody },
+  matchup: { allyCarry: requestBody.allyCarry, allySupport: requestBody.allySupport, enemyCarry: requestBody.enemyCarry, enemySupport: requestBody.enemySupport, patch: requestBody.patch },
   lanePlan: 'Contrôler la vague et jouer les fenêtres de cooldown.',
   threatResponseWindow: {
     threat: 'Swain cherche son E.',
@@ -275,6 +276,18 @@ test('GET /api/health remains unchanged with and without analysis dependencies',
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { status: 'ok' });
   }
+});
+
+test('only an explicit supported locale is accepted', async () => {
+  const { locale: _locale, ...withoutLocale } = requestBody;
+  for (const body of [withoutLocale, { ...requestBody, locale: 'en-US' }]) {
+    const { app, resolvedPatches, analyzedInputs } = configuredApp();
+    await expectApiError(await postJson(app, body), 422, 'INVALID_MATCHUP_REQUEST');
+    assert.equal(resolvedPatches.length, 0);
+    assert.equal(analyzedInputs.length, 0);
+  }
+  const { app } = configuredApp();
+  assert.equal((await postJson(app, requestBody)).status, 200);
 });
 
 test('GET /api/analysis-context exposes injected normalized metadata', async () => {

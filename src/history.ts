@@ -4,20 +4,23 @@ import type { Champion } from './champions';
 import type { MatchupSelection } from './matchup';
 import { browserStorage, readJson, writeJson } from './storage';
 import type { LocalStore } from './storage';
+import { DEFAULT_LOCALE, isAppLocale } from '../shared/locale';
+import type { AppLocale } from '../shared/locale';
 
-export const MATCHUP_HISTORY_STORAGE_KEY = 'lanelens.matchup-history.v1';
-export const MATCHUP_HISTORY_VERSION = 1;
+export const MATCHUP_HISTORY_STORAGE_KEY = 'lanelens.matchup-history.v2';
+export const MATCHUP_HISTORY_VERSION = 2;
 export const MATCHUP_HISTORY_LIMIT = 10;
 
 export interface MatchupHistoryEntry {
   readonly selection: MatchupSelection;
   readonly patch: string;
+  readonly locale: AppLocale;
   readonly analysis: MatchupAnalysis;
   readonly generatedAt: string;
 }
 
 interface StoredMatchupHistory {
-  readonly version: 1;
+  readonly version: 2;
   readonly entries: readonly MatchupHistoryEntry[];
 }
 
@@ -101,6 +104,7 @@ function hasStrictAnalysisShape(value: unknown): value is MatchupAnalysis {
 function requestFromEntry(
   selection: MatchupSelection,
   patch: string,
+  locale: AppLocale,
 ): MatchupRequest {
   return {
     allyCarry: selection.allyCarry.name,
@@ -108,22 +112,24 @@ function requestFromEntry(
     enemyCarry: selection.enemyCarry.name,
     enemySupport: selection.enemySupport.name,
     patch,
+    locale,
   };
 }
 
 export function isMatchupHistoryEntry(value: unknown): value is MatchupHistoryEntry {
   if (
     !isRecord(value)
-    || !hasExactKeys(value, ['selection', 'patch', 'analysis', 'generatedAt'])
+    || !hasExactKeys(value, ['selection', 'patch', 'locale', 'analysis', 'generatedAt'])
     || !isSelectionSnapshot(value.selection)
     || !nonBlank(value.patch)
+    || !isAppLocale(value.locale)
     || !isCanonicalIsoDate(value.generatedAt)
     || !hasStrictAnalysisShape(value.analysis)
   ) return false;
 
   return isMatchupAnalysis(
     value.analysis,
-    requestFromEntry(value.selection, value.patch.trim()),
+    requestFromEntry(value.selection, value.patch.trim(), value.locale),
   );
 }
 
@@ -137,9 +143,10 @@ function immutableCopy(entry: MatchupHistoryEntry): MatchupHistoryEntry {
   return deepFreeze(structuredClone(entry));
 }
 
-export function matchupHistoryIdentity(entry: Pick<MatchupHistoryEntry, 'selection' | 'patch'>): string {
+export function matchupHistoryIdentity(entry: Pick<MatchupHistoryEntry, 'selection' | 'patch' | 'locale'>): string {
   const { selection } = entry;
   return JSON.stringify([
+    entry.locale,
     entry.patch.trim(),
     selection.allyCarry.name.trim().toLocaleLowerCase('en-US'),
     selection.allySupport.name.trim().toLocaleLowerCase('en-US'),
@@ -148,7 +155,7 @@ export function matchupHistoryIdentity(entry: Pick<MatchupHistoryEntry, 'selecti
   ]);
 }
 
-export function normalizeMatchupHistory(value: unknown): readonly MatchupHistoryEntry[] {
+export function normalizeMatchupHistory(value: unknown, locale: AppLocale = DEFAULT_LOCALE): readonly MatchupHistoryEntry[] {
   if (
     !isRecord(value)
     || !hasExactKeys(value, ['version', 'entries'])
@@ -159,7 +166,7 @@ export function normalizeMatchupHistory(value: unknown): readonly MatchupHistory
   const identities = new Set<string>();
   const entries: MatchupHistoryEntry[] = [];
   for (const candidate of value.entries) {
-    if (!isMatchupHistoryEntry(candidate)) continue;
+    if (!isMatchupHistoryEntry(candidate) || candidate.locale !== locale) continue;
     const identity = matchupHistoryIdentity(candidate);
     if (identities.has(identity)) continue;
     identities.add(identity);
@@ -171,6 +178,7 @@ export function normalizeMatchupHistory(value: unknown): readonly MatchupHistory
 
 export function addMatchupHistoryEntry(
   entries: readonly MatchupHistoryEntry[],
+  locale: AppLocale,
   selection: MatchupSelection,
   analysis: MatchupAnalysis,
   generatedAt = new Date().toISOString(),
@@ -178,6 +186,7 @@ export function addMatchupHistoryEntry(
   const entry = immutableCopy({
     selection,
     patch: analysis.matchup.patch.trim(),
+    locale,
     analysis,
     generatedAt,
   });
@@ -198,8 +207,9 @@ export class MatchupHistoryStore {
   constructor(
     private readonly storage: LocalStore | undefined = browserStorage(),
     private readonly now: () => Date = () => new Date(),
+    private readonly locale: AppLocale = DEFAULT_LOCALE,
   ) {
-    this.entries = normalizeMatchupHistory(readJson(storage, MATCHUP_HISTORY_STORAGE_KEY));
+    this.entries = normalizeMatchupHistory(readJson(storage, MATCHUP_HISTORY_STORAGE_KEY), locale);
   }
 
   getEntries(): readonly MatchupHistoryEntry[] {
@@ -209,6 +219,7 @@ export class MatchupHistoryStore {
   add(selection: MatchupSelection, analysis: MatchupAnalysis): readonly MatchupHistoryEntry[] {
     this.entries = addMatchupHistoryEntry(
       this.entries,
+      this.locale,
       selection,
       analysis,
       this.now().toISOString(),

@@ -1,4 +1,6 @@
 import type { Champion } from './champions';
+import { DEFAULT_LOCALE } from '../shared/locale';
+import type { AppLocale } from '../shared/locale';
 
 export const SLOT_IDS = ['allyCarry', 'allySupport', 'enemyCarry', 'enemySupport'] as const;
 export type SlotId = (typeof SLOT_IDS)[number];
@@ -64,8 +66,8 @@ export function snapshotSelection(selection: DraftSelection): MatchupSelection |
   });
 }
 
-export function searchChampions(champions: readonly Champion[], query: string): readonly Champion[] {
-  const normalizedQuery = query.trim().toLocaleLowerCase('fr-FR');
+export function searchChampions(champions: readonly Champion[], query: string, locale: AppLocale = DEFAULT_LOCALE): readonly Champion[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase(locale);
   if (!normalizedQuery) return champions;
-  return champions.filter((champion) => champion.name.toLocaleLowerCase('fr-FR').includes(normalizedQuery));
+  return champions.filter((champion) => champion.name.toLocaleLowerCase(locale).includes(normalizedQuery));
 }

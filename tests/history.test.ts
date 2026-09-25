@@ -49,6 +49,7 @@ const entry = (
 ): MatchupHistoryEntry => ({
   selection: snapshot,
   patch,
+  locale: 'fr-FR',
   analysis: analysis(snapshot, patch),
   generatedAt,
 });
@@ -81,6 +82,11 @@ test('missing, malformed, incompatible, and empty storage load as an empty histo
   const storage = new MemoryStorage();
   storage.values.set(MATCHUP_HISTORY_STORAGE_KEY, '{not-json');
   assert.deepEqual(new MatchupHistoryStore(storage).getEntries(), []);
+});
+
+test('v1 history is ignored instead of being relabelled as French', () => {
+  assert.deepEqual(normalizeMatchupHistory({ version: 1, entries: [entry()] }), []);
+  assert.equal(MATCHUP_HISTORY_STORAGE_KEY, 'lanelens.matchup-history.v2');
 });
 
 test('history entry validation rejects invalid fields and incoherent analyses', () => {
@@ -131,6 +137,7 @@ test('identity trims patch and compares positional champion names case-insensiti
     enemySupport: { ...original.selection.enemySupport, name: ' SWAIN ' },
   }, ' 26.19 ');
   assert.equal(matchupHistoryIdentity(original), matchupHistoryIdentity(normalized));
+  assert.match(matchupHistoryIdentity(original), /^\["fr-FR",/);
 
   const swapped = entry({
     ...original.selection,
@@ -144,7 +151,7 @@ test('stored duplicates keep the first valid occurrence in recent-to-old order',
   const recent = entry(selection(), '26.19', '2026-09-24T16:00:00.000Z');
   const old = entry(selection(), '26.19', '2026-09-24T14:00:00.000Z');
   const distinct = entry(selection('B'), '26.19', '2026-09-24T13:00:00.000Z');
-  const loaded = normalizeMatchupHistory({ version: 1, entries: [recent, old, distinct] });
+  const loaded = normalizeMatchupHistory({ version: MATCHUP_HISTORY_VERSION, entries: [recent, old, distinct] });
 
   assert.equal(loaded.length, 2);
   assert.equal(loaded[0]?.generatedAt, recent.generatedAt);
@@ -159,6 +166,7 @@ test('adding the same identity replaces it, renews its date, and moves it first'
 
   const result = addMatchupHistoryEntry(
     [distinct, old],
+    'fr-FR',
     selection(),
     latestAnalysis,
     '2026-09-24T17:00:00.000Z',
@@ -175,6 +183,7 @@ test('history keeps at most ten entries in recent-to-old order', () => {
     const snapshot = selection(String(index));
     entries = addMatchupHistoryEntry(
       entries,
+      'fr-FR',
       snapshot,
       analysis(snapshot),
       new Date(Date.UTC(2026, 8, 24, 10, index)).toISOString(),
@@ -204,7 +213,7 @@ test('serialized entries are restored by a new store without network or catalogu
   const restored = new MatchupHistoryStore(storage);
   assert.equal(restored.getEntries().length, 1);
   assert.deepEqual(restored.getEntries()[0]?.selection, selection());
-  assert.match(storage.values.get(MATCHUP_HISTORY_STORAGE_KEY) ?? '', /"version":1/);
+  assert.match(storage.values.get(MATCHUP_HISTORY_STORAGE_KEY) ?? '', /"version":2/);
 });
 
 test('returned entries cannot mutate future in-memory reads', () => {

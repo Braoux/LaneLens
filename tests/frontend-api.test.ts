@@ -9,11 +9,11 @@ import {
 import type { MatchupAnalysis, MatchupRequest } from '../shared/analysis-contract';
 
 const request: MatchupRequest = {
-  allyCarry: 'Ziggs', allySupport: 'Galio', enemyCarry: 'Jinx', enemySupport: 'Swain', patch: '26.19',
+  allyCarry: 'Ziggs', allySupport: 'Galio', enemyCarry: 'Jinx', enemySupport: 'Swain', patch: '26.19', locale: 'fr-FR',
 };
 
 const analysis: MatchupAnalysis = {
-  matchup: { ...request },
+  matchup: { allyCarry: request.allyCarry, allySupport: request.allySupport, enemyCarry: request.enemyCarry, enemySupport: request.enemySupport, patch: request.patch },
   lanePlan: 'Plan.',
   threatResponseWindow: { threat: 'Threat.', response: 'Response.', window: 'Window.', winCondition: 'Win.' },
   earlyLevels: { level1: 'N1.', level2: 'N2.', level3: 'N3.' },

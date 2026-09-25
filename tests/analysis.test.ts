@@ -3,6 +3,7 @@ import test from 'node:test';
 import { MatchupAnalysisError } from '../server/analysis/errors.js';
 import type { MatchupAnalysisProvider } from '../server/analysis/MatchupAnalysisProvider.js';
 import { MatchupAnalysisService } from '../server/analysis/MatchupAnalysisService.js';
+import { AnalysisLanguageValidator } from '../server/analysis/AnalysisLanguageValidator.js';
 import type {
   MatchupAnalysis,
   MatchupAnalysisInput,
@@ -15,6 +16,7 @@ const input: MatchupAnalysisInput = {
   enemyCarry: 'Caitlyn',
   enemySupport: 'Lux',
   patch: '26.19',
+  locale: 'fr-FR',
   patchContext: {
     patch: '26.19',
     contextVersion: '26.19-v1',
@@ -257,4 +259,33 @@ test('LaneLens instructions are explicitly transmitted with every required tacti
   }
   assert.match(instructions, /aucune recherche web/i);
   assert.match(instructions, /26\.19/);
+});
+
+test('French locale instructions explicitly prohibit English explanations', async () => {
+  let instructions = '';
+  const service = new MatchupAnalysisService({
+    async analyze(request) {
+      instructions = request.instructions;
+      return validAnalysis();
+    },
+  });
+  await service.analyze(input);
+  assert.match(instructions, /Rédige exclusivement en français/);
+  assert.match(instructions, /N’écris pas les explications en anglais/);
+});
+
+test('language validation rejects clearly English prose but tolerates LoL names and jargon', async () => {
+  const validator = new AnalysisLanguageValidator();
+  const french = validAnalysis();
+  french.targetPriority.explanation = 'Après Nevermove, Jinx peut poke puis roam avec son ADC.';
+  assert.deepEqual(validator.validate(french, 'fr-FR').violations, []);
+
+  const english = validAnalysis();
+  english.targetPriority.explanation = 'Focus her when Swain misses Nevermove.';
+  assert.deepEqual(validator.validate(english, 'fr-FR').violations, [
+    { path: 'targetPriority.explanation', expectedLocale: 'fr-FR' },
+  ]);
+
+  const service = new MatchupAnalysisService({ async analyze() { return english; } });
+  await assert.rejects(service.analyze(input), expectCode('INVALID_ANALYSIS_RESPONSE'));
 });
