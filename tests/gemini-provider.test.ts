@@ -31,6 +31,7 @@ const input: MatchupAnalysisInput = {
   enemyCarry: 'Jinx',
   enemySupport: 'Swain',
   patch: '26.19',
+  locale: 'fr-FR',
   patchContext: {
     patch: '26.19',
     contextVersion: '26.19-v1',

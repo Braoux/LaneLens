@@ -17,6 +17,7 @@ import { NOOP_LOGGER } from './logging/Logger.js';
 import type { Logger } from './logging/Logger.js';
 import { serializeError } from './logging/redaction.js';
 import { findProviderFailure } from './analysis/ProviderFailure.js';
+import { isAppLocale } from '../shared/locale.js';
 
 interface AppBindings {
   Variables: {
@@ -43,6 +44,7 @@ const MATCHUP_KEYS = [
   'enemyCarry',
   'enemySupport',
   'patch',
+  'locale',
 ] as const satisfies readonly (keyof MatchupRequest)[];
 
 const ERROR_MESSAGES: Record<ApiErrorCode, string> = {
@@ -89,12 +91,22 @@ function normalizeMatchupRequest(value: unknown): MatchupRequest | undefined {
     || !keys.every((key) => MATCHUP_KEYS.includes(key as keyof MatchupRequest))
   ) return undefined;
 
-  const normalized = {} as MatchupRequest;
+  const normalizedFields: Record<string, string> = {};
   for (const key of MATCHUP_KEYS) {
     const field = value[key];
     if (typeof field !== 'string' || field.trim().length === 0) return undefined;
-    normalized[key] = field.trim();
+    normalizedFields[key] = field.trim();
   }
+
+  if (!isAppLocale(normalizedFields.locale)) return undefined;
+  const normalized: MatchupRequest = {
+    allyCarry: normalizedFields.allyCarry!,
+    allySupport: normalizedFields.allySupport!,
+    enemyCarry: normalizedFields.enemyCarry!,
+    enemySupport: normalizedFields.enemySupport!,
+    patch: normalizedFields.patch!,
+    locale: normalizedFields.locale,
+  };
 
   if (
     normalized.allyCarry.toLocaleLowerCase('en-US')

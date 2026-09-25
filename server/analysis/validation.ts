@@ -1,5 +1,6 @@
 import { MatchupAnalysisError } from './errors.js';
 import type { MatchupAnalysis, MatchupAnalysisInput, PatchContext } from './types.js';
+import { isAppLocale } from '../../shared/locale.js';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -46,6 +47,7 @@ export function assertValidMatchupAnalysisInput(input: MatchupAnalysisInput): vo
 
   if (
     !validRolesAndPatch
+    || !isAppLocale(input.locale)
     || !isValidPatchContext(inputRecord.patchContext)
     || input.patch.trim() !== input.patchContext.patch.trim()
   ) {

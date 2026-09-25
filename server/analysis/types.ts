@@ -1,3 +1,5 @@
+import type { AppLocale } from '../../shared/locale.js';
+
 export interface PatchContextFact {
   readonly subject: string;
   readonly text: string;
@@ -15,6 +17,7 @@ export interface MatchupAnalysisInput {
   readonly enemyCarry: string;
   readonly enemySupport: string;
   readonly patch: string;
+  readonly locale: AppLocale;
   readonly patchContext: PatchContext;
 }
 

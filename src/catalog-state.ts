@@ -1,22 +1,26 @@
 import { loadChampionCatalog } from './champions';
 import type { CatalogResult } from './champions';
+import { DEFAULT_LOCALE } from '../shared/locale';
+import type { AppLocale } from '../shared/locale';
 
 export type CatalogState = { readonly status: 'idle' | 'loading' } | CatalogResult;
-let state: CatalogState = { status: 'idle' };
-let pending: Promise<CatalogResult> | undefined;
+const states = new Map<AppLocale, CatalogState>();
+const pending = new Map<AppLocale, Promise<CatalogResult>>();
 
-export function getChampionCatalogState(): CatalogState {
-  return state;
+export function getChampionCatalogState(locale: AppLocale = DEFAULT_LOCALE): CatalogState {
+  return states.get(locale) ?? { status: 'idle' };
 }
 
 /** Called at startup; future components can await the same promise without refetching. */
-export function initializeChampionCatalog(): Promise<CatalogResult> {
-  if (!pending) {
-    state = { status: 'loading' };
-    pending = loadChampionCatalog().then((result) => {
-      state = result;
+export function initializeChampionCatalog(locale: AppLocale = DEFAULT_LOCALE): Promise<CatalogResult> {
+  let task = pending.get(locale);
+  if (!task) {
+    states.set(locale, { status: 'loading' });
+    task = loadChampionCatalog({ locale }).then((result) => {
+      states.set(locale, result);
       return result;
     });
+    pending.set(locale, task);
   }
-  return pending;
+  return task;
 }

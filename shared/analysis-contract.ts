@@ -1,3 +1,5 @@
+import type { AppLocale } from './locale.js';
+
 export interface MatchupAnalysisSource {
   name: string;
   url?: string;
@@ -41,6 +43,7 @@ export interface MatchupRequest {
   enemyCarry: string;
   enemySupport: string;
   patch: string;
+  locale: AppLocale;
 }
 
 export interface AnalysisContextResponse {

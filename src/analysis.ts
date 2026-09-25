@@ -4,6 +4,7 @@ import type {
   MatchupAnalysisSource,
   MatchupRequest,
 } from '../shared/analysis-contract';
+import type { AppLocale } from '../shared/locale';
 import type { MatchupSelection } from './matchup';
 
 export interface QuickOverlay {
@@ -54,6 +55,7 @@ export function isAnalysisContextResponse(value: unknown): value is AnalysisCont
 export function buildMatchupRequest(
   selection: MatchupSelection,
   patch: string,
+  locale: AppLocale,
 ): MatchupRequest {
   return {
     allyCarry: selection.allyCarry.name,
@@ -61,6 +63,7 @@ export function buildMatchupRequest(
     enemyCarry: selection.enemyCarry.name,
     enemySupport: selection.enemySupport.name,
     patch: patch.trim(),
+    locale,
   };
 }
 

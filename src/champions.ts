@@ -1,9 +1,22 @@
 import { browserStorage, readJson, writeJson } from './storage';
 import type { LocalStore } from './storage';
+import { DEFAULT_LOCALE } from '../shared/locale';
+import type { AppLocale } from '../shared/locale';
 
 const BASE = 'https://ddragon.leagueoflegends.com';
-export const CATALOG_CACHE_KEY = 'lanelens.champion-catalog.v1';
 export const VERSIONS_URL = `${BASE}/api/versions.json`;
+
+const DATA_DRAGON_LOCALES: Record<AppLocale, string> = {
+  'fr-FR': 'fr_FR',
+};
+
+export function dataDragonLocaleFor(locale: AppLocale): string {
+  return DATA_DRAGON_LOCALES[locale];
+}
+
+export function championCatalogCacheKey(locale: AppLocale): string {
+  return `lanelens.champion-catalog.${locale}.v1`;
+}
 
 export interface Champion {
   readonly id: string;
@@ -14,7 +27,7 @@ export interface Champion {
 export interface StoredCatalog {
   readonly champions: readonly Champion[];
   readonly dataDragonVersion: string;
-  readonly locale: 'fr_FR';
+  readonly locale: AppLocale;
   readonly fetchedAt: string;
 }
 
@@ -30,6 +43,7 @@ export type CatalogResult =
 interface LoadOptions {
   fetch?: typeof globalThis.fetch;
   storage?: LocalStore | null;
+  locale?: AppLocale;
 }
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -44,8 +58,8 @@ function imagePrefix(dataDragonVersion: string): string {
   return `${BASE}/cdn/${dataDragonVersion}/img/champion/`;
 }
 
-function validCache(value: unknown): value is StoredCatalog {
-  if (!record(value) || !version(value.dataDragonVersion) || value.locale !== 'fr_FR'
+function validCache(value: unknown, locale: AppLocale): value is StoredCatalog {
+  if (!record(value) || !version(value.dataDragonVersion) || value.locale !== locale
     || typeof value.fetchedAt !== 'string' || !Number.isFinite(Date.parse(value.fetchedAt))
     || !Array.isArray(value.champions) || value.champions.length === 0) return false;
 
@@ -61,7 +75,7 @@ function validCache(value: unknown): value is StoredCatalog {
   });
 }
 
-function normalize(value: unknown, dataDragonVersion: string): StoredCatalog {
+function normalize(value: unknown, dataDragonVersion: string, locale: AppLocale): StoredCatalog {
   if (!record(value) || value.version !== dataDragonVersion || !record(value.data)) {
     throw new Error('Catalogue Data Dragon invalide');
   }
@@ -73,8 +87,8 @@ function normalize(value: unknown, dataDragonVersion: string): StoredCatalog {
     }
     return { id: entry.id, name: entry.name, imageUrl: `${imagePrefix(dataDragonVersion)}${entry.image.full}` };
   });
-  const catalog = { champions, dataDragonVersion, locale: 'fr_FR' as const, fetchedAt: new Date().toISOString() };
-  if (!validCache(catalog)) throw new Error('Catalogue inexploitable');
+  const catalog = { champions, dataDragonVersion, locale, fetchedAt: new Date().toISOString() };
+  if (!validCache(catalog, locale)) throw new Error('Catalogue inexploitable');
   return catalog;
 }
 
@@ -90,9 +104,11 @@ function ready(stored: StoredCatalog, source: 'network' | 'cache', stale: boolea
 }
 
 export async function loadChampionCatalog(options: LoadOptions = {}): Promise<CatalogResult> {
+  const locale = options.locale ?? DEFAULT_LOCALE;
+  const cacheKey = championCatalogCacheKey(locale);
   const storage = options.storage === undefined ? browserStorage() : options.storage ?? undefined;
-  const cached = readJson(storage, CATALOG_CACHE_KEY);
-  const previous = validCache(cached) ? cached : undefined;
+  const cached = readJson(storage, cacheKey);
+  const previous = validCache(cached, locale) ? cached : undefined;
   const fetchData = options.fetch ?? globalThis.fetch;
   const json = async (url: string): Promise<unknown> => {
     const response = await fetchData(url, { signal: AbortSignal.timeout(5000), cache: 'no-cache' });
@@ -107,9 +123,9 @@ export async function loadChampionCatalog(options: LoadOptions = {}): Promise<Ca
     const latest = versions[0];
     if (previous?.dataDragonVersion === latest) return ready(previous, 'cache', false);
 
-    const payload = await json(`${BASE}/cdn/${latest}/data/fr_FR/champion.json`);
-    const catalog = normalize(payload, latest);
-    const saved = writeJson(storage, CATALOG_CACHE_KEY, catalog);
+    const payload = await json(`${BASE}/cdn/${latest}/data/${dataDragonLocaleFor(locale)}/champion.json`);
+    const catalog = normalize(payload, latest, locale);
+    const saved = writeJson(storage, cacheKey, catalog);
     return ready(catalog, 'network', false, saved ? 'saved' : 'unavailable');
   } catch {
     if (previous) return ready(previous, 'cache', true);

@@ -19,10 +19,10 @@ const selection: MatchupSelection = {
   enemySupport: { id: 'Swain', name: 'Swain', imageUrl: '/swain.png' },
 };
 
-const request = buildMatchupRequest(selection, ' 26.19 ');
+const request = buildMatchupRequest(selection, ' 26.19 ', 'fr-FR');
 
 const analysis = (): MatchupAnalysis => ({
-  matchup: { ...request },
+  matchup: { allyCarry: request.allyCarry, allySupport: request.allySupport, enemyCarry: request.enemyCarry, enemySupport: request.enemySupport, patch: request.patch },
   lanePlan: 'Plan exact.',
   threatResponseWindow: {
     threat: 'Threat exact.',
@@ -54,9 +54,10 @@ test('MatchupRequest contains exactly the selected champion names and discovered
     enemyCarry: 'Jinx',
     enemySupport: 'Swain',
     patch: '26.19',
+    locale: 'fr-FR',
   });
   assert.deepEqual(Object.keys(request).sort(), [
-    'allyCarry', 'allySupport', 'enemyCarry', 'enemySupport', 'patch',
+    'allyCarry', 'allySupport', 'enemyCarry', 'enemySupport', 'patch', 'locale',
   ].sort());
 });
 

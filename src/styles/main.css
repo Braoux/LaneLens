@@ -11,9 +11,19 @@ main { width: 100%; }
 .brand { color: #f0f7f5; text-decoration: none; font-family: Manrope, sans-serif; font-size: 21px; font-weight: 700; letter-spacing: 2.5px; }
 .brand span, h1 span { color: #70d8c0; }
 .brand i { color: #ba9d64; font-style: normal; margin-left: 11px; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
 .catalog-meta { display: flex; align-items: center; gap: 9px; color: #90a6a3; font-size: 12px; }
 .catalog-meta span { border: 1px solid #263c3d; border-radius: 99px; padding: 7px 11px; }
 #cache-status { color: #d4b877; border-color: #55482e; }
+.language-selector { position: relative; }
+.language-selector summary { min-height: 34px; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid #263c3d; border-radius: 99px; color: #b7c8c5; font-size: 11px; font-weight: 700; letter-spacing: 1px; cursor: pointer; list-style: none; transition: border-color .18s, color .18s, background .18s; }
+.language-selector summary::-webkit-details-marker { display: none; }
+.language-selector summary:hover, .language-selector summary:focus-visible, .language-selector[open] summary { border-color: #4b867b; color: #e9f1ef; background: #102123; }
+.language-selector summary:focus-visible { outline: 2px solid #70d8c0; outline-offset: 3px; }
+#language-options { position: absolute; z-index: 30; top: calc(100% + 7px); right: 0; min-width: 150px; padding: 6px; border: 1px solid #294143; border-radius: 10px; background: #0d1b1d; box-shadow: 0 12px 28px rgba(0, 0, 0, .28); }
+.language-option { width: 100%; min-height: 36px; padding: 7px 10px; border: 0; border-radius: 7px; text-align: left; background: transparent; cursor: pointer; }
+.language-option:hover:not(:disabled), .language-option:focus-visible { background: #173032; }
+.language-option:disabled { color: #70d8c0; cursor: default; opacity: 1; }
 .hero { padding: 68px 0 52px; text-align: center; }
 .eyebrow { margin: 0 0 15px; color: #b99f69; font-size: 10px; letter-spacing: 3px; font-weight: 700; }
 h1 { margin: 0; font-family: Manrope, sans-serif; font-size: clamp(36px, 5vw, 58px); letter-spacing: -2.8px; line-height: 1.05; }
@@ -154,6 +164,7 @@ footer { margin-top: auto; padding-top: 62px; color: #596d6a; font-size: 10px; l
 @media (max-width: 520px) {
   #app { padding: 20px 16px; }
   .topbar { align-items: flex-start; gap: 15px; }
+  .topbar-actions { margin-left: auto; }
   .catalog-meta { flex-direction: column; align-items: flex-end; }
   .topbar { flex-wrap: wrap; }
   .hero { padding: 42px 0 34px; }

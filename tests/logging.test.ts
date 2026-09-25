@@ -80,10 +80,11 @@ const requestBody = {
   enemyCarry: 'Jinx',
   enemySupport: 'Swain',
   patch: '26.19',
+  locale: 'fr-FR',
 };
 
 const validAnalysis = (): MatchupAnalysis => ({
-  matchup: { ...requestBody },
+  matchup: { allyCarry: requestBody.allyCarry, allySupport: requestBody.allySupport, enemyCarry: requestBody.enemyCarry, enemySupport: requestBody.enemySupport, patch: requestBody.patch },
   lanePlan: 'Contrôler la vague.',
   threatResponseWindow: {
     threat: 'Engage adverse.',

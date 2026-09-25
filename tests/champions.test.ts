@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CATALOG_CACHE_KEY, loadChampionCatalog, VERSIONS_URL } from '../src/champions';
+import { championCatalogCacheKey, dataDragonLocaleFor, loadChampionCatalog, VERSIONS_URL } from '../src/champions';
 import type { CatalogResult } from '../src/champions';
 
 const v1 = '1.0.1';
 const v2 = '1.1.1';
+const CATALOG_CACHE_KEY = championCatalogCacheKey('fr-FR');
 const payload = (version: string) => ({ version, data: {
   MonkeyKing: { id: 'MonkeyKing', name: 'Wukong', image: { full: 'MonkeyKing.png' } },
 } });
@@ -45,13 +46,18 @@ test('first load normalizes French data and persists a coherent catalogue withou
   const value = catalog(result);
   assert.equal(value.source, 'network');
   assert.equal(value.stale, false);
-  assert.equal(value.locale, 'fr_FR');
+  assert.equal(value.locale, 'fr-FR');
   assert.equal(value.dataDragonVersion, v2);
   assert.deepEqual(value.champions, [{ id: 'MonkeyKing', name: 'Wukong',
     imageUrl: `https://ddragon.leagueoflegends.com/cdn/${v2}/img/champion/MonkeyKing.png` }]);
   assert.deepEqual(net.calls, [VERSIONS_URL, `https://ddragon.leagueoflegends.com/cdn/${v2}/data/fr_FR/champion.json`]);
   assert.equal(JSON.parse(storage.getItem(CATALOG_CACHE_KEY)!).dataDragonVersion, v2);
   assert.ok(Object.isFrozen(value.champions[0]));
+});
+
+test('application locale maps to Data Dragon locale and a dedicated cache key', () => {
+  assert.equal(dataDragonLocaleFor('fr-FR'), 'fr_FR');
+  assert.equal(CATALOG_CACHE_KEY, 'lanelens.champion-catalog.fr-FR.v1');
 });
 
 test('a new loader instance reuses serialized cache after checking version, preserving fetchedAt', async () => {

@@ -13,6 +13,7 @@ const requestBody = {
   enemyCarry: 'Jinx',
   enemySupport: 'Swain',
   patch: '26.19',
+  locale: 'fr-FR',
 };
 
 function postMatchup(app: ReturnType<typeof createRuntimeApp>) {
@@ -50,7 +51,7 @@ test('configured runtime preserves historical OpenAI selection when AI_PROVIDER 
     async analyze(request) {
       requests.push(request);
       return {
-        matchup: { ...requestBody },
+        matchup: { allyCarry: requestBody.allyCarry, allySupport: requestBody.allySupport, enemyCarry: requestBody.enemyCarry, enemySupport: requestBody.enemySupport, patch: requestBody.patch },
         lanePlan: 'Contrôler la vague.',
         threatResponseWindow: {
           threat: 'Engage adverse.',
@@ -132,7 +133,7 @@ test('AI_PROVIDER=gemini selects Gemini without falling back to OpenAI', async (
   const provider: MatchupAnalysisProvider = {
     async analyze(request) {
       return {
-        matchup: { ...requestBody },
+        matchup: { allyCarry: requestBody.allyCarry, allySupport: requestBody.allySupport, enemyCarry: requestBody.enemyCarry, enemySupport: requestBody.enemySupport, patch: requestBody.patch },
         lanePlan: 'Contrôler la vague.',
         threatResponseWindow: {
           threat: 'Engage adverse.',
@@ -188,7 +189,7 @@ test('AI_PROVIDER=groq selects Groq without falling back to OpenAI or Gemini', a
   const provider: MatchupAnalysisProvider = {
     async analyze() {
       return {
-        matchup: { ...requestBody },
+        matchup: { allyCarry: requestBody.allyCarry, allySupport: requestBody.allySupport, enemyCarry: requestBody.enemyCarry, enemySupport: requestBody.enemySupport, patch: requestBody.patch },
         lanePlan: 'Contrôler la vague.',
         threatResponseWindow: {
           threat: 'Engage adverse.',
