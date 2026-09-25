@@ -2,10 +2,9 @@
 
 > Know the matchup before it knows you.
 
-LaneLens aide les joueurs de League of Legends à comprendre **comment jouer une botlane précise**.
+LaneLens aide les joueurs de League of Legends à comprendre **comment jouer un matchup botlane précis à partir des quatre champions présents**.
 
-Choisissez les quatre champions du matchup et obtenez un plan de jeu concret :
-quoi respecter, quand avancer, qui cibler, comment gérer la wave et quelles erreurs éviter.
+Choisissez votre carry, votre support et la botlane adverse. LaneLens transforme les interactions entre les quatre kits en un plan de jeu concret : quoi respecter, quand avancer, qui cibler, comment gérer la wave et quelles erreurs éviter.
 
 <p align="center">
   <img src="docs/assets/lanelens-home.png"
@@ -17,17 +16,13 @@ quoi respecter, quand avancer, qui cibler, comment gérer la wave et quelles err
 
 Connaître les quatre champions ne suffit pas toujours à savoir comment jouer la lane.
 
-Entre les matchups, les timings de niveaux, les cooldowns, la wave et les fenêtres
-d'engage, la vraie question est souvent beaucoup plus simple :
+Entre les timings de niveaux, les cooldowns, la wave, les fenêtres d'engage et les interactions entre carry et support, la vraie question est souvent beaucoup plus simple :
 
 > **Qu'est-ce qu'on doit réellement faire dans cette botlane ?**
 
-LaneLens est conçu pour répondre à cette question avec une analyse courte,
-actionnable et centrée sur les interactions entre les quatre champions.
+LaneLens est conçu pour répondre à cette question avec une analyse structurée, actionnable et centrée sur le **2v2 complet**, pas uniquement sur un duel champion contre champion.
 
-## Ce que LaneLens analyse
-
-Pour un matchup comme :
+Exemple :
 
 ```text
 Ziggs + Galio
@@ -35,22 +30,44 @@ vs
 Jinx + Swain
 ```
 
-LaneLens structure l'analyse autour de points directement utiles en partie :
+## Ce que LaneLens analyse
 
-- plan de lane ;
-- principales menaces adverses ;
-- réponse à ces menaces ;
-- fenêtres de trade et d'engage ;
-- plan des niveaux 1, 2 et 3 ;
-- gestion de wave ;
-- cible prioritaire ;
-- plan après le niveau 6 ;
-- opportunités de roaming ;
-- cheat sheet ;
-- règle essentielle à retenir.
+Pour chaque matchup, LaneLens produit notamment :
 
-L'objectif n'est pas de réciter les sorts des champions, mais de transformer le
-matchup en **décisions concrètes**.
+- un plan de lane ;
+- les principales menaces adverses ;
+- la réponse à ces menaces ;
+- les fenêtres de trade et d'engage ;
+- une condition de victoire ;
+- le plan des niveaux 1, 2 et 3 ;
+- la gestion de wave ;
+- la cible prioritaire ;
+- les changements après le niveau 6 ;
+- les opportunités de roaming ;
+- une cheat sheet copiable ;
+- une règle essentielle à retenir.
+
+L'objectif n'est pas de réciter les sorts des champions, mais de transformer le matchup en **décisions concrètes**.
+
+## État du projet
+
+LaneLens est en développement actif et se rapproche de sa première alpha.
+
+Le parcours principal est déjà fonctionnel :
+
+```text
+4 champions
+    ↓
+analyse
+    ↓
+Quick Overlay
+    ↓
+analyse détaillée
+    ↓
+historique local
+```
+
+Les travaux actuels portent principalement sur la qualité et la conformité gameplay des analyses, l'UX finale, la cohérence linguistique et le déploiement de l'alpha.
 
 ## Fonctionnalités
 
@@ -60,18 +77,27 @@ matchup en **décisions concrètes**.
 - recherche instantanée dans le catalogue League of Legends ;
 - portraits et données champions via Riot Data Dragon ;
 - gestion des matchups miroir ;
-- moteur d'analyse backend ;
-- analyse IA structurée ;
+- moteur d'analyse backend provider-agnostic ;
+- providers OpenAI, Google Gemini et Groq ;
 - contexte de patch versionné ;
 - API `POST /api/matchup` ;
-- validation des réponses avant affichage.
+- endpoint `GET /api/analysis-context` ;
+- validation structurelle des analyses avant affichage ;
+- Quick Overlay tactique ;
+- analyse détaillée du matchup ;
+- cheat sheet copiable ;
+- historique local des dix dernières analyses ;
+- logs backend structurés avec `X-Request-Id` ;
+- diagnostic sécurisé des erreurs provider.
 
 ### En cours
 
-- affichage complet de l'analyse dans l'interface ;
-- Quick Overlay pour consulter l'essentiel très rapidement ;
-- historique local des derniers matchups ;
-- UX et responsive final du MVP.
+- refonte UX et responsive final du MVP ;
+- garde-fous de conformité gameplay des analyses ;
+- interface entièrement française et architecture i18n ;
+- déploiement de l'alpha publique et système de crédits LaneLens.
+
+> La validation actuellement livrée garantit le contrat et la cohérence structurelle de la réponse. Les garde-fous destinés à détecter des impossibilités gameplay déterministes sont encore en cours de développement.
 
 ## Philosophie du projet
 
@@ -85,8 +111,7 @@ LaneLens cherche à rester simple :
 1 plan de jeu clair
 ```
 
-Pas de compte Riot obligatoire, pas de statistiques envahissantes et pas de
-dashboard complexe pour répondre à une question de lane.
+Pas de compte Riot obligatoire, pas de statistiques envahissantes et pas de dashboard complexe pour répondre à une question de lane.
 
 ---
 
@@ -99,12 +124,14 @@ Frontend    TypeScript · Vite · HTML · CSS
 Backend     Node.js · Hono
 Data        Riot Data Dragon
 AI          MatchupAnalysisProvider · OpenAI · Google Gemini · Groq
+Storage     localStorage côté navigateur
+Logs        JSON Lines côté serveur
 Tests       TypeScript · Node.js
 ```
 
 ## Démarrage local
 
-Prérequis : Node.js >= 22.12 et npm.
+Prérequis : Node.js >= 22.12.0 et npm.
 
 ```sh
 npm ci
@@ -139,39 +166,15 @@ retourne :
 }
 ```
 
-## Logs backend
+Le contexte d'analyse courant est exposé par :
 
-Le serveur écrit des logs structurés JSON Lines dans un répertoire local créé
-automatiquement au démarrage. Par défaut :
-
-```text
-./logs/lanelens-YYYY-MM-DD.log
+```http
+GET /api/analysis-context
 ```
-
-Configuration disponible dans `.env` :
-
-```env
-LOG_DIR=./logs
-LOG_LEVEL=info
-LOG_RETENTION_DAYS=14
-```
-
-- `LOG_DIR` est résolu depuis le répertoire de travail du processus ;
-- `LOG_LEVEL` accepte `debug`, `info`, `warn` ou `error` ;
-- `LOG_RETENTION_DAYS` contrôle la rétention locale au démarrage ;
-- un nouveau fichier est utilisé chaque jour UTC, toujours en mode append ;
-- chaque requête reçoit un `X-Request-Id` corrélé aux événements serveur ;
-- les clés, tokens, cookies, mots de passe et secrets sont masqués ;
-- les bodies, prompts, contextes de patch et réponses LLM ne sont pas journalisés.
-
-Les logs restent exclusivement sur la machine hôte. Le dossier `logs/` est
-ignoré par Git et ne doit jamais être envoyé vers un service externe. Si le
-logger persistant ne peut pas être initialisé, le serveur refuse de démarrer.
 
 ## Configuration de l'analyse IA
 
-Aucune clé n'est nécessaire pour démarrer l'application ou utiliser
-`GET /api/health`.
+Aucune clé n'est nécessaire pour démarrer l'application ou utiliser `GET /api/health`.
 
 Pour activer une analyse réelle :
 
@@ -179,34 +182,7 @@ Pour activer une analyse réelle :
 Copy-Item .env.example .env
 ```
 
-Puis sélectionner un provider et renseigner sa clé uniquement dans le fichier
-local `.env`.
-
-### Gemini
-
-```env
-AI_PROVIDER=gemini
-GEMINI_API_KEY=
-GEMINI_MODEL=gemini-3.8-flash
-GEMINI_TIMEOUT_MS=30000
-```
-
-`GEMINI_MODEL` et `GEMINI_TIMEOUT_MS` sont facultatifs. Le niveau sans frais de
-Gemini reste soumis aux quotas, aux conditions d'utilisation et à la politique
-de traitement des données de Google associée au free tier. LaneLens envoie
-uniquement les quatre noms de champions, le patch, le contexte de patch et les
-instructions tactiques nécessaires à l'analyse.
-
-### OpenAI
-
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-6-sol
-OPENAI_TIMEOUT_MS=30000
-```
-
-`OPENAI_MODEL` et `OPENAI_TIMEOUT_MS` sont facultatifs.
+Puis sélectionner un provider et renseigner sa clé uniquement dans le fichier local `.env`.
 
 ### Groq
 
@@ -217,12 +193,27 @@ GROQ_MODEL=openai/gpt-oss-120b
 GROQ_TIMEOUT_MS=30000
 ```
 
-`GROQ_MODEL` et `GROQ_TIMEOUT_MS` sont facultatifs. LaneLens utilise Chat
-Completions avec un JSON Schema strict, `reasoning_effort=medium`, aucun outil
-et aucun retry SDK. La sortie reste validée par LaneLens avant d'être exposée.
+### OpenAI
 
-Le backend charge automatiquement `.env` au démarrage. Le fichier est ignoré
-par Git ; `.env.example` doit toujours rester sans secret.
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-6-sol
+OPENAI_TIMEOUT_MS=30000
+```
+
+### Gemini
+
+```env
+AI_PROVIDER=gemini
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.8-flash
+GEMINI_TIMEOUT_MS=30000
+```
+
+Les modèles et timeouts sont configurables. Une valeur `AI_PROVIDER` absente conserve OpenAI pour compatibilité avec les configurations existantes.
+
+Il n'existe aucun fallback automatique entre providers.
 
 Sans clé exploitable pour le provider sélectionné :
 
@@ -252,6 +243,8 @@ POST /api/matchup
    ↓
 Hono
    ↓
+PatchContextResolver
+   ↓
 MatchupAnalysisService
    ↓
 MatchupAnalysisProvider
@@ -263,11 +256,7 @@ validation LaneLens
 MatchupAnalysis
 ```
 
-Les providers actuellement intégrés sont OpenAI, Google Gemini et Groq. Le
-provider est sélectionné avec `AI_PROVIDER=openai`, `AI_PROVIDER=gemini` ou
-`AI_PROVIDER=groq`. Une valeur absente conserve OpenAI pour compatibilité avec
-les configurations existantes.
-Il n'existe aucun fallback automatique entre providers.
+Le contrôleur HTTP ne dépend d'aucun SDK LLM. Le runtime choisit le provider à partir de la configuration, puis l'injecte derrière `MatchupAnalysisProvider`.
 
 Changer de modèle ou de provider ne doit pas nécessiter de modifier :
 
@@ -280,16 +269,18 @@ LaneLens conserve la responsabilité :
 
 - du contexte de patch ;
 - des instructions métier ;
-- de la validation finale de l'analyse.
+- de la validation finale de la structure d'analyse ;
+- de la traduction des erreurs en contrat HTTP sûr.
+
+Voir [Architecture technique](docs/architecture.md) et [ADR-001](docs/decisions/ADR-001-remplacer-openclaw-runtime.md).
 
 ## Contexte de patch
 
-Le patch utilisé pour l'analyse n'est pas déduit automatiquement de la version
-Data Dragon.
+Le patch utilisé pour l'analyse n'est pas déduit automatiquement de la version Data Dragon.
 
 Les contextes supportés sont préparés et versionnés côté serveur.
 
-Contexte actuellement disponible :
+Contexte actuellement embarqué :
 
 ```text
 26.19-v1
@@ -299,8 +290,7 @@ Voir [Maintenance des contextes de patch](docs/patch-context.md).
 
 ## Test manuel de l'analyse
 
-Renseigner la clé du provider sélectionné dans le fichier local `.env`, puis
-redémarrer le serveur :
+Renseigner la clé du provider sélectionné dans le fichier local `.env`, puis démarrer le backend :
 
 ```sh
 npm run dev:server
@@ -320,8 +310,7 @@ curl -X POST http://127.0.0.1:3000/api/matchup \
   }'
 ```
 
-Avec une configuration valide, la réponse attendue est un `MatchupAnalysis`
-avec HTTP 200.
+Avec une configuration valide, la réponse attendue est un `MatchupAnalysis` avec HTTP 200.
 
 Ce test manuel n'est jamais exécuté par `npm test`.
 
@@ -336,10 +325,7 @@ LaneLens :
 - réutilise ce cache si Data Dragon devient temporairement indisponible ;
 - ne nécessite aucune clé Riot.
 
-La version Data Dragon est une version technique et n'est pas utilisée comme
-détection automatique du patch joueur.
-
-Voir le [rapport LAN-002](docs/LAN-002/verification.md).
+La version Data Dragon est une version technique et n'est pas utilisée comme détection automatique du patch joueur.
 
 ## Champion Picker
 
@@ -358,7 +344,47 @@ Les doublons sont bloqués dans une même équipe.
 
 Le mode Mirror permet au même champion d'apparaître une fois dans chaque équipe.
 
-Voir le [rapport LAN-003](docs/LAN-003/verification.md).
+## Historique local
+
+Les analyses valides affichées peuvent être conservées localement dans le navigateur.
+
+L'historique :
+
+- conserve au maximum dix entrées ;
+- mémorise un snapshot des quatre champions, le patch, l'analyse et la date de génération ;
+- remplace une entrée existante pour le même matchup/patch ;
+- reste consultable sans dépendre du catalogue Data Dragon courant ;
+- ne nécessite aucune base de données.
+
+Clé actuelle :
+
+```text
+lanelens.matchup-history.v1
+```
+
+## Logs backend
+
+Le serveur écrit des logs structurés JSON Lines dans un répertoire local créé automatiquement au démarrage.
+
+Par défaut :
+
+```text
+./logs/lanelens-YYYY-MM-DD.log
+```
+
+Configuration :
+
+```env
+LOG_DIR=./logs
+LOG_LEVEL=info
+LOG_RETENTION_DAYS=14
+```
+
+Chaque requête reçoit un `X-Request-Id` qui permet de corréler les événements HTTP, analyse et provider.
+
+Les clés, tokens, cookies, mots de passe et secrets sont masqués. Les prompts complets, contextes de patch complets et réponses LLM complètes ne sont pas journalisés.
+
+Le dossier `logs/` est ignoré par Git.
 
 ## Vérification du projet
 
@@ -371,8 +397,9 @@ npm run build
 La compilation produit :
 
 ```text
-dist/client/
-dist/server/
+dist/
+├── client/
+└── server/
 ```
 
 ## Périmètre actuel
@@ -383,15 +410,21 @@ Le MVP reste volontairement léger :
 - pas de base de données ;
 - pas de compte Riot ;
 - pas de Riot API authentifiée ;
-- pas de déploiement public inclus dans le socle actuel.
+- pas de fallback automatique entre providers ;
+- pas de déploiement public livré à ce stade ;
+- pas d'analytics produit détaillée.
+
+Le déploiement public et la protection de la consommation d'analyses sont prévus dans LAN-021.
 
 ## Documentation
 
 - [Cahier des charges](docs/cahier-des-charges.md)
 - [Architecture technique](docs/architecture.md)
+- [ADR-001 — Rendre OpenClaw remplaçable dans le runtime](docs/decisions/ADR-001-remplacer-openclaw-runtime.md)
 - [Maintenance des contextes de patch](docs/patch-context.md)
 
 ## Références techniques
 
 - [Vite](https://vite.dev/guide/)
 - [Hono sur Node.js](https://hono.dev/docs/getting-started/nodejs)
+- [Riot Data Dragon](https://developer.riotgames.com/docs/lol#data-dragon)
