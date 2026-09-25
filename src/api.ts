@@ -8,6 +8,11 @@ import { isAnalysisContextResponse, isMatchupAnalysis } from './analysis';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
+export function analysisRequestSignal(signal?: AbortSignal, timeoutMs = REQUEST_TIMEOUT_MS): AbortSignal {
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
+}
+
 export class InvalidAnalysisResponseError extends Error {
   constructor() {
     super('L’analyse reçue est invalide.');
@@ -96,7 +101,7 @@ export async function analyzeMatchup(
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
-    signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: analysisRequestSignal(signal),
   });
   if (!response.ok) {
     const requestId = response.headers.get('x-request-id')?.trim() || undefined;
