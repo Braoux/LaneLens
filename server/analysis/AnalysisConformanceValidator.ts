@@ -105,6 +105,29 @@ const LETHAL_PATTERNS = [
   /\bkill garanti\b/u,
 ] as const;
 
+const DEFAULT_SEVERITY: Readonly<
+  Record<AnalysisConformanceCode, 'error' | 'warning'>
+> = {
+  ABILITY_UNAVAILABLE_AT_LEVEL: 'error',
+  ABILITY_CHAMPION_MISMATCH: 'error',
+  ABILITY_SLOT_MISMATCH: 'error',
+  ABILITY_NAME_MISMATCH: 'error',
+  ABILITY_EFFECT_MISMATCH: 'error',
+  ABILITY_TARGETING_MISMATCH: 'error',
+
+  // Pas forcément faux : simplement non confirmé par notre contexte.
+  UNSUPPORTED_ABILITY_INTERACTION: 'warning',
+  UNSUPPORTED_CC_INTERACTION: 'warning',
+  UNSUPPORTED_EXACT_VALUE: 'warning',
+
+  // On conserve ces contrôles stricts pour le moment.
+  UNSUPPORTED_COOLDOWN_RESET: 'error',
+  UNSUPPORTED_LETHAL_CLAIM: 'error',
+  TEMPORAL_INCONSISTENCY: 'error',
+
+  TACTICAL_PLAN_CONTRADICTION: 'warning',
+};
+
 function normalize(value: string): string {
   return value
     .toLocaleLowerCase('fr-FR')
@@ -203,9 +226,11 @@ function addViolation(
   violations: AnalysisConformanceViolation[],
   code: AnalysisConformanceCode,
   path: string,
-  severity: 'error' | 'warning' = 'error',
+  severity: 'error' | 'warning' = DEFAULT_SEVERITY[code],
 ): void {
-  if (!violations.some((violation) => violation.code === code && violation.path === path)) {
+  if (!violations.some(
+    (violation) => violation.code === code && violation.path === path,
+  )) {
     violations.push(Object.freeze({ code, severity, path }));
   }
 }
