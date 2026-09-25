@@ -2,7 +2,7 @@
 
 État documenté : architecture livrée au 25 septembre 2026, après LAN-018.
 
-Ce document décrit le code actuellement présent dans le dépôt. Le [cahier des charges](cahier-des-charges.md) décrit la cible produit et [ADR-001](decisions/ADR-001-remplacer-openclaw-runtime.md) formalise la décision de rendre le moteur d’analyse indépendant d’OpenClaw.
+Ce document décrit le code actuellement présent dans le dépôt. [ADR-001](decisions/ADR-001-remplacer-openclaw-runtime.md) formalise la décision de rendre le moteur d’analyse indépendant d’OpenClaw.
 
 ---
 
@@ -35,7 +35,7 @@ flowchart LR
     I --> O["OpenAI / Gemini / Groq"]
 ```
 
-Le proxy Vite est uniquement une commodité de développement. Le déploiement public n’est pas encore livré ; LAN-021 prévoit de servir le frontend compilé depuis Hono dans un service Render unique.
+Le proxy Vite est uniquement une commodité de développement. Le déploiement public n’est pas encore livré dans l’état documenté ici.
 
 ---
 
@@ -372,7 +372,7 @@ Ne sont pas journalisés volontairement :
 - PatchContext complet ;
 - réponse LLM complète.
 
-LAN-021 prévoit d’utiliser au minimum stdout/stderr côté Render en complément ou à la place de la persistance fichier locale.
+En production, la journalisation devra rester compatible avec un environnement où le filesystem local n’est pas nécessairement durable.
 
 ---
 
@@ -648,7 +648,7 @@ dist/
 └── server/
 ```
 
-À ce stade, `start:server` ne sert pas encore `dist/client/`. Cette évolution appartient à LAN-021.
+À ce stade, `start:server` ne sert pas encore `dist/client/`.
 
 ---
 
@@ -656,30 +656,7 @@ dist/
 
 Aucun déploiement public n’est encore livré dans le code courant.
 
-LAN-021 prévoit :
-
-```text
-GitHub
-├── main        → développement
-└── production  → déploiement automatique
-                       ↓
-                     Render
-                       ↓
-               Node/Hono + frontend
-```
-
-Le ticket prévoit également :
-
-- HTTPS ;
-- `PORT` fourni par l’hébergeur ;
-- healthcheck `/api/health` ;
-- secrets Render ;
-- crédits LaneLens ;
-- rate limiting ;
-- codes de crédits pour certains testeurs ;
-- logs production.
-
-Ces éléments sont des **cibles**, pas encore du code livré.
+La cible de production reste volontairement découplée du cœur métier : le frontend compilé et l’API pourront être servis derrière une infrastructure adaptée sans modifier les contrats métier ni les providers.
 
 ---
 
@@ -722,16 +699,6 @@ Doit introduire :
 - historique séparé par locale ;
 - mapping Data Dragon par locale.
 
-### LAN-021 — alpha publique
-
-Doit ajouter :
-
-- déploiement Render ;
-- service production unique ;
-- branche `production` ;
-- crédits LaneLens ;
-- codes de crédits ;
-- protections anti-abus de base.
 
 ---
 
@@ -752,7 +719,6 @@ Doit ajouter :
 
 ## Références
 
-- [Cahier des charges](cahier-des-charges.md)
 - [ADR-001 — Rendre OpenClaw remplaçable dans le runtime](decisions/ADR-001-remplacer-openclaw-runtime.md)
 - [Maintenance des contextes de patch](patch-context.md)
 - [README](../README.md)
