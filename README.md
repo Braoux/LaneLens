@@ -7,7 +7,7 @@ LaneLens aide les joueurs de League of Legends à comprendre **comment jouer un 
 Choisissez votre carry, votre support et la botlane adverse. LaneLens transforme les interactions entre les quatre kits en un plan de jeu concret : quoi respecter, quand avancer, qui cibler, comment gérer la wave et quelles erreurs éviter.
 
 <p align="center">
-  <img src="docs/assets/lanelens-home.png"
+  <img src="docs/assets/HomePicker.png"
        alt="LaneLens — sélection d'un matchup botlane League of Legends"
        width="1200">
 </p>
@@ -22,13 +22,11 @@ Entre les timings de niveaux, les cooldowns, la wave, les fenêtres d'engage et 
 
 LaneLens est conçu pour répondre à cette question avec une analyse structurée, actionnable et centrée sur le **2v2 complet**, pas uniquement sur un duel champion contre champion.
 
-Exemple :
-
-```text
-Ziggs + Galio
-vs
-Jinx + Swain
-```
+<p align="center">
+  <img src="docs/assets/homeAnalysisTop.png"
+       alt="LaneLens — sélection d'un matchup botlane League of Legends"
+       width="1200">
+</p>
 
 ## Ce que LaneLens analyse
 
