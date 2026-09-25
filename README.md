@@ -23,7 +23,7 @@ Entre les timings de niveaux, les cooldowns, la wave, les fenêtres d'engage et 
 LaneLens est conçu pour répondre à cette question avec une analyse structurée, actionnable et centrée sur le **2v2 complet**, pas uniquement sur un duel champion contre champion.
 
 <p align="center">
-  <img src="docs/assets/homeAnalysisTop.png"
+  <img src="docs/assets/HomeAnalysisTop.png"
        alt="LaneLens — sélection d'un matchup botlane League of Legends"
        width="1200">
 </p>
