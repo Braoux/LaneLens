@@ -3,6 +3,7 @@ import test from 'node:test';
 import type { MatchupAnalysisProvider } from '../server/analysis/MatchupAnalysisProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../server/analysis/types.js';
 import { AIProviderConfigurationError } from '../server/analysis/providers/ai-provider-config.js';
+import { GroqProviderError } from '../server/analysis/providers/GroqProvider.js';
 import type { LogFields, Logger } from '../server/logging/Logger.js';
 import { createRuntimeApp } from '../server/runtime.js';
 
@@ -180,6 +181,68 @@ test('AI_PROVIDER=gemini selects Gemini without falling back to OpenAI', async (
   assert.equal(openAICalls, 0);
 });
 
+test('AI_PROVIDER=groq selects Groq without falling back to OpenAI or Gemini', async () => {
+  let openAICalls = 0;
+  let geminiCalls = 0;
+  let configuredModel = '';
+  const provider: MatchupAnalysisProvider = {
+    async analyze() {
+      return {
+        matchup: { ...requestBody },
+        lanePlan: 'Contrôler la vague.',
+        threatResponseWindow: {
+          threat: 'Engage adverse.',
+          response: 'Garder la distance.',
+          window: 'Après le cooldown principal.',
+          winCondition: 'Poke avant le combat.',
+        },
+        earlyLevels: {
+          level1: 'Prendre la priorité.',
+          level2: 'Respecter l’engage.',
+          level3: 'Jouer les cooldowns.',
+        },
+        wavePlan: 'Maintenir une vague sûre.',
+        targetPriority: {
+          primaryTarget: 'Swain',
+          explanation: 'Le punir après son contrôle.',
+        },
+        postLevel6: 'Éviter les combats prolongés.',
+        roamPlan: 'Roam après avoir poussé.',
+        cheatSheet: ['Contrôle raté → avancer'],
+        goldenRule: 'Jouer après les cooldowns adverses.',
+      };
+    },
+  };
+  const app = createRuntimeApp({
+    environment: {
+      AI_PROVIDER: '  GROQ ',
+      OPENAI_API_KEY: 'unused-openai-key',
+      GEMINI_API_KEY: 'unused-gemini-key',
+      GROQ_API_KEY: 'groq-key',
+      GROQ_MODEL: ' custom-groq-model ',
+      GROQ_TIMEOUT_MS: '4321',
+    },
+    openAIProviderFactory() {
+      openAICalls += 1;
+      return provider;
+    },
+    geminiProviderFactory() {
+      geminiCalls += 1;
+      return provider;
+    },
+    groqProviderFactory(config) {
+      configuredModel = config.model;
+      assert.equal(config.timeoutMs, 4321);
+      return provider;
+    },
+  });
+
+  assert.equal((await postMatchup(app)).status, 200);
+  assert.equal(configuredModel, 'custom-groq-model');
+  assert.equal(openAICalls, 0);
+  assert.equal(geminiCalls, 0);
+});
+
 test('configured runtime logs only the selected provider name and model', () => {
   const entries: Array<{ event: string; fields: LogFields }> = [];
   const logger: Logger = {
@@ -225,6 +288,77 @@ test('selected provider without its key stays unconfigured and never falls back'
     (await response.json() as { error: { code: string } }).error.code,
     'ANALYSIS_NOT_CONFIGURED',
   );
+});
+
+test('Groq-selected runtime starts without a Groq key and never falls back', async () => {
+  const app = createRuntimeApp({
+    environment: {
+      AI_PROVIDER: 'groq',
+      GROQ_API_KEY: '   ',
+      OPENAI_API_KEY: 'available-but-not-selected',
+      GEMINI_API_KEY: 'available-but-not-selected',
+    },
+  });
+
+  assert.equal((await app.request('/api/health')).status, 200);
+  const response = await postMatchup(app);
+  assert.equal(response.status, 503);
+  assert.equal(
+    (await response.json() as { error: { code: string } }).error.code,
+    'ANALYSIS_NOT_CONFIGURED',
+  );
+});
+
+test('Groq provider failures keep safe correlated diagnostics without leaking its key', async () => {
+  const entries: Array<{ level: string; event: string; fields: LogFields }> = [];
+  const logger: Logger = {
+    debug(event, fields = {}) { entries.push({ level: 'debug', event, fields }); },
+    info(event, fields = {}) { entries.push({ level: 'info', event, fields }); },
+    warn(event, fields = {}) { entries.push({ level: 'warn', event, fields }); },
+    error(event, fields = {}) { entries.push({ level: 'error', event, fields }); },
+  };
+  const providerError = Object.assign(
+    new Error('401 api_key=gsk_sensitive-secret Authorization: Bearer hidden-token'),
+    { status: 401 },
+  );
+  const app = createRuntimeApp({
+    environment: {
+      AI_PROVIDER: 'groq',
+      GROQ_API_KEY: 'must-not-appear',
+      GROQ_MODEL: 'openai/gpt-oss-120b',
+    },
+    logger,
+    groqProviderFactory(config) {
+      return {
+        async analyze() {
+          throw new GroqProviderError(config.model, providerError);
+        },
+      };
+    },
+  });
+
+  const response = await postMatchup(app);
+  const requestId = response.headers.get('x-request-id');
+  assert.equal(response.status, 503);
+  assert.equal(
+    (await response.json() as { error: { code: string } }).error.code,
+    'ANALYSIS_PROVIDER_UNAVAILABLE',
+  );
+
+  const correlated = entries.filter((entry) => [
+    'http_request_completed',
+    'matchup_analysis_started',
+    'matchup_analysis_failed',
+    'analysis_provider_failed',
+  ].includes(entry.event));
+  assert.equal(correlated.length, 4);
+  assert.ok(correlated.every((entry) => entry.fields.requestId === requestId));
+  const failure = entries.find((entry) => entry.event === 'analysis_provider_failed');
+  assert.equal(failure?.fields.provider, 'groq');
+  assert.equal(failure?.fields.model, 'openai/gpt-oss-120b');
+  assert.equal(failure?.fields.category, 'authentication');
+  assert.equal(failure?.fields.status, 401);
+  assert.doesNotMatch(JSON.stringify(entries), /must-not-appear|gsk_sensitive|hidden-token/);
 });
 
 test('unknown AI_PROVIDER values fail with a controlled configuration error', () => {

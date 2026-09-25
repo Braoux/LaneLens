@@ -1,5 +1,6 @@
 import type {
   AnalysisContextResponse,
+  ApiErrorCode,
   MatchupAnalysis,
   MatchupRequest,
 } from '../shared/analysis-contract';
@@ -11,6 +12,50 @@ export class InvalidAnalysisResponseError extends Error {
   constructor() {
     super('L’analyse reçue est invalide.');
     this.name = 'InvalidAnalysisResponseError';
+  }
+}
+
+const API_ERROR_CODES = new Set<ApiErrorCode>([
+  'UNSUPPORTED_MEDIA_TYPE',
+  'INVALID_JSON',
+  'INVALID_MATCHUP_REQUEST',
+  'PATCH_CONTEXT_NOT_FOUND',
+  'PATCH_CONTEXT_UNAVAILABLE',
+  'PATCH_CONTEXT_INVALID',
+  'ANALYSIS_NOT_CONFIGURED',
+  'ANALYSIS_PROVIDER_UNAVAILABLE',
+  'INVALID_ANALYSIS_RESPONSE',
+  'ANALYSIS_FAILED',
+  'INTERNAL_ERROR',
+]);
+
+export class AnalysisRequestError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code?: ApiErrorCode,
+    readonly requestId?: string,
+  ) {
+    super('Analyse indisponible');
+    this.name = 'AnalysisRequestError';
+  }
+}
+
+async function readSafeApiErrorCode(response: Response): Promise<ApiErrorCode | undefined> {
+  try {
+    const body: unknown = await response.clone().json();
+    if (
+      typeof body !== 'object'
+      || body === null
+      || !('error' in body)
+      || typeof body.error !== 'object'
+      || body.error === null
+      || !('code' in body.error)
+      || typeof body.error.code !== 'string'
+      || !API_ERROR_CODES.has(body.error.code as ApiErrorCode)
+    ) return undefined;
+    return body.error.code as ApiErrorCode;
+  } catch {
+    return undefined;
   }
 }
 
@@ -53,7 +98,14 @@ export async function analyzeMatchup(
     body: JSON.stringify(request),
     signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
-  if (!response.ok) throw new Error('Analyse indisponible');
+  if (!response.ok) {
+    const requestId = response.headers.get('x-request-id')?.trim() || undefined;
+    throw new AnalysisRequestError(
+      response.status,
+      await readSafeApiErrorCode(response),
+      requestId,
+    );
+  }
 
   let body: unknown;
   try {

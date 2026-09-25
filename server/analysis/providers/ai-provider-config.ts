@@ -1,4 +1,4 @@
-export type AIProviderName = 'openai' | 'gemini';
+export type AIProviderName = 'openai' | 'gemini' | 'groq';
 export type AIEnvironment = Readonly<Record<string, string | undefined>>;
 
 export class AIProviderConfigurationError extends Error {
@@ -11,6 +11,6 @@ export class AIProviderConfigurationError extends Error {
 export function resolveAIProvider(rawValue: string | undefined): AIProviderName {
   const value = rawValue?.trim().toLowerCase() ?? '';
   if (value.length === 0) return 'openai';
-  if (value === 'openai' || value === 'gemini') return value;
+  if (value === 'openai' || value === 'gemini' || value === 'groq') return value;
   throw new AIProviderConfigurationError();
 }

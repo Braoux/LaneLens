@@ -265,9 +265,13 @@ test('refusal, absent output, empty output, and malformed JSON return controlled
 });
 
 test('client failures become safe provider errors and safe LaneLens errors', async () => {
+  const sdkError = Object.assign(
+    new Error('401 Authorization: Bearer secret-key provider-path=C:\\private'),
+    { status: 401 },
+  );
   const client: OpenAIResponsesClient = {
     async create() {
-      throw new Error('Authorization: Bearer secret-key provider-path=C:\\private');
+      throw sdkError;
     },
   };
   const provider = new OpenAIProvider(client, 'gpt-6-sol');
@@ -275,7 +279,14 @@ test('client failures become safe provider errors and safe LaneLens errors', asy
   await assert.rejects(provider.analyze(providerRequest), (error: unknown) => {
     assert.ok(error instanceof OpenAIProviderError);
     assert.equal(error.message, 'Le provider OpenAI est indisponible.');
+    assert.equal(error.provider, 'openai');
+    assert.equal(error.model, 'gpt-6-sol');
+    assert.equal(error.category, 'authentication');
+    assert.equal(error.status, 401);
     assert.equal(error.cause, undefined);
+    assert.equal(error.errorName, 'Error');
+    assert.match(error.errorMessage ?? '', /\[REDACTED\]/);
+    assert.doesNotMatch(error.errorMessage ?? '', /secret-key|private/i);
     assert.doesNotMatch(error.message, /secret|authorization|private/i);
     return true;
   });
@@ -283,6 +294,7 @@ test('client failures become safe provider errors and safe LaneLens errors', asy
   await assert.rejects(new MatchupAnalysisService(provider).analyze(input), (error: unknown) => {
     assert.ok(error instanceof MatchupAnalysisError);
     assert.equal(error.code, 'ANALYSIS_PROVIDER_UNAVAILABLE');
+    assert.ok(error.cause instanceof OpenAIProviderError);
     assert.doesNotMatch(error.message, /secret|authorization|private/i);
     return true;
   });

@@ -16,6 +16,7 @@ import type { HealthResponse } from './types.js';
 import { NOOP_LOGGER } from './logging/Logger.js';
 import type { Logger } from './logging/Logger.js';
 import { serializeError } from './logging/redaction.js';
+import { findProviderFailure } from './analysis/ProviderFailure.js';
 
 interface AppBindings {
   Variables: {
@@ -31,6 +32,7 @@ export interface AppDependencies {
   readonly analysisContext?: AnalysisContextResponse;
   readonly logger?: Logger;
   readonly analysisProviderName?: string;
+  readonly analysisProviderModel?: string;
 }
 
 type ApiErrorStatus = 400 | 415 | 422 | 500 | 502 | 503;
@@ -211,16 +213,27 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
         patch: request.patch,
         errorCode: code,
       };
-      if (error !== undefined) fields.error = serializeError(error, status >= 500);
+      if (error !== undefined) {
+        fields.error = serializeError(error, code === 'INTERNAL_ERROR');
+      }
       logger[status >= 500 ? 'error' : 'warn']('matchup_analysis_failed', fields);
       if (
         code === 'ANALYSIS_PROVIDER_UNAVAILABLE'
         && dependencies.analysisProviderName !== undefined
       ) {
-        logger.error('analysis_provider_failed', {
+        const providerFailure = findProviderFailure(error);
+        const providerFields: Record<string, unknown> = {
           requestId,
-          provider: dependencies.analysisProviderName,
+          provider: providerFailure?.provider ?? dependencies.analysisProviderName,
+          model: providerFailure?.model ?? dependencies.analysisProviderModel,
+          category: providerFailure?.category,
+          status: providerFailure?.status,
+          errorName: providerFailure?.errorName,
+          errorMessage: providerFailure?.errorMessage,
           errorCode: code,
+        };
+        logger.error('analysis_provider_failed', {
+          ...providerFields,
         });
       }
       return errorResponse(c, status, code);
@@ -271,7 +284,7 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
       return c.json(result, 200);
     } catch (error) {
       if (error instanceof MatchupAnalysisError) {
-        return failAnalysis(analysisErrorStatus(error), error.code);
+        return failAnalysis(analysisErrorStatus(error), error.code, error);
       }
       return failAnalysis(500, 'INTERNAL_ERROR', error);
     }

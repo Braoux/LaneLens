@@ -7,6 +7,10 @@ import {
   MATCHUP_ANALYSIS_JSON_SCHEMA,
 } from './matchup-analysis-schema.js';
 import type { JsonSchema } from './matchup-analysis-schema.js';
+import {
+  ProviderFailureError,
+  providerFailureDetails,
+} from '../ProviderFailure.js';
 
 export { MATCHUP_ANALYSIS_JSON_SCHEMA } from './matchup-analysis-schema.js';
 
@@ -46,9 +50,12 @@ export interface OpenAIClientOptions {
 
 export type OpenAIClientFactory = (options: OpenAIClientOptions) => OpenAIResponsesClient;
 
-export class OpenAIProviderError extends Error {
-  constructor() {
-    super('Le provider OpenAI est indisponible.');
+export class OpenAIProviderError extends ProviderFailureError {
+  constructor(model: string, cause: unknown) {
+    super(
+      providerFailureDetails('openai', model, cause),
+      'Le provider OpenAI est indisponible.',
+    );
     this.name = 'OpenAIProviderError';
   }
 }
@@ -89,8 +96,8 @@ export class OpenAIProvider implements MatchupAnalysisProvider {
         tools: [],
         store: false,
       });
-    } catch {
-      throw new OpenAIProviderError();
+    } catch (error) {
+      throw new OpenAIProviderError(this.model, error);
     }
 
     if (typeof response.outputText !== 'string' || response.outputText.length === 0) {

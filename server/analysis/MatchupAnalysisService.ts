@@ -15,8 +15,8 @@ export class MatchupAnalysisService {
 
     try {
       providerResponse = await this.provider.analyze({ input, instructions });
-    } catch {
-      throw new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE');
+    } catch (error) {
+      throw new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE', { cause: error });
     }
 
     return validateMatchupAnalysis(providerResponse, input);

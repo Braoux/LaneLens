@@ -12,6 +12,7 @@ import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { createApp } from '../server/app.js';
 import { MatchupAnalysisError } from '../server/analysis/errors.js';
+import { ProviderFailureError } from '../server/analysis/ProviderFailure.js';
 import type { MatchupAnalysis } from '../server/analysis/types.js';
 import {
   DEFAULT_LOG_LEVEL,
@@ -319,18 +320,73 @@ test('HTTP logs use info for 200, warn for 422, and error for 500', async () => 
 
 test('analysis failures keep the request ID, normalized code, and provider name', async () => {
   const logger = new MemoryLogger();
+  const sdkError = Object.assign(
+    new Error('429 quota exceeded Authorization: Bearer provider-secret-token'),
+    { status: 429 },
+  );
   const response = await postMatchup(configuredApp(
     logger,
-    new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE'),
+    new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE', {
+      cause: new ProviderFailureError({
+        provider: 'gemini',
+        model: 'gemini-3.8-flash',
+        category: 'rate_limit',
+        status: 429,
+        errorName: sdkError.name,
+        errorMessage: '429 quota exceeded Authorization: Bearer [REDACTED]',
+      }),
+    }),
   ));
   const requestId = response.headers.get('x-request-id');
 
   assert.equal(response.status, 503);
   const failed = logger.entries.find((entry) => entry.event === 'matchup_analysis_failed');
   const provider = logger.entries.find((entry) => entry.event === 'analysis_provider_failed');
+  const correlated = logger.entries.filter((entry) => [
+    'http_request_completed',
+    'matchup_analysis_started',
+    'matchup_analysis_failed',
+    'analysis_provider_failed',
+  ].includes(entry.event));
+  assert.equal(correlated.length, 4);
+  assert.ok(correlated.every((entry) => entry.fields.requestId === requestId));
   assert.equal(failed?.fields.requestId, requestId);
   assert.equal(failed?.fields.errorCode, 'ANALYSIS_PROVIDER_UNAVAILABLE');
   assert.equal(provider?.fields.requestId, requestId);
   assert.equal(provider?.fields.provider, 'gemini');
+  assert.equal(provider?.fields.model, 'gemini-3.8-flash');
+  assert.equal(provider?.fields.category, 'rate_limit');
+  assert.equal(provider?.fields.status, 429);
+  assert.equal(provider?.fields.errorName, 'Error');
+  assert.match(String(provider?.fields.errorMessage), /\[REDACTED\]/);
+  assert.doesNotMatch(JSON.stringify(provider), /provider-secret-token/);
   assert.equal(provider?.fields.errorCode, 'ANALYSIS_PROVIDER_UNAVAILABLE');
+});
+
+test('provider diagnostics are redacted before being persisted', async (t) => {
+  const directory = temporaryDirectory(t);
+  const logger = createFileLogger(logConfig(directory), { now: () => NOW });
+  const sdkError = Object.assign(
+    new Error('401 api_key=AIzaSensitiveCredential123456789 Authorization: Bearer hidden-token'),
+    { status: 401 },
+  );
+  const response = await postMatchup(configuredApp(
+    logger,
+    new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE', {
+      cause: new ProviderFailureError({
+        provider: 'gemini',
+        model: 'gemini-3.8-flash',
+        category: 'authentication',
+        status: 401,
+        errorName: sdkError.name,
+        errorMessage: '401 api_key=[REDACTED] Authorization: Bearer [REDACTED]',
+      }),
+    }),
+  ));
+
+  assert.equal(response.status, 503);
+  const serialized = JSON.stringify(readEntries(directory));
+  assert.match(serialized, /analysis_provider_failed/);
+  assert.match(serialized, /authentication/);
+  assert.doesNotMatch(serialized, /AIzaSensitiveCredential|hidden-token/);
 });

@@ -12,8 +12,8 @@ const SAFE_MESSAGES: Record<MatchupAnalysisErrorCode, string> = {
 export class MatchupAnalysisError extends Error {
   readonly code: MatchupAnalysisErrorCode;
 
-  constructor(code: MatchupAnalysisErrorCode) {
-    super(SAFE_MESSAGES[code]);
+  constructor(code: MatchupAnalysisErrorCode, options?: ErrorOptions) {
+    super(SAFE_MESSAGES[code], options);
     this.name = 'MatchupAnalysisError';
     this.code = code;
   }
