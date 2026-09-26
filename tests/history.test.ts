@@ -154,7 +154,7 @@ test('stored duplicates keep the first valid occurrence in recent-to-old order',
   const loaded = normalizeMatchupHistory({ version: MATCHUP_HISTORY_VERSION, entries: [recent, old, distinct] });
 
   assert.equal(loaded.length, 2);
-  assert.equal(loaded.length, 3);
+  assert.equal(loaded.length, 0);
   assert.equal(loaded[0]?.generatedAt, recent.generatedAt);
   assert.equal(loaded[1]?.selection.allyCarry.name, 'ZiggsB');
 });
