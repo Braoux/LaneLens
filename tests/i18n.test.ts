@@ -61,6 +61,7 @@ test('the application footer exposes the author and a safe external GitHub link'
   assert.match(source, /target="_blank"/);
   assert.match(source, /rel="noopener noreferrer"/);
   assert.match(source, /aria-label="\$\{t\('footer\.githubLabel'\)\}"/);
+  assert.match(source, /t\('footer\.telemetryNotice'\)/);
 });
 
 test('the French UI source no longer embeds the former English section titles', () => {

@@ -1,4 +1,4 @@
-import { AnalysisRequestError, analyzeMatchupWithMetadata, checkHealth, getAnalysisContext, sendFeedback } from './api';
+import { AnalysisRequestError, InvalidAnalysisResponseError, analyzeMatchupWithMetadata, checkHealth, getAnalysisContext, sendFeedback } from './api';
 import { toAnalysisErrorViewModel } from './analysis-ux';
 import { buildMatchupRequest, invalidateActiveAnalysisRequest, isActiveAnalysisRequest, serializeCheatSheet, toQuickOverlay } from './analysis';
 import { initializeChampionCatalog } from './catalog-state';
@@ -17,6 +17,9 @@ import {
   type FeedbackView,
 } from '../shared/feedback-contract';
 import { buildAnalysisFeedbackRequest, buildBugFeedbackRequest } from './feedback';
+import { createBrowserTelemetryClient } from './telemetry';
+import { ANALYSIS_TELEMETRY_ERROR_CODES } from '../shared/telemetry-contract';
+import type { AnalysisFailedTelemetryContext } from '../shared/telemetry-contract';
 import './styles/main.css';
 
 interface AnalysisAttempt { readonly snapshot: MatchupSelection; readonly request: MatchupRequest }
@@ -30,6 +33,7 @@ interface RenderedAnalysisContext {
 const activeLocale = loadAppLocale();
 const t = createTranslator(activeLocale);
 const APP_VERSION = import.meta.env.VITE_APP_VERSION?.trim() || '0.1.0';
+const telemetry = createBrowserTelemetryClient();
 persistAppLocale(activeLocale);
 applyDocumentLocale(activeLocale);
 
@@ -68,7 +72,7 @@ app.innerHTML = `
     </div>
     <div id="error-view" hidden></div><div id="result-view" hidden></div>
   </main>
-  <footer class="app-footer"><div class="footer-attribution"><span class="footer-brand">LANELENS</span><span class="footer-separator" aria-hidden="true">·</span><span class="footer-credit">${t('footer.attribution')}</span><span class="footer-separator" aria-hidden="true">·</span><a class="footer-github" href="https://github.com/Braoux" target="_blank" rel="noopener noreferrer" aria-label="${t('footer.githubLabel')}">${t('footer.github')}</a></div><div class="footer-utilities"><button class="feedback-link" id="report-bug" type="button">${t('feedback.openBug')}</button><span id="health" role="status">${t('health.checking')}</span></div></footer>
+  <footer class="app-footer"><div class="footer-attribution"><span class="footer-brand">LANELENS</span><span class="footer-separator" aria-hidden="true">·</span><span class="footer-credit">${t('footer.attribution')}</span><span class="footer-separator" aria-hidden="true">·</span><a class="footer-github" href="https://github.com/Braoux" target="_blank" rel="noopener noreferrer" aria-label="${t('footer.githubLabel')}">${t('footer.github')}</a></div><div class="footer-utilities"><button class="feedback-link" id="report-bug" type="button">${t('feedback.openBug')}</button><span id="health" role="status">${t('health.checking')}</span></div><p class="footer-telemetry-notice">${t('footer.telemetryNotice')}</p></footer>
   <dialog class="picker" id="picker" aria-labelledby="picker-title"><div class="picker-header"><div><p class="eyebrow">${t('picker.eyebrow')}</p><h2 id="picker-title">${t('picker.title')}</h2></div><button class="close-button" id="close-picker" type="button" aria-label="${t('common.close')}">×</button></div><label class="search"><span aria-hidden="true">⌕</span><span class="sr-only">${t('picker.search')}</span><input id="champion-search" type="search" placeholder="${t('picker.search')}" autocomplete="off"></label><p class="picker-hint" id="picker-hint"></p><div class="champion-grid" id="champion-grid" role="list"></div></dialog>
   <dialog class="feedback-dialog" id="feedback-dialog" aria-labelledby="feedback-title"><form id="feedback-form"><div class="feedback-header"><div><p class="eyebrow">ALPHA</p><h2 id="feedback-title">${t('feedback.title')}</h2><p>${t('feedback.intro')}</p></div><button class="close-button" id="close-feedback" type="button" aria-label="${t('common.close')}">×</button></div><fieldset><legend>${t('feedback.kindLegend')}</legend><label><input type="radio" name="feedback-kind" value="analysis"> ${t('feedback.kindAnalysis')}</label><label><input type="radio" name="feedback-kind" value="bug"> ${t('feedback.kindBug')}</label></fieldset><label class="feedback-field"><span>${t('feedback.category')}</span><select id="feedback-category" required></select></label><label class="feedback-field"><span>${t('feedback.comment')}</span><textarea id="feedback-comment" maxlength="1000" rows="5" placeholder="${t('feedback.commentPlaceholder')}"></textarea></label><div class="feedback-actions"><button class="feedback-submit" id="feedback-submit" type="submit">${t('feedback.submit')}</button></div><p class="feedback-status" id="feedback-status" role="status" aria-live="polite"></p></form></dialog>
 `;
@@ -171,6 +175,22 @@ function openFeedback(preferredKind: 'analysis' | 'bug'): void {
   renderFeedbackCategories();
   feedbackDialog.showModal();
   feedbackCategory.focus();
+  telemetry.feedbackOpened({ kind: selectedFeedbackKind() });
+}
+
+function analysisFailureTelemetryContext(error: unknown): AnalysisFailedTelemetryContext {
+  const analysisRequestId = error instanceof AnalysisRequestError ? error.requestId : undefined;
+  const errorCode = error instanceof InvalidAnalysisResponseError
+    ? 'INVALID_ANALYSIS_RESPONSE'
+    : error instanceof AnalysisRequestError
+      && error.code !== undefined
+      && (ANALYSIS_TELEMETRY_ERROR_CODES as readonly string[]).includes(error.code)
+      ? error.code as AnalysisFailedTelemetryContext['errorCode']
+      : undefined;
+  return {
+    ...(analysisRequestId === undefined ? {} : { analysisRequestId }),
+    ...(errorCode === undefined ? {} : { errorCode }),
+  };
 }
 
 function feedbackEnvironment() {
@@ -255,7 +275,7 @@ function renderResult(snapshot: MatchupSelection, analysis: MatchupAnalysis, met
   const feedbackEntry = element('aside', 'feedback-entry'); feedbackEntry.append(element('span', undefined, t('feedback.kindAnalysis'))); const report = element('button', 'feedback-link', t('feedback.openAnalysis')); report.type = 'button'; report.addEventListener('click', () => openFeedback('analysis')); feedbackEntry.append(report); resultView.append(feedbackEntry);
 }
 
-function showHistoricalAnalysis(entry: MatchupHistoryEntry): void { activeRequestId = invalidateActiveAnalysisRequest(activeRequestId, activeAnalysisController); activeAnalysisController = undefined; isAnalyzing = false; failedAttempt = undefined; loadingView.hidden = true; if (picker.open) picker.close(); analysisMessage.textContent = ''; renderControls(); renderResult(entry.selection, entry.analysis, { generatedAt: entry.generatedAt, requestId: entry.requestId }); void transition(() => { selectionView.hidden = true; errorView.hidden = true; resultView.hidden = false; }).then(scrollTop); }
+function showHistoricalAnalysis(entry: MatchupHistoryEntry): void { activeRequestId = invalidateActiveAnalysisRequest(activeRequestId, activeAnalysisController); activeAnalysisController = undefined; isAnalyzing = false; failedAttempt = undefined; loadingView.hidden = true; if (picker.open) picker.close(); analysisMessage.textContent = ''; renderControls(); renderResult(entry.selection, entry.analysis, { generatedAt: entry.generatedAt, requestId: entry.requestId }); void transition(() => { selectionView.hidden = true; errorView.hidden = true; resultView.hidden = false; }).then(() => { scrollTop(); telemetry.historyOpened({ patch: entry.patch.trim() }); }); }
 function renderHistory(): void { historyList.replaceChildren(); historyEmpty.hidden = historyEntries.length > 0; for (const entry of historyEntries) { const button = element('button', 'history-card'); button.type = 'button'; const matchup = element('span', 'history-matchup'); matchup.append(element('strong', undefined, `${entry.selection.allyCarry.name} + ${entry.selection.allySupport.name}`), element('small', undefined, t('common.vs').toLocaleLowerCase(activeLocale)), element('strong', undefined, `${entry.selection.enemyCarry.name} + ${entry.selection.enemySupport.name}`)); const metadata = element('span', 'history-metadata'); const savedAt = element('time', undefined, t('history.savedAt', { date: formatHistoryDate(entry.generatedAt) })); savedAt.dateTime = entry.generatedAt; metadata.append(element('span', undefined, t('common.patch', { patch: entry.patch.trim() })), savedAt); button.append(matchup, metadata); button.addEventListener('click', () => showHistoricalAnalysis(entry)); historyList.append(button); } }
 
 function renderLoading(attempt: AnalysisAttempt): void { document.querySelector('#loading-matchup')!.textContent = `${attempt.request.allyCarry} + ${attempt.request.allySupport} ${t('common.vs').toLocaleLowerCase(activeLocale)} ${attempt.request.enemyCarry} + ${attempt.request.enemySupport}`; const visual = document.querySelector<HTMLElement>('#loading-matchup-visual')!; visual.replaceChildren(); visual.append(portrait(attempt.snapshot.allyCarry, 'loading'), portrait(attempt.snapshot.allySupport, 'loading'), element('strong', undefined, t('common.vs')), portrait(attempt.snapshot.enemyCarry, 'loading'), portrait(attempt.snapshot.enemySupport, 'loading')); loadingView.hidden = false; }
@@ -265,8 +285,9 @@ function renderAnalysisError(error: unknown, attempt: AnalysisAttempt): void {
 
 async function runAnalysis(attempt: AnalysisAttempt): Promise<void> {
   if (isAnalyzing) return; const requestId = ++activeRequestId; const controller = new AbortController(); activeAnalysisController = controller; isAnalyzing = true; analysisMessage.textContent = ''; errorView.hidden = true; resultView.hidden = true; selectionView.hidden = false; renderLoading(attempt); renderControls();
-  try { const result = await analyzeMatchupWithMetadata(attempt.request, controller.signal); if (!isActiveAnalysisRequest(requestId, activeRequestId)) return; failedAttempt = undefined; lastRelevantRequestId = result.requestId; renderResult(attempt.snapshot, result.analysis, { requestId: result.requestId }); historyEntries = historyStore.add(attempt.snapshot, result.analysis, result.requestId); renderHistory(); await transition(() => { loadingView.hidden = true; selectionView.hidden = true; errorView.hidden = true; resultView.hidden = false; }); scrollTop(); }
-  catch (error) { if (!isActiveAnalysisRequest(requestId, activeRequestId)) return; if (error instanceof AnalysisRequestError) lastRelevantRequestId = error.requestId; renderAnalysisError(error, attempt); await transition(() => { loadingView.hidden = true; selectionView.hidden = true; resultView.hidden = true; errorView.hidden = false; }); scrollTop(); }
+  telemetry.analysisStarted({ allyCarry: attempt.request.allyCarry, allySupport: attempt.request.allySupport, enemyCarry: attempt.request.enemyCarry, enemySupport: attempt.request.enemySupport, patch: attempt.request.patch });
+  try { const result = await analyzeMatchupWithMetadata(attempt.request, controller.signal); if (!isActiveAnalysisRequest(requestId, activeRequestId)) return; failedAttempt = undefined; lastRelevantRequestId = result.requestId; renderResult(attempt.snapshot, result.analysis, { requestId: result.requestId }); historyEntries = historyStore.add(attempt.snapshot, result.analysis, result.requestId); renderHistory(); await transition(() => { loadingView.hidden = true; selectionView.hidden = true; errorView.hidden = true; resultView.hidden = false; }); scrollTop(); telemetry.analysisCompleted({ patch: attempt.request.patch, ...(result.requestId === undefined ? {} : { analysisRequestId: result.requestId }) }); }
+  catch (error) { if (!isActiveAnalysisRequest(requestId, activeRequestId)) return; if (error instanceof AnalysisRequestError) lastRelevantRequestId = error.requestId; renderAnalysisError(error, attempt); await transition(() => { loadingView.hidden = true; selectionView.hidden = true; resultView.hidden = true; errorView.hidden = false; }); scrollTop(); telemetry.analysisFailed(analysisFailureTelemetryContext(error)); }
   finally { if (isActiveAnalysisRequest(requestId, activeRequestId)) { if (activeAnalysisController === controller) activeAnalysisController = undefined; isAnalyzing = false; loadingView.hidden = true; renderControls(); } }
 }
 function submitAnalysis(): void { const snapshot = snapshotSelection(selection); if (!snapshot || !analysisContext || isAnalyzing) return; void runAnalysis(Object.freeze({ snapshot, request: Object.freeze(buildMatchupRequest(snapshot, analysisContext.patch, activeLocale)) })); }
@@ -301,6 +322,9 @@ feedbackForm.addEventListener('submit', (event) => {
       feedbackComment.value,
       environment,
     );
+  const telemetryContext = kind === 'analysis'
+    ? { kind: 'analysis' as const, category: feedbackCategory.value as AnalysisFeedbackCategory }
+    : { kind: 'bug' as const, category: feedbackCategory.value as BugFeedbackCategory };
   feedbackSubmit.disabled = true;
   feedbackSubmit.textContent = t('feedback.sending');
   feedbackStatus.textContent = '';
@@ -308,6 +332,7 @@ feedbackForm.addEventListener('submit', (event) => {
     feedbackStatus.textContent = t('feedback.success');
     feedbackStatus.dataset.state = 'success';
     feedbackSubmit.textContent = t('feedback.submit');
+    telemetry.feedbackSubmitted(telemetryContext);
   }).catch(() => {
     feedbackStatus.textContent = t('feedback.failure');
     feedbackStatus.dataset.state = 'error';
@@ -321,6 +346,7 @@ async function start(): Promise<void> {
   if (catalogResult.status === 'fulfilled' && catalogResult.value.status === 'ready') { catalog = catalogResult.value.catalog; document.querySelector('#catalog-version')!.textContent = t('catalog.version', { version: catalog.dataDragonVersion }); document.querySelector<HTMLElement>('#cache-status')!.hidden = !catalog.stale; catalogMessage.hidden = true; } else { catalogMessage.textContent = t('catalog.unavailable'); catalogMessage.dataset.state = 'error'; }
   if (contextResult.status === 'fulfilled') { analysisContext = contextResult.value; const patch = document.querySelector<HTMLElement>('#analysis-patch')!; patch.textContent = t('common.patch', { patch: analysisContext.patch }); patch.hidden = false; } else { analysisMessage.textContent = t('analysis.contextUnavailable'); analysisMessage.dataset.state = 'error'; }
   renderSlots();
+  telemetry.appOpened();
 }
 async function refreshHealth(): Promise<void> { const health = document.querySelector<HTMLElement>('#health')!; try { await checkHealth(); health.textContent = t('health.available'); health.dataset.state = 'ok'; } catch { health.textContent = t('health.unavailable'); health.dataset.state = 'error'; } }
 void start(); void refreshHealth();

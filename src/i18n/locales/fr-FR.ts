@@ -87,6 +87,7 @@ export const frFR = {
   'footer.attribution': 'Designed & developed by Jonathan Assah',
   'footer.github': 'GitHub',
   'footer.githubLabel': 'Ouvrir le profil GitHub de Jonathan Assah dans un nouvel onglet',
+  'footer.telemetryNotice': 'LaneLens Alpha utilise une télémétrie pseudonyme minimale pour mesurer l’utilisation et améliorer l’application. Aucun compte Riot ni information d’identité n’est collecté.',
   'feedback.openAnalysis': 'Signaler un problème',
   'feedback.openBug': 'Signaler un bug',
   'feedback.title': 'Signaler un problème',
