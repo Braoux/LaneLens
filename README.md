@@ -264,7 +264,7 @@ Le contrôleur HTTP ne dépend d'aucun SDK LLM. Le runtime choisit le provider �
 
 Changer de modèle ou de provider ne doit pas nécessiter de modifier le frontend, le contrat HTTP ou le service métier.
 
-Voir [Architecture technique](docs/architecture.md) et [ADR-001](docs/decisions/ADR-001-remplacer-openclaw-runtime.md).
+Voir [Architecture technique](docs/architecture.md).
 
 ## Contexte gameplay
 
@@ -430,7 +430,6 @@ LaneLens reste volontairement léger :
 ## Documentation
 
 - [Architecture technique](docs/architecture.md)
-- [ADR-001 — Rendre OpenClaw remplaçable dans le runtime](docs/decisions/ADR-001-remplacer-openclaw-runtime.md)
 - [Maintenance des contextes de patch](docs/patch-context.md)
 
 ## Références techniques
