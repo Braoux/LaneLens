@@ -48,8 +48,19 @@ test('locale persistence accepts declared locales and safely rejects unknown or 
 test('typed catalogue translates semantic keys and controlled interpolation', () => {
   const t = createTranslator('fr-FR');
   assert.equal(t('result.target'), 'Cible prioritaire');
+  assert.equal(t('footer.attribution'), 'Designed & developed by Jonathan Assah');
+  assert.equal(t('footer.github'), 'GitHub');
   assert.equal(t('history.savedAt', { date: '25/09/2026 10:30' }), 'Sauvegardée le 25/09/2026 10:30');
   assert.throws(() => translate('fr-FR', 'missing.key' as never), /Missing translation/);
+});
+
+test('the application footer exposes the author and a safe external GitHub link', () => {
+  const source = readFileSync(new URL('../src/main.ts', import.meta.url), 'utf8');
+  assert.match(source, /t\('footer\.attribution'\)/);
+  assert.match(source, /href="https:\/\/github\.com\/Braoux"/);
+  assert.match(source, /target="_blank"/);
+  assert.match(source, /rel="noopener noreferrer"/);
+  assert.match(source, /aria-label="\$\{t\('footer\.githubLabel'\)\}"/);
 });
 
 test('the French UI source no longer embeds the former English section titles', () => {
