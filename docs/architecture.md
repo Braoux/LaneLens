@@ -1,6 +1,6 @@
 # Architecture — LaneLens
 
-État documenté : architecture livrée au 25 septembre 2026, après LAN-018.
+État documenté : architecture livrée au 26 septembre 2026, après mise en production alpha, CI/CD et instrumentation alpha.
 
 Ce document décrit le code actuellement présent dans le dépôt. [ADR-001](decisions/ADR-001-remplacer-openclaw-runtime.md) formalise la décision de rendre le moteur d’analyse indépendant d’OpenClaw.
 
@@ -35,7 +35,7 @@ flowchart LR
     I --> O["OpenAI / Gemini / Groq"]
 ```
 
-Le proxy Vite est uniquement une commodité de développement. Le déploiement public n’est pas encore livré dans l’état documenté ici.
+Le proxy Vite est uniquement une commodité de développement. En production, Hono sert également le frontend compilé depuis `dist/client/`. Le déploiement public actuel est réalisé sur Render depuis la branche `production`.
 
 ---
 
@@ -95,7 +95,7 @@ interface MatchupRequest {
 
 Le contrôleur exige actuellement exactement ces cinq propriétés, toutes non vides.
 
-LAN-020 prévoit l’ajout explicite d’une locale, mais ce changement n’est pas encore livré.
+La locale fait désormais partie explicitement de `MatchupRequest` et est propagée jusqu’au provider et aux validateurs.
 
 ### MatchupAnalysis
 
@@ -187,7 +187,7 @@ Responsabilités actuelles :
 
 Le service ne connaît ni Hono ni le transport HTTP.
 
-LAN-019 prévoit d’ajouter une validation de conformité gameplay après la validation structurelle.
+Après la validation structurelle, le service applique désormais une validation de conformité gameplay déterministe puis une validation de cohérence linguistique.
 
 ---
 
@@ -213,7 +213,7 @@ Une réponse invalide devient :
 INVALID_ANALYSIS_RESPONSE
 ```
 
-Important : cette validation est actuellement **structurelle et contractuelle**. Elle ne garantit pas encore qu’une recommandation gameplay soit mécaniquement vraie. LAN-019 existe pour traiter ce point.
+Important : la validation structurelle reste distincte de la validation gameplay. Le validateur de conformité détecte plusieurs impossibilités déterministes et incohérences textuelles, mais ne constitue pas une preuve formelle de justesse tactique.
 
 ---
 
@@ -228,9 +228,11 @@ server/app.ts
 Routes actuellement livrées :
 
 ```http
-GET /api/health
-GET /api/analysis-context
+GET  /api/health
+GET  /api/analysis-context
 POST /api/matchup
+POST /api/feedback
+POST /api/telemetry
 ```
 
 ### GET /api/health
@@ -307,6 +309,14 @@ Mappings principaux :
 
 Le frontend ne rend jamais directement le body technique provider.
 
+### POST /api/feedback
+
+Reçoit les signalements testeurs validés côté serveur puis les transmet à un tracker GitHub configurable. Les tokens et coordonnées du dépôt restent exclusivement côté serveur.
+
+### POST /api/telemetry
+
+Reçoit une télémétrie pseudonyme minimale basée sur un `clientId` local et un `sessionId` de session. Les événements couvrent notamment l’ouverture de l’application, les analyses, l’historique et le feedback.
+
 ---
 
 ## Request ID et diagnostic
@@ -335,7 +345,7 @@ Le logging est abstrait derrière :
 server/logging/Logger.ts
 ```
 
-L’implémentation courante écrit des fichiers JSON Lines quotidiens.
+En local, l’implémentation courante écrit des fichiers JSON Lines quotidiens. En production Render, LaneLens utilise stdout/stderr afin de s’intégrer au système de logs de la plateforme.
 
 Configuration :
 
@@ -722,3 +732,52 @@ Doit introduire :
 - [ADR-001 — Rendre OpenClaw remplaçable dans le runtime](decisions/ADR-001-remplacer-openclaw-runtime.md)
 - [Maintenance des contextes de patch](patch-context.md)
 - [README](../README.md)
+
+
+---
+
+## Production et livraison
+
+La branche `main` reste la branche de développement. La branche `production` représente l’état réellement déployé.
+
+```text
+feature
+  ↓ PR
+main
+  ↓ promotion
+production
+  ↓
+GitHub Actions CI
+  ↓
+Render
+  ↓
+Production Smoke Test
+```
+
+La CI exécute :
+
+```text
+npm ci
+npm audit --audit-level=high
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Le smoke test de production attend le déploiement Render correspondant au commit de `production`, puis vérifie `GET /api/health` sur le service public.
+
+Les branches `main` et `production` sont protégées.
+
+---
+
+## Points de vigilance actuels
+
+Le socle est adapté à l’alpha, mais les sujets suivants restent ouverts avant une diffusion plus large :
+
+- conformité Riot et mentions produit tiers ;
+- protection renforcée contre l’abus des endpoints publics ;
+- exploitation et mesure des warnings de conformité gameplay ;
+- enrichissement progressif de la base de faits gameplay ;
+- découpage progressif du frontend aujourd’hui encore concentré dans `src/main.ts` ;
+- formalisation plus complète de la politique de confidentialité liée à la télémétrie.
