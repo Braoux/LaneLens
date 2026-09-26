@@ -23,6 +23,8 @@ function exactKeys(value: UnknownRecord, expected: readonly string[]): boolean {
 function boundedString(value: unknown, max: number): string | undefined {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim();
+  // Les caractères de contrôle sont volontairement rejetés.
+  // eslint-disable-next-line no-control-regex
   if (normalized.length === 0 || normalized.length > max || /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/u.test(normalized)) {
     return undefined;
   }

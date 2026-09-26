@@ -131,7 +131,7 @@ test('AI_PROVIDER=gemini selects Gemini without falling back to OpenAI', async (
   let openAICalls = 0;
   let configuredModel = '';
   const provider: MatchupAnalysisProvider = {
-    async analyze(request) {
+    async analyze() {
       return {
         matchup: { allyCarry: requestBody.allyCarry, allySupport: requestBody.allySupport, enemyCarry: requestBody.enemyCarry, enemySupport: requestBody.enemySupport, patch: requestBody.patch },
         lanePlan: 'Contrôler la vague.',
