@@ -9,7 +9,8 @@ export interface ProductionFrontendOptions {
   readonly clientDirectory?: string;
   readonly workingDirectory?: string;
 }
-
+// Hono doit conserver les bindings génériques de l'application appelante.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function attachProductionFrontend<T extends Hono<any>>(
   app: T,
   options: ProductionFrontendOptions,

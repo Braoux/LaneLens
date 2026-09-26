@@ -101,6 +101,8 @@ test('telemetry failures are fire-and-forget and never escape into product flows
 test('telemetry invokes the injected fetch function without a receiver', () => {
   let receiver: unknown = 'not-called';
   const fetchImpl = (function (this: unknown) {
+    // Ce test vérifie volontairement le receiver de l'appel.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     receiver = this;
     return Promise.resolve(Response.json({ status: 'accepted' }, { status: 202 }));
   }) as typeof fetch;
@@ -159,7 +161,7 @@ test('POST /api/telemetry logs a sanitized product event with server request cor
   assert.equal(event?.fields.sessionId, sessionId);
   assert.equal(event?.fields.telemetryEvent, 'analysis_started');
   assert.match(String(event?.fields.requestId), /^[0-9a-f-]{36}$/u);
-  assert.doesNotMatch(JSON.stringify(entries), /analysis\"|comment|userAgent|prompt/i);
+  assert.doesNotMatch(JSON.stringify(entries), /analysis"|comment|userAgent|prompt/i);
 });
 
 test('POST /api/telemetry rejects malformed and unknown events without affecting health', async () => {
