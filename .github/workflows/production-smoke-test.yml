@@ -28,9 +28,14 @@ jobs:
         shell: bash
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            sha="${{ github.sha }}"
+            sha="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/production | cut -f1)"
           else
             sha="${{ github.event.workflow_run.head_sha }}"
+          fi
+
+          if [ -z "$sha" ]; then
+            echo "Unable to resolve production commit."
+            exit 1
           fi
 
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
