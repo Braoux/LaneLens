@@ -22,6 +22,8 @@ import { findAnalysisConformanceFailure } from './analysis/AnalysisConformanceVa
 import type { FeedbackAcceptedResponse } from '../shared/feedback-contract.js';
 import type { FeedbackServiceLike } from './feedback/types.js';
 import { normalizeFeedbackRequest } from './feedback/validation.js';
+import type { TelemetryAcceptedResponse } from '../shared/telemetry-contract.js';
+import { normalizeTelemetryRequest } from './telemetry/validation.js';
 
 interface AppBindings {
   Variables: {
@@ -53,6 +55,7 @@ const MATCHUP_KEYS = [
 ] as const satisfies readonly (keyof MatchupRequest)[];
 
 const ERROR_MESSAGES: Record<ApiErrorCode, string> = {
+  INVALID_TELEMETRY_REQUEST: 'L’événement de télémétrie est invalide.',
   UNSUPPORTED_MEDIA_TYPE: 'Le contenu de la requête doit être au format JSON.',
   INVALID_JSON: 'Le corps JSON est absent ou invalide.',
   INVALID_MATCHUP_REQUEST: 'La requête de matchup est invalide.',
@@ -193,6 +196,33 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
       patch: analysisContext.patch.trim(),
       contextVersion: analysisContext.contextVersion.trim(),
     } satisfies AnalysisContextResponse);
+  });
+
+  app.post('/api/telemetry', async (c) => {
+    if (!hasJsonContentType(c.req.header('content-type'))) {
+      return errorResponse(c, 415, 'UNSUPPORTED_MEDIA_TYPE');
+    }
+
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return errorResponse(c, 400, 'INVALID_JSON');
+    }
+
+    const telemetry = normalizeTelemetryRequest(body);
+    if (telemetry === undefined) {
+      return errorResponse(c, 422, 'INVALID_TELEMETRY_REQUEST');
+    }
+
+    logger.info('product_telemetry', {
+      requestId: c.get('requestId'),
+      clientId: telemetry.clientId,
+      sessionId: telemetry.sessionId,
+      telemetryEvent: telemetry.event,
+      ...('context' in telemetry ? telemetry.context : {}),
+    });
+    return c.json({ status: 'accepted' } satisfies TelemetryAcceptedResponse, 202);
   });
 
   app.post('/api/feedback', async (c) => {
