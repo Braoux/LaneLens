@@ -16,46 +16,19 @@ Choisissez votre carry, votre support et la botlane adverse. LaneLens transforme
 
 Connaître les quatre champions ne suffit pas toujours à savoir comment jouer la lane.
 
-Entre les timings de niveaux, les cooldowns, la wave, les fenêtres d'engage et les interactions entre carry et support, la vraie question est souvent beaucoup plus simple :
+Entre les timings de niveaux, les cooldowns, la wave, les fenêtres d'engage et les interactions entre carry et support, la vraie question est souvent :
 
 > **Qu'est-ce qu'on doit réellement faire dans cette botlane ?**
 
-LaneLens est conçu pour répondre à cette question avec une analyse structurée, actionnable et centrée sur le **2v2 complet**, pas uniquement sur un duel champion contre champion.
-
-## Comment ça marche ?
-
-Sélectionnez les deux champions de votre botlane et les deux champions adverses, puis lancez l'analyse. LaneLens transforme ce 2v2 en un plan de jeu lisible avant d'entrer en partie.
-
-<p align="center">
-  <img src="docs/assets/lanelens-picker.png"
-       alt="LaneLens — sélection de Miss Fortune et Leona contre Jinx et Soraka"
-       width="1200">
-</p>
-
-## Ce que LaneLens analyse
-
-Pour chaque matchup, LaneLens produit notamment :
-
-- un plan de lane ;
-- les principales menaces adverses ;
-- la réponse à ces menaces ;
-- les fenêtres de trade et d'engage ;
-- une condition de victoire ;
-- le plan des niveaux 1, 2 et 3 ;
-- la gestion de wave ;
-- la cible prioritaire ;
-- les changements après le niveau 6 ;
-- les opportunités de roaming ;
-- une cheat sheet copiable ;
-- une règle essentielle à retenir.
-
-L'objectif n'est pas de réciter les sorts des champions, mais de transformer le matchup en **décisions concrètes**.
+LaneLens répond à cette question avec une analyse structurée, actionnable et centrée sur le **2v2 complet**, pas uniquement sur un duel champion contre champion.
 
 ## État du projet
 
-LaneLens est en développement actif et se rapproche de sa première alpha.
+LaneLens est en **alpha** et dispose désormais d'un déploiement public de test sur Render :
 
-Le parcours principal est déjà fonctionnel :
+https://lanelens.onrender.com
+
+Le parcours principal est fonctionnel :
 
 ```text
 4 champions
@@ -69,11 +42,25 @@ analyse détaillée
 historique local
 ```
 
-Le parcours principal, l'interface responsive et le socle d'internationalisation sont désormais en place. Les travaux actuels portent principalement sur la conformité gameplay des analyses, la conformité Riot, la remontée de feedback testeur et la préparation du déploiement de l'alpha.
+Le socle de production est également en place :
 
-## Fonctionnalités
+```text
+feature
+   ↓ PR
+ main
+   ↓ promotion
+ production
+   ↓
+ CI
+   ↓
+ Render
+   ↓
+ smoke test
+```
 
-### Disponible
+Les travaux en cours portent principalement sur la conformité Riot, l'exploitation des retours alpha et le durcissement avant une diffusion plus large.
+
+## Fonctionnalités disponibles
 
 - sélection des quatre champions de la botlane ;
 - recherche instantanée dans le catalogue League of Legends ;
@@ -84,38 +71,32 @@ Le parcours principal, l'interface responsive et le socle d'internationalisation
 - contexte de patch versionné ;
 - API `POST /api/matchup` ;
 - endpoint `GET /api/analysis-context` ;
-- validation structurelle des analyses avant affichage ;
-- résumé tactique ;
-- analyse détaillée du matchup ;
+- validation structurelle des réponses IA ;
+- garde-fous déterministes de conformité gameplay ;
+- validation de la langue de l'analyse ;
+- résumé tactique et analyse détaillée ;
 - cheat sheet copiable ;
 - historique local des dix dernières analyses ;
+- interface française par défaut avec architecture i18n ;
 - logs backend structurés avec `X-Request-Id` ;
 - diagnostic sécurisé des erreurs provider ;
-- interface française par défaut avec architecture i18n `fr-FR` ;
-- locale propagée jusqu'au provider et validation de la cohérence linguistique des analyses.
+- feedback testeur envoyé vers un tracker GitHub configurable ;
+- télémétrie produit pseudonyme minimale ;
+- CI GitHub Actions ;
+- Dependabot pour npm et GitHub Actions ;
+- déploiement Render depuis la branche `production` ;
+- healthcheck Render sur `GET /api/health` ;
+- smoke test de production GitHub Actions.
 
-### En cours
+## En cours / avant ouverture plus large
 
-- garde-fous de conformité gameplay des analyses ;
-- conformité Riot avant ouverture de l'alpha ;
-- remontée de bugs et d'analyses incorrectes par les testeurs ;
-- préparation du déploiement de la première alpha.
+- conformité Riot et mentions produit tiers ;
+- consolidation des retours alpha ;
+- protection renforcée contre l'abus des endpoints publics ;
+- amélioration progressive des garde-fous gameplay ;
+- préparation d'une Knowledge Base gameplay structurée à partir des besoins réellement observés.
 
-> La validation actuellement livrée garantit le contrat et la cohérence structurelle de la réponse. Les garde-fous destinés à détecter des impossibilités gameplay déterministes sont encore en cours de développement.
-
-## Philosophie du projet
-
-LaneLens cherche à rester simple :
-
-```text
-4 champions
-      ↓
-1 matchup
-      ↓
-1 plan de jeu clair
-```
-
-Pas de compte Riot obligatoire, pas de statistiques envahissantes et pas de dashboard complexe pour répondre à une question de lane.
+> Les garde-fous gameplay réduisent certaines erreurs déterministes, mais ne constituent pas une preuve formelle de justesse de toute recommandation tactique.
 
 ---
 
@@ -124,18 +105,27 @@ Pas de compte Riot obligatoire, pas de statistiques envahissantes et pas de dash
 ## Stack
 
 ```text
-Frontend    TypeScript · Vite · HTML · CSS
-Backend     Node.js · Hono
-Data        Riot Data Dragon
-AI          MatchupAnalysisProvider · OpenAI · Google Gemini · Groq
-Storage     localStorage côté navigateur
-Logs        JSON Lines côté serveur
-Tests       TypeScript · Node.js
+Frontend     TypeScript · Vite · HTML · CSS
+Backend      Node.js · Hono
+Data         Riot Data Dragon
+AI           MatchupAnalysisProvider · OpenAI · Gemini · Groq
+Storage      localStorage / sessionStorage côté navigateur
+Feedback     GitHub Issues configurable côté serveur
+Logs         JSONL en local · stdout/stderr en production
+Hosting      Render
+Tests        TypeScript · node:test
+CI/CD        GitHub Actions
+```
+
+## Prérequis
+
+LaneLens utilise Node.js :
+
+```text
+>= 22.13.1 < 23
 ```
 
 ## Démarrage local
-
-Prérequis : Node.js >= 22.12.0 et npm.
 
 ```sh
 npm ci
@@ -148,21 +138,21 @@ Ouvrir :
 http://127.0.0.1:5173
 ```
 
-Cette commande lance le frontend Vite et l'API Hono ensemble.
+Cette commande lance le backend puis attend que `GET /api/health` réponde avant de démarrer Vite.
 
-Le backend est disponible sur :
+Backend local :
 
 ```text
 http://127.0.0.1:3000
 ```
 
-Le health check :
+Healthcheck :
 
 ```http
 GET /api/health
 ```
 
-retourne :
+Réponse :
 
 ```json
 {
@@ -170,23 +160,29 @@ retourne :
 }
 ```
 
-Le contexte d'analyse courant est exposé par :
+## API actuelle
 
 ```http
-GET /api/analysis-context
+GET  /api/health
+GET  /api/analysis-context
+POST /api/matchup
+POST /api/feedback
+POST /api/telemetry
 ```
+
+Le frontend et le backend partagent leurs contrats via `shared/`.
+
+Chaque requête HTTP reçoit un `X-Request-Id` généré côté serveur afin de corréler les erreurs utilisateur et les logs.
 
 ## Configuration de l'analyse IA
 
-Aucune clé n'est nécessaire pour démarrer l'application ou utiliser `GET /api/health`.
-
-Pour activer une analyse réelle :
+Copier la configuration d'exemple :
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Puis sélectionner un provider et renseigner sa clé uniquement dans le fichier local `.env`.
+Puis sélectionner un provider.
 
 ### Groq
 
@@ -215,7 +211,7 @@ GEMINI_MODEL=gemini-3.8-flash
 GEMINI_TIMEOUT_MS=30000
 ```
 
-Les modèles et timeouts sont configurables. Une valeur `AI_PROVIDER` absente conserve OpenAI pour compatibilité avec les configurations existantes.
+Une valeur `AI_PROVIDER` absente conserve OpenAI pour compatibilité avec les configurations existantes.
 
 Il n'existe aucun fallback automatique entre providers.
 
@@ -236,9 +232,7 @@ public/
 VITE_*
 ```
 
-## Architecture
-
-Le moteur d'analyse reste indépendant du provider concret :
+## Architecture de l'analyse
 
 ```text
 Frontend
@@ -249,34 +243,47 @@ Hono
    ↓
 PatchContextResolver
    ↓
+GameplayContextResolver
+   ↓
 MatchupAnalysisService
    ↓
 MatchupAnalysisProvider
    ↓
 Provider concret
    ↓
-validation LaneLens
+validation structurelle
+   ↓
+validation gameplay
+   ↓
+validation langue
    ↓
 MatchupAnalysis
 ```
 
-Le contrôleur HTTP ne dépend d'aucun SDK LLM. Le runtime choisit le provider à partir de la configuration, puis l'injecte derrière `MatchupAnalysisProvider`.
+Le contrôleur HTTP ne dépend d'aucun SDK LLM. Le runtime choisit le provider à partir de la configuration puis l'injecte derrière `MatchupAnalysisProvider`.
 
-Changer de modèle ou de provider ne doit pas nécessiter de modifier :
+Changer de modèle ou de provider ne doit pas nécessiter de modifier le frontend, le contrat HTTP ou le service métier.
 
-- le frontend ;
-- le contrat HTTP ;
-- `MatchupAnalysisService` ;
-- le contrat `MatchupAnalysis`.
+Voir [Architecture technique](docs/architecture.md).
 
-LaneLens conserve la responsabilité :
+## Contexte gameplay
 
-- du contexte de patch ;
-- des instructions métier ;
-- de la validation finale de la structure d'analyse ;
-- de la traduction des erreurs en contrat HTTP sûr.
+LaneLens embarque un snapshot Data Dragon généré pour fournir au moteur d'analyse des faits statiques sur les champions.
 
-Voir [Architecture technique](docs/architecture.md) et [ADR-001](docs/decisions/ADR-001-remplacer-openclaw-runtime.md).
+Les informations déterministes supplémentaires sont ajoutées dans une couche de confiance LaneLens utilisée par les garde-fous de conformité.
+
+Le validateur peut notamment détecter certaines incohérences liées :
+
+- au niveau de disponibilité d'une capacité ;
+- au champion ou au slot associé ;
+- à certains effets et modes de ciblage ;
+- à des interactions mécaniques non supportées ;
+- à des valeurs exactes non justifiées ;
+- à des claims de lethal absolus ;
+- à des incohérences temporelles ;
+- à certaines contradictions de plan de wave.
+
+Cette couche reste volontairement conservatrice et sera enrichie à partir des erreurs réellement observées en alpha.
 
 ## Contexte de patch
 
@@ -292,62 +299,18 @@ Contexte actuellement embarqué :
 
 Voir [Maintenance des contextes de patch](docs/patch-context.md).
 
-## Test manuel de l'analyse
-
-Renseigner la clé du provider sélectionné dans le fichier local `.env`, puis démarrer le backend :
-
-```sh
-npm run dev:server
-```
-
-Exemple :
-
-```sh
-curl -X POST http://127.0.0.1:3000/api/matchup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "allyCarry": "Ziggs",
-    "allySupport": "Galio",
-    "enemyCarry": "Jinx",
-    "enemySupport": "Swain",
-    "patch": "26.19",
-    "locale": "fr-FR"
-  }'
-```
-
-Avec une configuration valide, la réponse attendue est un `MatchupAnalysis` avec HTTP 200.
-
-Ce test manuel n'est jamais exécuté par `npm test`.
-
 ## Catalogue des champions
 
-Le catalogue est chargé depuis Riot Data Dragon en `fr_FR`.
+Le catalogue visible dans le frontend est chargé depuis Riot Data Dragon selon la locale active.
 
 LaneLens :
 
 - recherche la dernière version Data Dragon disponible ;
 - conserve le dernier catalogue valide dans `localStorage` ;
 - réutilise ce cache si Data Dragon devient temporairement indisponible ;
-- ne nécessite aucune clé Riot.
+- ne nécessite aucune clé Riot pour ces données statiques.
 
 La version Data Dragon est une version technique et n'est pas utilisée comme détection automatique du patch joueur.
-
-## Champion Picker
-
-L'interface propose quatre slots :
-
-```text
-Carry allié
-Support allié
-Carry adverse
-Support adverse
-```
-
-La recherche est insensible à la casse et les sélections restent modifiables.
-
-Les doublons sont bloqués dans une même équipe.
-
-Le mode Mirror permet au même champion d'apparaître une fois dans chaque équipe.
 
 ## Historique local
 
@@ -361,45 +324,56 @@ L'historique :
 - reste consultable sans dépendre du catalogue Data Dragon courant ;
 - ne nécessite aucune base de données.
 
-Clé actuelle :
+## Télémétrie alpha
 
-```text
-lanelens.matchup-history.v2
+LaneLens utilise une télémétrie pseudonyme minimale pour mesurer l'usage de l'alpha.
+
+Elle repose sur :
+
+- un `clientId` aléatoire conservé dans `localStorage` ;
+- un `sessionId` aléatoire conservé dans `sessionStorage` ;
+- des événements fonctionnels limités : ouverture, analyses, historique et feedback.
+
+Aucun compte Riot n'est nécessaire et LaneLens ne collecte pas d'identité Riot dans ce parcours.
+
+## Feedback testeur
+
+Le backend peut créer des tickets de feedback dans un dépôt GitHub configuré uniquement côté serveur.
+
+Variables :
+
+```env
+FEEDBACK_GITHUB_TOKEN=
+FEEDBACK_GITHUB_OWNER=
+FEEDBACK_GITHUB_REPOSITORY=
 ```
+
+Les entrées utilisateur sont validées et normalisées avant d'être envoyées au tracker.
 
 ## Logs backend
 
-Le serveur écrit des logs structurés JSON Lines dans un répertoire local créé automatiquement au démarrage.
+En local, le serveur écrit des logs JSON Lines avec rétention configurable.
 
-Par défaut :
+En production, il utilise stdout/stderr afin de s'intégrer aux logs Render.
 
-```text
-./logs/lanelens-YYYY-MM-DD.log
-```
-
-Configuration :
-
-```env
-LOG_DIR=./logs
-LOG_LEVEL=info
-LOG_RETENTION_DAYS=14
-```
-
-Chaque requête reçoit un `X-Request-Id` qui permet de corréler les événements HTTP, analyse et provider.
-
-Les clés, tokens, cookies, mots de passe et secrets sont masqués. Les prompts complets, contextes de patch complets et réponses LLM complètes ne sont pas journalisés.
-
-Le dossier `logs/` est ignoré par Git.
+Les clés, tokens, cookies, mots de passe et secrets sont masqués. Les prompts complets, contextes complets et réponses LLM complètes ne sont pas journalisés.
 
 ## Vérification du projet
 
 ```sh
+npm run lint
 npm run typecheck
 npm test
 npm run build
 ```
 
-La compilation produit :
+La CI exécute également :
+
+```sh
+npm audit --audit-level=high
+```
+
+Le build produit :
 
 ```text
 dist/
@@ -407,22 +381,55 @@ dist/
 └── server/
 ```
 
+## Déploiement
+
+Le déploiement public actuel utilise un seul service Render :
+
+```text
+production
+    ↓
+Render
+    ↓
+Node / Hono
+├── frontend compilé
+└── /api/*
+```
+
+Build :
+
+```sh
+npm ci && npm run build
+```
+
+Start :
+
+```sh
+npm run start:server
+```
+
+Healthcheck :
+
+```text
+/api/health
+```
+
+Après une CI réussie sur `production`, le workflow de smoke test attend le déploiement Render correspondant au commit puis vérifie l'endpoint public de santé.
+
 ## Périmètre actuel
 
-Le MVP reste volontairement léger :
+LaneLens reste volontairement léger :
 
-- pas d'authentification ;
-- pas de base de données ;
-- pas de compte Riot ;
+- pas de compte utilisateur ;
+- pas de base de données utilisateur ;
+- pas de compte Riot obligatoire ;
 - pas de Riot API authentifiée ;
 - pas de fallback automatique entre providers ;
-- pas de déploiement public livré à ce stade ;
-- pas d'analytics produit détaillée.
+- pas de paiement ;
+- pas de domaine personnalisé requis.
 
 ## Documentation
 
 - [Architecture technique](docs/architecture.md)
-- [ADR-001 — Rendre OpenClaw remplaçable dans le runtime](docs/decisions/ADR-001-remplacer-openclaw-runtime.md)
 - [Maintenance des contextes de patch](docs/patch-context.md)
 
 ## Références techniques
