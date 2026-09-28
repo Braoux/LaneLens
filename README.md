@@ -86,7 +86,8 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - Dependabot pour npm et GitHub Actions ;
 - déploiement Render depuis la branche `production` ;
 - healthcheck Render sur `GET /api/health` ;
-- smoke test de production GitHub Actions.
+- smoke test de production GitHub Actions ;
+- runner CLI d'évaluation gameplay reproductible sur corpus externe, avec reprise et gestion des rate limits.
 
 ## En cours / avant ouverture plus large
 
@@ -94,8 +95,8 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - consolidation des retours alpha ;
 - protection renforcée contre l'abus des endpoints publics ;
 - amélioration progressive des garde-fous gameplay ;
-- préparation d'une Knowledge Base gameplay structurée à partir des besoins réellement observés.
-- runner CLI d'évaluation gameplay reproductible sur corpus externe.
+- préparation d'une Knowledge Base gameplay structurée à partir des besoins réellement observés ;
+- finalisation de la baseline gameplay pré-KB, actuellement contrainte par les quotas du provider.
 
 > Les garde-fous gameplay réduisent certaines erreurs déterministes, mais ne constituent pas une preuve formelle de justesse de toute recommandation tactique.
 
