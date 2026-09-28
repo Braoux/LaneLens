@@ -471,12 +471,14 @@ function validateLethal(field: AnalysisTextField, violations: AnalysisConformanc
 }
 
 export class AnalysisConformanceFailure extends Error {
+  readonly violations: readonly AnalysisConformanceViolation[];
   readonly violationCodes: readonly AnalysisConformanceCode[];
   readonly violationPaths: readonly string[];
 
   constructor(violations: readonly AnalysisConformanceViolation[]) {
     super('Gameplay conformance validation failed.');
     this.name = 'AnalysisConformanceFailure';
+    this.violations = Object.freeze(violations.map((violation) => Object.freeze({ ...violation })));
     this.violationCodes = Object.freeze([...new Set(violations.map(({ code }) => code))]);
     this.violationPaths = Object.freeze([...new Set(violations.map(({ path }) => path))]);
   }

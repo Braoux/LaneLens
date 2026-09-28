@@ -15,6 +15,17 @@ export interface ProviderFailureDetails {
   readonly status?: number;
   readonly errorName?: string;
   readonly errorMessage?: string;
+  readonly retryMetadata?: ProviderRetryMetadata;
+}
+
+export interface ProviderRetryMetadata {
+  readonly retryAfterMs?: number;
+  readonly rateLimitLimitRequests?: number;
+  readonly rateLimitLimitTokens?: number;
+  readonly rateLimitRemainingRequests?: number;
+  readonly rateLimitRemainingTokens?: number;
+  readonly rateLimitResetRequests?: string;
+  readonly rateLimitResetTokens?: string;
 }
 
 const MAX_PROVIDER_ERROR_LENGTH = 1000;
@@ -112,6 +123,7 @@ export class ProviderFailureError extends Error {
   readonly status?: number;
   readonly errorName?: string;
   readonly errorMessage?: string;
+  readonly retryMetadata?: ProviderRetryMetadata;
 
   constructor(
     details: ProviderFailureDetails,
@@ -125,6 +137,7 @@ export class ProviderFailureError extends Error {
     this.status = details.status;
     this.errorName = details.errorName;
     this.errorMessage = details.errorMessage;
+    this.retryMetadata = details.retryMetadata;
   }
 }
 
@@ -132,6 +145,7 @@ export function providerFailureDetails(
   provider: string,
   model: string | undefined,
   error: unknown,
+  retryMetadata?: ProviderRetryMetadata,
 ): ProviderFailureDetails {
   return {
     provider,
@@ -139,6 +153,7 @@ export function providerFailureDetails(
     ...classifyProviderFailure(error),
     errorName: readSafeErrorName(error),
     errorMessage: readSafeErrorMessage(error),
+    ...(retryMetadata === undefined ? {} : { retryMetadata }),
   };
 }
 

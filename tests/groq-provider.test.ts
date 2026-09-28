@@ -8,6 +8,7 @@ import {
   createGroqSDKClient,
   GroqProvider,
   GroqProviderError,
+  readGroqRateLimitHeaders,
 } from '../server/analysis/providers/GroqProvider.js';
 import type {
   GroqClient,
@@ -237,6 +238,81 @@ test('Groq SDK adapter maps Chat Completions and disables retries', async () => 
     false,
   );
   assert.deepEqual(requestOptions, { timeout: 12_345, maxRetries: 0 });
+});
+
+test('Groq rate-limit headers are allow-listed and normalized without credentials', () => {
+  const headers = new Headers({
+    'retry-after': '1.25',
+    'x-ratelimit-limit-requests': '1000',
+    'x-ratelimit-limit-tokens': '8000',
+    'x-ratelimit-remaining-requests': '999',
+    'x-ratelimit-remaining-tokens': '7000',
+    'x-ratelimit-reset-requests': '2m59.56s',
+    'x-ratelimit-reset-tokens': '7.66s',
+    authorization: 'Bearer sensitive-token',
+  });
+  const metadata = readGroqRateLimitHeaders(headers);
+  assert.deepEqual(metadata, {
+    retryAfterMs: 1_250,
+    rateLimitLimitRequests: 1_000,
+    rateLimitLimitTokens: 8_000,
+    rateLimitRemainingRequests: 999,
+    rateLimitRemainingTokens: 7_000,
+    rateLimitResetRequests: '2m59.56s',
+    rateLimitResetTokens: '7.66s',
+  });
+  assert.doesNotMatch(JSON.stringify(metadata), /authorization|sensitive/u);
+});
+
+test('Groq SDK adapter exposes allow-listed response metadata to the provider observer', async () => {
+  const data = {
+    choices: [{ message: { content: JSON.stringify(validAnalysis()) } }],
+  };
+  const client = createGroqSDKClient({
+    apiKey: 'factory-secret',
+    timeout: 12_345,
+    maxRetries: 0,
+    logLevel: 'off',
+  }, () => ({
+    chat: {
+      completions: {
+        create() {
+          return Object.assign(Promise.resolve(data), {
+            async withResponse() {
+              return {
+                data,
+                response: {
+                  headers: new Headers({
+                    'x-ratelimit-remaining-requests': '42',
+                    cookie: 'must-not-appear',
+                  }),
+                },
+              };
+            },
+          });
+        },
+      },
+    },
+  }));
+
+  const result = await client.generate({
+    model: 'test-model',
+    instructions: 'instructions',
+    input: '{}',
+    reasoningEffort: 'medium',
+    responseFormat: {
+      type: 'json_schema',
+      jsonSchema: {
+        name: 'matchup_analysis',
+        strict: true,
+        schema: MATCHUP_ANALYSIS_JSON_SCHEMA,
+      },
+    },
+    tools: [],
+    timeoutMs: 12_345,
+  });
+  assert.deepEqual(result.retryMetadata, { rateLimitRemainingRequests: 42 });
+  assert.doesNotMatch(JSON.stringify(result), /cookie|must-not-appear/u);
 });
 
 test('Groq production factory validates config and disables retries', async () => {

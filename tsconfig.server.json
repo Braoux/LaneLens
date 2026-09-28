@@ -11,5 +11,5 @@
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": ["server", "shared"]
+  "include": ["server", "shared", "scripts"]
 }
