@@ -1,6 +1,6 @@
 # Architecture — LaneLens
 
-État documenté : architecture livrée au 26 septembre 2026, après mise en production alpha, CI/CD et instrumentation alpha.
+État documenté : architecture livrée au 28 septembre 2026, après mise en production alpha, CI/CD, instrumentation alpha et ajout du runner d’évaluation gameplay.
 
 Ce document décrit le code actuellement présent dans le dépôt. [ADR-001](decisions/ADR-001-remplacer-openclaw-runtime.md) formalise la décision de rendre le moteur d’analyse indépendant d’OpenClaw.
 
@@ -70,6 +70,20 @@ historique local
 ```
 
 Le provider concret reste interchangeable.
+
+---
+
+## Évaluation gameplay hors HTTP
+
+Le dépôt contient désormais un runner CLI dans `scripts/evaluation/` permettant d'exécuter le pipeline réel sur un corpus externe sans passer par Hono :
+
+```sh
+npm run eval:gameplay -- --corpus <path>
+```
+
+Le runner réutilise le pipeline applicatif, exécute les cas séquentiellement, persiste les résultats de manière incrémentale et sait reprendre un run interrompu sans rejouer les cas terminés. Les erreurs provider, rate limits, retries et rejets de conformité sont conservés séparément afin de ne pas confondre disponibilité technique et qualité gameplay.
+
+Les artefacts d'évaluation et corpus privés ne font pas partie du runtime public. Voir [Runner d’évaluation gameplay](evaluation-runner.md).
 
 ---
 
