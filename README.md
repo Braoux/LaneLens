@@ -95,6 +95,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - protection renforcée contre l'abus des endpoints publics ;
 - amélioration progressive des garde-fous gameplay ;
 - préparation d'une Knowledge Base gameplay structurée à partir des besoins réellement observés.
+- runner CLI d'évaluation gameplay reproductible sur corpus externe.
 
 > Les garde-fous gameplay réduisent certaines erreurs déterministes, mais ne constituent pas une preuve formelle de justesse de toute recommandation tactique.
 
@@ -373,6 +374,17 @@ La CI exécute également :
 npm audit --audit-level=high
 ```
 
+## Évaluation gameplay
+
+Le pipeline réel peut être exécuté hors HTTP sur un corpus externe :
+
+```sh
+npm run eval:gameplay -- --corpus <path>
+```
+
+Voir [Runner d’évaluation gameplay](docs/evaluation-runner.md) pour les modes
+sentinelles, cas individuel, reprise, output privé et gestion des rate limits.
+
 Le build produit :
 
 ```text
@@ -431,6 +443,7 @@ LaneLens reste volontairement léger :
 
 - [Architecture technique](docs/architecture.md)
 - [Maintenance des contextes de patch](docs/patch-context.md)
+- [Runner d’évaluation gameplay](docs/evaluation-runner.md)
 
 ## Références techniques
 
