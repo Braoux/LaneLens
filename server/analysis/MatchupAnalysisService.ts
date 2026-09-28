@@ -1,5 +1,8 @@
 import { MatchupAnalysisError } from './errors.js';
-import type { MatchupAnalysisProvider } from './MatchupAnalysisProvider.js';
+import type {
+  MatchupAnalysisProvider,
+  MatchupAnalysisProviderOptions,
+} from './MatchupAnalysisProvider.js';
 import { buildMatchupAnalysisInstructions } from './prompt.js';
 import type { MatchupAnalysis, MatchupAnalysisInput } from './types.js';
 import { assertValidMatchupAnalysisInput, validateMatchupAnalysis } from './validation.js';
@@ -19,7 +22,10 @@ export class MatchupAnalysisService {
     private readonly conformanceValidator = new AnalysisConformanceValidator(),
   ) {}
 
-  async analyze(input: MatchupAnalysisInput): Promise<MatchupAnalysis> {
+  async analyze(
+    input: MatchupAnalysisInput,
+    providerOptions?: MatchupAnalysisProviderOptions,
+  ): Promise<MatchupAnalysis> {
     assertValidMatchupAnalysisInput(input);
 
     let gameplayContext;
@@ -38,7 +44,7 @@ export class MatchupAnalysisService {
     let providerResponse: unknown;
 
     try {
-      providerResponse = await this.provider.analyze({ input, instructions });
+      providerResponse = await this.provider.analyze({ input, instructions }, providerOptions);
     } catch (error) {
       throw new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE', { cause: error });
     }

@@ -1,16 +1,9 @@
 import type { MatchupAnalysisProvider } from './analysis/MatchupAnalysisProvider.js';
-import { MatchupAnalysisService } from './analysis/MatchupAnalysisService.js';
-import { createGeminiProvider } from './analysis/providers/GeminiProvider.js';
-import { loadGeminiConfig } from './analysis/providers/gemini-config.js';
 import type { GeminiConfig } from './analysis/providers/gemini-config.js';
-import { createOpenAIProvider } from './analysis/providers/OpenAIProvider.js';
-import { loadOpenAIConfig } from './analysis/providers/openai-config.js';
 import type { OpenAIConfig } from './analysis/providers/openai-config.js';
-import { createGroqProvider } from './analysis/providers/GroqProvider.js';
-import { loadGroqConfig } from './analysis/providers/groq-config.js';
 import type { GroqConfig } from './analysis/providers/groq-config.js';
-import { resolveAIProvider } from './analysis/providers/ai-provider-config.js';
 import type { AIEnvironment } from './analysis/providers/ai-provider-config.js';
+import { createAnalysisRuntime } from './analysis/createAnalysisRuntime.js';
 import type { AnalysisContextResponse } from '../shared/analysis-contract.js';
 import { createApp } from './app.js';
 import type { PatchContextResolver } from './patch-context/PatchContextResolver.js';
@@ -43,12 +36,6 @@ export interface RuntimeCompositionOptions {
 export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
   const environment = options.environment ?? process.env;
   const logger = options.logger ?? NOOP_LOGGER;
-  const providerName = resolveAIProvider(environment.AI_PROVIDER);
-  const apiKey = {
-    openai: environment.OPENAI_API_KEY,
-    gemini: environment.GEMINI_API_KEY,
-    groq: environment.GROQ_API_KEY,
-  }[providerName]?.trim() ?? '';
   const patchContextResolver = options.patchContextResolver
     ?? new VersionedPatchContextResolver();
   const analysisContext = options.analysisContext ?? {
@@ -67,7 +54,13 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
     logger.error('feedback_tracker_configuration_invalid');
   }
 
-  if (apiKey.length === 0) {
+  const analysisRuntime = createAnalysisRuntime({
+    environment,
+    openAIProviderFactory: options.openAIProviderFactory,
+    geminiProviderFactory: options.geminiProviderFactory,
+    groqProviderFactory: options.groqProviderFactory,
+  });
+  if (analysisRuntime === undefined) {
     const app = createApp({ patchContextResolver, analysisContext, logger, feedbackService });
     return attachProductionFrontend(app, {
       environment,
@@ -76,40 +69,17 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
     });
   }
 
-  let provider: MatchupAnalysisProvider;
-  let model: string;
-  switch (providerName) {
-    case 'gemini': {
-      const config = loadGeminiConfig(environment);
-      provider = (options.geminiProviderFactory ?? createGeminiProvider)(config);
-      model = config.model;
-      break;
-    }
-    case 'groq': {
-      const config = loadGroqConfig(environment);
-      provider = (options.groqProviderFactory ?? createGroqProvider)(config);
-      model = config.model;
-      break;
-    }
-    case 'openai': {
-      const config = loadOpenAIConfig(environment);
-      provider = (options.openAIProviderFactory ?? createOpenAIProvider)(config);
-      model = config.model;
-      break;
-    }
-  }
   logger.info('analysis_provider_configured', {
-    provider: providerName,
-    model,
+    provider: analysisRuntime.provider,
+    model: analysisRuntime.model,
   });
-  const analysisService = new MatchupAnalysisService(provider);
   const app = createApp({
-    analysisService,
+    analysisService: analysisRuntime.service,
     patchContextResolver,
     analysisContext,
     logger,
-    analysisProviderName: providerName,
-    analysisProviderModel: model,
+    analysisProviderName: analysisRuntime.provider,
+    analysisProviderModel: analysisRuntime.model,
     feedbackService,
   });
   return attachProductionFrontend(app, {
