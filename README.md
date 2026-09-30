@@ -383,8 +383,15 @@ Le pipeline réel peut être exécuté hors HTTP sur un corpus externe :
 npm run eval:gameplay -- --corpus <path>
 ```
 
-Voir [Runner d’évaluation gameplay](docs/evaluation-runner.md) pour les modes
-sentinelles, cas individuel, reprise, output privé et gestion des rate limits.
+Depuis LAN-039, l’usage recommandé pour l’équipe sous Windows est le launcher interactif :
+
+```text
+run-gameplay-evaluation.cmd
+```
+
+Un double-clic ouvre un menu permettant de démarrer un run complet, reprendre le dernier run incomplet, choisir un run existant, lancer uniquement les sentinelles, exécuter un matchup précis ou consulter l’état du dernier run sans appel provider. Le même menu peut être lancé depuis un terminal avec `npm run eval:interactive`.
+
+Voir [Runner d’évaluation gameplay](docs/evaluation-runner.md) pour la CLI avancée et [Launcher interactif du runner](docs/interactive-evaluation-runner.md) pour l’usage quotidien par l’équipe.
 
 Le build produit :
 
@@ -445,6 +452,7 @@ LaneLens reste volontairement léger :
 - [Architecture technique](docs/architecture.md)
 - [Maintenance des contextes de patch](docs/patch-context.md)
 - [Runner d’évaluation gameplay](docs/evaluation-runner.md)
+- [Launcher interactif du runner](docs/interactive-evaluation-runner.md)
 
 ## Références techniques
 
