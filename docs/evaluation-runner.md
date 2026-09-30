@@ -157,6 +157,8 @@ npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --kno
 
 Avec le launcher Windows, ce choix est obligatoire pour chaque nouveau run et l’argument est construit automatiquement. Le préflight affiche l’état/version KB et calcule localement la couverture de la sélection avant confirmation et avant tout appel provider. Une couverture `none` sur 100 % d’un run annoncé avec KB bloque le lancement.
 
+La couverture affichée par la V1 est **une couverture par champion**, pas une preuve de couverture mécanique exhaustive. Ainsi, `full` (4/4 champions) peut coexister avec des capacités ou interactions insuffisamment structurées pour être rejetées automatiquement en cas d’hallucination. Les sentinelles et la revue humaine restent donc nécessaires pour mesurer les faux verts (`success` mais factuellement incorrects). Voir LAN-042 (#92).
+
 Lors d’une reprise, la valeur de `run.json` est immuable. Le runtime doit charger exactement cette version ; une baseline ne peut pas devenir post-KB et un run KB ne peut pas être repris sans sa version.
 
 Seuls les rate limits sont retentés automatiquement. Après un HTTP 429 :
@@ -184,7 +186,7 @@ Chaque répertoire de run contient :
 
 Statuts terminaux :
 
-- `success` : analyse valide et évaluable ;
+- `success` : analyse conforme au contrat et n’ayant déclenché aucun validator bloquant ; ce statut ne constitue pas une certification humaine de l’exactitude factuelle ou stratégique ;
 - `invalid_analysis` : sortie invalide ou rejetée par les validators, évaluable
   pour le taux de conformité ;
 - `rate_limited` : quota épuisé, non évaluable gameplay ;
