@@ -244,7 +244,7 @@ test('AI_PROVIDER=groq selects Groq without falling back to OpenAI or Gemini', a
   assert.equal(geminiCalls, 0);
 });
 
-test('configured runtime logs only the selected provider name and model', () => {
+test('configured runtime logs only safe provider, model, and KB version metadata', () => {
   const entries: Array<{ event: string; fields: LogFields }> = [];
   const logger: Logger = {
     debug() {},
@@ -268,7 +268,7 @@ test('configured runtime logs only the selected provider name and model', () => 
 
   assert.deepEqual(entries, [{
     event: 'analysis_provider_configured',
-    fields: { provider: 'gemini', model: 'gemini-test-model' },
+    fields: { provider: 'gemini', model: 'gemini-test-model', knowledgeBaseVersion: 'lan-032-kb-v1' },
   }]);
   assert.doesNotMatch(JSON.stringify(entries), /must-not-appear/);
 });

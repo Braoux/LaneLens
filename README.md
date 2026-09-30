@@ -95,7 +95,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - consolidation des retours alpha ;
 - protection renforcée contre l'abus des endpoints publics ;
 - amélioration progressive des garde-fous gameplay ;
-- préparation d'une Knowledge Base gameplay structurée à partir des besoins réellement observés ;
+- résolution ciblée d'une Knowledge Base gameplay structurée, traçable et versionnée ([documentation](docs/knowledge-base.md)) ;
 - finalisation de la baseline gameplay pré-KB, actuellement contrainte par les quotas du provider.
 
 > Les garde-fous gameplay réduisent certaines erreurs déterministes, mais ne constituent pas une preuve formelle de justesse de toute recommandation tactique.

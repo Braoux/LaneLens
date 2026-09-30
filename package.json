@@ -17,7 +17,8 @@
     "start:server": "node dist/server/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "eval:gameplay": "tsx scripts/evaluation/evaluate-gameplay.ts"
+    "eval:gameplay": "tsx scripts/evaluation/evaluate-gameplay.ts",
+    "eval:compare": "tsx scripts/evaluation/compare-gameplay.ts"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",

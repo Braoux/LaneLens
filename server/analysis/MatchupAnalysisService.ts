@@ -11,14 +11,17 @@ import {
   AnalysisConformanceFailure,
   AnalysisConformanceValidator,
 } from './AnalysisConformanceValidator.js';
-import { StaticGameplayContextResolver } from '../gameplay-context/StaticGameplayContextResolver.js';
-import type { GameplayContextResolver } from '../gameplay-context/types.js';
+import { KnowledgeResolver } from '../knowledge/KnowledgeResolver.js';
+import { StaticKnowledgeRepository } from '../knowledge/StaticKnowledgeRepository.js';
+import type { KnowledgeContextResolver } from '../knowledge/types.js';
 
 export class MatchupAnalysisService {
   constructor(
     private readonly provider: MatchupAnalysisProvider,
     private readonly languageValidator = new AnalysisLanguageValidator(),
-    private readonly gameplayContextResolver: GameplayContextResolver = new StaticGameplayContextResolver(),
+    private readonly knowledgeResolver: KnowledgeContextResolver = new KnowledgeResolver(
+      new StaticKnowledgeRepository(),
+    ),
     private readonly conformanceValidator = new AnalysisConformanceValidator(),
   ) {}
 
@@ -28,19 +31,19 @@ export class MatchupAnalysisService {
   ): Promise<MatchupAnalysis> {
     assertValidMatchupAnalysisInput(input);
 
-    let gameplayContext;
+    let knowledgeContext;
     try {
-      gameplayContext = this.gameplayContextResolver.resolve([
-        input.allyCarry,
-        input.allySupport,
-        input.enemyCarry,
-        input.enemySupport,
-      ]);
+      knowledgeContext = this.knowledgeResolver.resolve({
+        champions: [input.allyCarry, input.allySupport, input.enemyCarry, input.enemySupport],
+        patch: input.patch,
+        phases: ['lane', 'level-1', 'level-2', 'level-3', 'level-6-plus'],
+      });
     } catch {
       throw new MatchupAnalysisError('ANALYSIS_FAILED');
     }
 
-    const instructions = buildMatchupAnalysisInstructions(input, gameplayContext);
+    providerOptions?.onKnowledgeCoverage?.(knowledgeContext.coverage, knowledgeContext.version);
+    const instructions = buildMatchupAnalysisInstructions(input, knowledgeContext);
     let providerResponse: unknown;
 
     try {
@@ -52,7 +55,7 @@ export class MatchupAnalysisService {
     const analysis = validateMatchupAnalysis(providerResponse, input);
     const conformance = this.conformanceValidator.validate(
       analysis,
-      gameplayContext,
+      knowledgeContext,
       input.patchContext,
     );
     if (!conformance.valid) {

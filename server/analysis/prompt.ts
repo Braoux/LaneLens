@@ -1,6 +1,7 @@
 import type { MatchupAnalysisInput } from './types.js';
 import type { AppLocale } from '../../shared/locale.js';
 import type { GameplayContext } from '../gameplay-context/types.js';
+import type { KnowledgeEntry, ResolvedKnowledgeContext } from '../knowledge/types.js';
 
 const LANGUAGE_INSTRUCTIONS: Record<AppLocale, readonly string[]> = {
   'fr-FR': [
@@ -25,8 +26,11 @@ function gameplayFacts(context: GameplayContext): readonly string[] {
 
 export function buildMatchupAnalysisInstructions(
   input: MatchupAnalysisInput,
-  gameplayContext: GameplayContext,
+  knowledgeContext: ResolvedKnowledgeContext,
 ): string {
+  const knowledgeLines = (entries: readonly KnowledgeEntry[]) => entries.length === 0
+    ? ['(aucune connaissance enrichie pertinente)']
+    : entries.map(({ id, subject, statement }) => `[${id}] ${subject} — ${statement}`);
   return [
     ...LANGUAGE_INSTRUCTIONS[input.locale],
     'Produis une analyse tactique concrète de la botlane décrite dans input.',
@@ -64,8 +68,20 @@ export function buildMatchupAnalysisInstructions(
     'Conserve un raisonnement tactique concret et actionnable pour la cible prioritaire, la wave, le poke, l’engage et le roam sans transformer ces choix en faits mécaniques absolus.',
     'Avant de finaliser, vérifie que lanePlan, wavePlan, winCondition, goldenRule et cheatSheet ne se contredisent pas directement.',
     'Si la stratégie de wave change selon la phase, explicite la transition, par exemple garder d’abord la vague de votre côté puis pousser après une fenêtre favorable.',
+    'Raisonne en priorité à partir du contexte LaneLens vérifié ci-dessous.',
+    'L’absence d’une connaissance ne prouve jamais l’absence d’une mécanique.',
+    'Ne transforme pas une HEURISTIC ou une MATCHUP OBSERVATION en fait mécanique absolu.',
+    'OFFICIAL FACTS — informations fiables :',
+    ...knowledgeLines(knowledgeContext.officialFacts),
+    'DERIVED MECHANICS — conséquences mécaniques validées :',
+    ...knowledgeLines(knowledgeContext.derivedMechanics),
+    'HEURISTICS — recommandations à contextualiser :',
+    ...knowledgeLines(knowledgeContext.heuristics),
+    'MATCHUP OBSERVATIONS — interactions prudentes et contextualisées :',
+    ...knowledgeLines(knowledgeContext.matchupObservations),
+    `KNOWLEDGE COVERAGE — ${knowledgeContext.coverage.status}; ${knowledgeContext.coverage.coveredChampions}/${knowledgeContext.coverage.totalChampions} champions; ${knowledgeContext.coverage.relevantKnowledgeCount} entrées.`,
     'Le contexte Data Dragon ci-dessous décrit les kits statiques et reste distinct du patch joueur :',
-    ...gameplayFacts(gameplayContext),
+    ...gameplayFacts(knowledgeContext.gameplay),
     'Retourne une valeur respectant le contrat MatchupAnalysis fourni par LaneLens.',
   ].join('\n');
 }

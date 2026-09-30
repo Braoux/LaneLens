@@ -156,9 +156,20 @@ function assertResumeMatches(
 export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<void> {
   const arguments_ = parseEvaluationArguments(argv);
   const loadedCorpus = await loadEvaluationCorpus(resolve(arguments_.corpus));
-  const analysisRuntime = createAnalysisRuntime();
+  const resumeSnapshot = arguments_.resume === undefined
+    ? undefined
+    : await loadEvaluationRun(resolve(arguments_.resume));
+  const requestedKnowledgeBaseVersion = arguments_.knowledgeBaseVersion
+    ?? resumeSnapshot?.run.knowledgeBaseVersion
+    ?? null;
+  const analysisRuntime = createAnalysisRuntime({
+    knowledgeBaseEnabled: requestedKnowledgeBaseVersion !== null,
+  });
   if (analysisRuntime === undefined) {
     throw new Error('Aucun provider d’analyse configuré pour le runner.');
+  }
+  if (analysisRuntime.knowledgeBaseVersion !== requestedKnowledgeBaseVersion) {
+    throw new Error(`Version Knowledge Base attendue : ${analysisRuntime.knowledgeBaseVersion ?? 'aucune'}.`);
   }
 
   let run: EvaluationRun;
@@ -166,7 +177,7 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
   let files: RunFiles;
   let matchups: typeof loadedCorpus.corpus.matchups;
   if (arguments_.resume !== undefined) {
-    const resumed = await loadEvaluationRun(resolve(arguments_.resume));
+    const resumed = resumeSnapshot!;
     assertResumeMatches(resumed.run, loadedCorpus, arguments_);
     if (
       resumed.run.provider !== analysisRuntime.provider

@@ -1,5 +1,7 @@
 # Architecture — LaneLens
 
+Voir aussi [Knowledge Base gameplay](knowledge-base.md) pour le resolver LAN-032, la politique de validation, le fallback et l’évaluation avant/après.
+
 État documenté : architecture livrée au 28 septembre 2026, après mise en production alpha, CI/CD, instrumentation alpha et ajout du runner d’évaluation gameplay.
 
 Ce document décrit le code actuellement présent dans le dépôt. [ADR-001](decisions/ADR-001-remplacer-openclaw-runtime.md) formalise la décision de rendre le moteur d’analyse indépendant d’OpenClaw.

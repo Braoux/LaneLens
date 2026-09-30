@@ -72,6 +72,7 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
   logger.info('analysis_provider_configured', {
     provider: analysisRuntime.provider,
     model: analysisRuntime.model,
+    knowledgeBaseVersion: analysisRuntime.knowledgeBaseVersion,
   });
   const app = createApp({
     analysisService: analysisRuntime.service,
