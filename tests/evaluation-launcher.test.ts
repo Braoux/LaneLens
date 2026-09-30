@@ -271,6 +271,16 @@ test('matchup validation is friendly and corpus discovery remains configurable',
   await saveLauncherConfig(directory, config);
   assert.equal(await discoverCorpusPath({ workingDirectory: directory, config }), resolve(corpus));
   assert.equal(resolveResultsRoot({ workingDirectory: directory, config }), resolve(config.resultsRoot));
+
+  const canonicalDirectory = await mkdtemp(join(tmpdir(), 'lanelens-launcher-canonical-'));
+  t.after(() => rm(canonicalDirectory, { recursive: true, force: true }));
+  const canonicalCorpus = join(canonicalDirectory, 'evaluation', 'corpus', 'lan-032-corpus-v1.json');
+  await mkdir(dirname(canonicalCorpus), { recursive: true });
+  await writeFile(canonicalCorpus, JSON.stringify(TEST_CORPUS), 'utf8');
+  assert.equal(
+    await discoverCorpusPath({ workingDirectory: canonicalDirectory, environment: {} }),
+    resolve(canonicalCorpus),
+  );
 });
 
 test('preflight rejects unsupported Node, missing provider config, missing corpus, and existing output safely', async (t) => {
