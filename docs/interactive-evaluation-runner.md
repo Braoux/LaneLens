@@ -36,10 +36,10 @@ Le chemin du corpus reste configurable. Le launcher utilise, dans l’ordre :
 
 1. `LANELENS_EVALUATION_CORPUS` si cette variable locale est définie ;
 2. le dernier chemin mémorisé localement ;
-3. le corpus du dépôt interne voisin lorsqu’il existe dans l’arborescence de développement habituelle ;
+3. le corpus canonique public `evaluation/corpus/lan-032-corpus-v1.json` ;
 4. un chemin demandé interactivement.
 
-Le dernier choix est mémorisé dans `.lanelens-evaluation/launcher.json`. Ce dossier est ignoré par Git : aucun chemin privé ni contenu de corpus n’est versionné.
+Le dernier choix est mémorisé dans `.lanelens-evaluation/launcher.json`. Ce dossier est ignoré par Git : aucun chemin local privé n’est versionné. Le corpus de référence V1, lui, est volontairement versionné dans le dépôt public.
 
 Les nouveaux runs sont créés dans `.lanelens-evaluation/runs/` par défaut. Un autre dossier peut être défini avec `LANELENS_EVALUATION_RESULTS`. Chaque run obtient un dossier horodaté unique préfixé par `pre-kb-` ou `kb-lan-032-kb-v1-` ; un chemin existant est refusé et n’est jamais écrasé.
 
