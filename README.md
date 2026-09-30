@@ -87,7 +87,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - déploiement Render depuis la branche `production` ;
 - healthcheck Render sur `GET /api/health` ;
 - smoke test de production GitHub Actions ;
-- runner d'évaluation gameplay reproductible sur corpus externe, avec reprise, gestion des rate limits et [launcher Windows interactif](docs/interactive-evaluation-runner.md).
+- runner d'évaluation gameplay reproductible avec corpus de référence versionné dans `evaluation/corpus/`, reprise, gestion des rate limits et [launcher Windows interactif](docs/interactive-evaluation-runner.md).
 
 ## En cours / avant ouverture plus large
 
@@ -377,10 +377,10 @@ npm audit --audit-level=high
 
 ## Évaluation gameplay
 
-Le pipeline réel peut être exécuté hors HTTP sur un corpus externe :
+Le pipeline réel peut être exécuté hors HTTP sur le corpus de référence versionné (`evaluation/corpus/lan-032-corpus-v1.json`) ou sur un corpus alternatif :
 
 ```sh
-npm run eval:gameplay -- --corpus <path>
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json
 ```
 
 Depuis LAN-039, l’usage recommandé pour l’équipe sous Windows est le launcher interactif :
