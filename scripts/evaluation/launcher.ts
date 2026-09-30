@@ -19,7 +19,10 @@ import {
 } from '../../server/analysis/providers/ai-provider-config.js';
 import { loadEvaluationCorpus, selectCorpusMatchups } from './corpus.js';
 import { loadEvaluationRun, runFiles } from './result-writer.js';
-import type { EvaluationResult } from './types.js';
+import type { CorpusMatchup, EvaluationMode, EvaluationResult } from './types.js';
+import { KnowledgeResolver } from '../../server/knowledge/KnowledgeResolver.js';
+import { StaticKnowledgeRepository } from '../../server/knowledge/StaticKnowledgeRepository.js';
+import { KNOWLEDGE_BASE_VERSION } from '../../server/knowledge/data/knowledge.js';
 
 const CONFIG_RELATIVE_PATH = '.lanelens-evaluation/launcher.json';
 const DEFAULT_RESULTS_RELATIVE_PATH = '.lanelens-evaluation/runs';
@@ -48,6 +51,7 @@ export interface EvaluationRunInfo {
   readonly corpusFile: string;
   readonly provider: string;
   readonly model: string;
+  readonly knowledgeBaseVersion: string | null;
   readonly startedAt: string;
   readonly updatedAt: string;
   readonly completed: number;
@@ -68,7 +72,27 @@ export interface LauncherExecutionRequest {
   readonly outputDirectory?: string;
   readonly resumeDirectory?: string;
   readonly matchupId?: string;
+  readonly knowledgeBaseVersion: string | null;
 }
+
+export interface KnowledgeCoveragePreflight {
+  readonly version: string;
+  readonly selectedMatchups: number;
+  readonly nonEmptyCoverage: number;
+  readonly emptyCoverage: number;
+}
+
+export interface EvaluationConfigurationSummary {
+  readonly corpusFile: string;
+  readonly mode: Exclude<LauncherExecutionMode, 'resume'>;
+  readonly provider: string;
+  readonly model: string;
+  readonly knowledgeBaseVersion: string | null;
+  readonly outputDirectory: string;
+  readonly coverage?: KnowledgeCoveragePreflight;
+}
+
+export const CURRENT_KNOWLEDGE_BASE_VERSION = KNOWLEDGE_BASE_VERSION;
 
 export class EvaluationLauncherError extends Error {
   constructor(message: string) {
@@ -186,6 +210,7 @@ export async function readRunInfo(directory: string): Promise<EvaluationRunInfo>
     corpusFile: loaded.run.corpusFile,
     provider: loaded.run.provider,
     model: loaded.run.model,
+    knowledgeBaseVersion: loaded.run.knowledgeBaseVersion ?? null,
     startedAt: loaded.run.startedAt,
     updatedAt,
     completed,
@@ -244,7 +269,9 @@ export function buildEvaluationArguments(request: LauncherExecutionRequest): rea
   const corpusPath = resolve(request.corpusPath);
   if (request.mode === 'resume') {
     if (!request.resumeDirectory) throw new EvaluationLauncherError('Le dossier du run à reprendre est requis.');
-    return ['--corpus', corpusPath, '--resume', resolve(request.resumeDirectory)];
+    const args = ['--corpus', corpusPath, '--resume', resolve(request.resumeDirectory)];
+    if (request.knowledgeBaseVersion) args.push('--knowledge-base-version', request.knowledgeBaseVersion);
+    return args;
   }
   if (!request.outputDirectory) throw new EvaluationLauncherError('Le dossier de sortie est requis.');
   const args = ['--corpus', corpusPath, '--output', resolve(request.outputDirectory)];
@@ -253,7 +280,90 @@ export function buildEvaluationArguments(request: LauncherExecutionRequest): rea
     if (!request.matchupId) throw new EvaluationLauncherError('L’identifiant du matchup est requis.');
     args.push('--id', request.matchupId);
   }
+  if (request.knowledgeBaseVersion) args.push('--knowledge-base-version', request.knowledgeBaseVersion);
   return args;
+}
+
+export function assertSupportedKnowledgeBaseVersion(version: string | null): void {
+  if (version !== null && version !== CURRENT_KNOWLEDGE_BASE_VERSION) {
+    throw new EvaluationLauncherError(
+      `La Knowledge Base ${version} n’est pas disponible dans ce runtime. Version disponible : ${CURRENT_KNOWLEDGE_BASE_VERSION}.`,
+    );
+  }
+}
+
+function champions(matchup: CorpusMatchup): readonly string[] {
+  return [
+    matchup.ally.carry,
+    matchup.ally.support,
+    matchup.enemy.carry,
+    matchup.enemy.support,
+  ];
+}
+
+export async function preflightKnowledgeCoverage(options: {
+  readonly corpusPath: string;
+  readonly mode: Exclude<LauncherExecutionMode, 'resume'>;
+  readonly matchupId?: string;
+  readonly knowledgeBaseVersion: string;
+}): Promise<KnowledgeCoveragePreflight> {
+  assertSupportedKnowledgeBaseVersion(options.knowledgeBaseVersion);
+  if (options.mode === 'single' && !options.matchupId) {
+    throw new EvaluationLauncherError('L’identifiant du matchup est requis pour le préflight Knowledge Base.');
+  }
+  const loaded = await loadEvaluationCorpus(resolve(options.corpusPath));
+  const selection = selectCorpusMatchups(loaded.corpus, {
+    sentinels: options.mode === 'sentinels',
+    ...(options.mode === 'single' ? { id: options.matchupId } : {}),
+  });
+  const resolver = new KnowledgeResolver(new StaticKnowledgeRepository());
+  const coverage = selection.matchups.map((matchup) => resolver.resolve({
+    champions: champions(matchup),
+    patch: matchup.patch,
+    phases: ['lane'],
+  }).coverage);
+  const emptyCoverage = coverage.filter(({ status }) => status === 'none').length;
+  if (coverage.length > 0 && emptyCoverage === coverage.length) {
+    throw new EvaluationLauncherError(
+      `Knowledge Base ${options.knowledgeBaseVersion} activée, mais la couverture locale est nulle pour les ${coverage.length} matchup(s) sélectionné(s). Aucun appel provider n’a été effectué.`,
+    );
+  }
+  return Object.freeze({
+    version: options.knowledgeBaseVersion,
+    selectedMatchups: coverage.length,
+    nonEmptyCoverage: coverage.length - emptyCoverage,
+    emptyCoverage,
+  });
+}
+
+export function formatEvaluationMode(mode: EvaluationMode): string {
+  return { full: 'Full', sentinels: 'Sentinelles', single: 'Matchup unique' }[mode];
+}
+
+export function formatEvaluationConfiguration(config: EvaluationConfigurationSummary): string {
+  const knowledge = config.knowledgeBaseVersion === null
+    ? 'Knowledge Base  : DÉSACTIVÉE — BASELINE PRÉ-KB\nVersion KB      : aucune'
+    : `Knowledge Base  : ACTIVÉE\nVersion KB      : ${config.knowledgeBaseVersion}`;
+  const coverage = config.coverage === undefined ? '' : [
+    '',
+    'Préflight Knowledge Base',
+    `- Matchups sélectionnés : ${config.coverage.selectedMatchups}`,
+    `- couverture non nulle attendue : ${config.coverage.nonEmptyCoverage}`,
+    `- couverture nulle attendue : ${config.coverage.emptyCoverage}`,
+    `- version : ${config.coverage.version}`,
+  ].join('\n');
+  return [
+    'Configuration de l’évaluation',
+    '',
+    `Corpus          : ${config.corpusFile}`,
+    `Mode            : ${formatEvaluationMode(config.mode)}`,
+    `Provider        : ${config.provider}`,
+    `Modèle          : ${config.model}`,
+    knowledge,
+    `Résultats       : ${config.outputDirectory}`,
+    coverage,
+    '',
+  ].join('\n');
 }
 
 export async function assertMatchupExists(corpusPath: string, matchupId: string): Promise<string> {
@@ -336,12 +446,16 @@ export async function assertNewOutputPath(outputDirectory: string): Promise<void
 
 export async function createRunOutputPath(options: {
   readonly resultsRoot: string;
+  readonly knowledgeBaseVersion: string | null;
   readonly now?: Date;
   readonly id?: string;
 }): Promise<string> {
   const timestamp = (options.now ?? new Date()).toISOString().replaceAll(/[:.]/gu, '-');
   const suffix = options.id ?? randomUUID();
-  const output = resolve(options.resultsRoot, `${timestamp}-${suffix}`);
+  const mode = options.knowledgeBaseVersion === null
+    ? 'pre-kb'
+    : `kb-${options.knowledgeBaseVersion.replaceAll(/[^a-zA-Z0-9-]+/gu, '-')}`;
+  const output = resolve(options.resultsRoot, `${mode}-${timestamp}-${suffix}`);
   await assertNewOutputPath(output);
   return output;
 }
@@ -353,10 +467,12 @@ export async function preflightEvaluation(options: {
   readonly resumeDirectory?: string;
   readonly environment?: AIEnvironment;
   readonly nodeVersion?: string;
+  readonly knowledgeBaseVersion: string | null;
 }): Promise<ProviderPreflight> {
   assertCompatibleNodeVersion(options.nodeVersion ?? process.versions.node);
   await assertLocalDependencies(options.workingDirectory);
   await loadEvaluationCorpus(resolve(options.corpusPath));
+  assertSupportedKnowledgeBaseVersion(options.knowledgeBaseVersion);
   const provider = preflightProvider(options.environment);
   if (options.outputDirectory !== undefined) {
     await ensureWritableDirectory(dirname(resolve(options.outputDirectory)));

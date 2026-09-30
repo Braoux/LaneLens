@@ -95,7 +95,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - consolidation des retours alpha ;
 - protection renforcée contre l'abus des endpoints publics ;
 - amélioration progressive des garde-fous gameplay ;
-- préparation d'une Knowledge Base gameplay structurée à partir des besoins réellement observés ;
+- résolution ciblée d'une Knowledge Base gameplay structurée, traçable et versionnée ([documentation](docs/knowledge-base.md)) ;
 - finalisation de la baseline gameplay pré-KB, actuellement contrainte par les quotas du provider.
 
 > Les garde-fous gameplay réduisent certaines erreurs déterministes, mais ne constituent pas une preuve formelle de justesse de toute recommandation tactique.
@@ -391,7 +391,7 @@ run-gameplay-evaluation.cmd
 
 Un double-clic ouvre un menu permettant de démarrer un run complet, reprendre le dernier run incomplet, choisir un run existant, lancer uniquement les sentinelles, exécuter un matchup précis ou consulter l’état du dernier run sans appel provider. Le même menu peut être lancé depuis un terminal avec `npm run eval:interactive`.
 
-Voir [Runner d’évaluation gameplay](docs/evaluation-runner.md) pour la CLI avancée et [Launcher interactif du runner](docs/interactive-evaluation-runner.md) pour l’usage quotidien par l’équipe.
+Voir [Runner d’évaluation gameplay](docs/evaluation-runner.md) pour la CLI avancée et [Launcher interactif du runner](docs/interactive-evaluation-runner.md) pour l’usage quotidien par l’équipe. Pour chaque nouveau run, le launcher impose un choix explicite entre baseline pré-KB et Knowledge Base `lan-032-kb-v1`, affiche la configuration complète et vérifie localement la couverture avant confirmation.
 
 Le build produit :
 

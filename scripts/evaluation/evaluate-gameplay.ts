@@ -36,6 +36,20 @@ export interface EvaluationCliArguments {
   readonly maxAttemptsProvided: boolean;
 }
 
+export function resolveRunKnowledgeBaseVersion(
+  requestedVersion: string | undefined,
+  resumedVersion?: string | null,
+): string | null {
+  if (
+    resumedVersion !== undefined
+    && requestedVersion !== undefined
+    && requestedVersion !== resumedVersion
+  ) {
+    throw new Error('--knowledge-base-version ne peut pas modifier un run repris.');
+  }
+  return requestedVersion ?? resumedVersion ?? null;
+}
+
 function parseNonNegativeInteger(value: string | undefined, option: string): number {
   if (value === undefined || !/^\d+$/u.test(value)) {
     throw new Error(`${option} attend un entier positif ou nul.`);
@@ -156,9 +170,21 @@ function assertResumeMatches(
 export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<void> {
   const arguments_ = parseEvaluationArguments(argv);
   const loadedCorpus = await loadEvaluationCorpus(resolve(arguments_.corpus));
-  const analysisRuntime = createAnalysisRuntime();
+  const resumeSnapshot = arguments_.resume === undefined
+    ? undefined
+    : await loadEvaluationRun(resolve(arguments_.resume));
+  const requestedKnowledgeBaseVersion = resolveRunKnowledgeBaseVersion(
+    arguments_.knowledgeBaseVersion,
+    resumeSnapshot?.run.knowledgeBaseVersion,
+  );
+  const analysisRuntime = createAnalysisRuntime({
+    knowledgeBaseEnabled: requestedKnowledgeBaseVersion !== null,
+  });
   if (analysisRuntime === undefined) {
     throw new Error('Aucun provider d’analyse configuré pour le runner.');
+  }
+  if (analysisRuntime.knowledgeBaseVersion !== requestedKnowledgeBaseVersion) {
+    throw new Error(`Version Knowledge Base attendue : ${analysisRuntime.knowledgeBaseVersion ?? 'aucune'}.`);
   }
 
   let run: EvaluationRun;
@@ -166,7 +192,7 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
   let files: RunFiles;
   let matchups: typeof loadedCorpus.corpus.matchups;
   if (arguments_.resume !== undefined) {
-    const resumed = await loadEvaluationRun(resolve(arguments_.resume));
+    const resumed = resumeSnapshot!;
     assertResumeMatches(resumed.run, loadedCorpus, arguments_);
     if (
       resumed.run.provider !== analysisRuntime.provider

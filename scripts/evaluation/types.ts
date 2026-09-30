@@ -5,6 +5,7 @@ import type {
 import type { MatchupAnalysisErrorCode } from '../../server/analysis/errors.js';
 import type { AnalysisConformanceViolation } from '../../server/analysis/AnalysisConformanceValidator.js';
 import type { ProviderRetryMetadata } from '../../server/analysis/ProviderFailure.js';
+import type { KnowledgeCoverage } from '../../server/knowledge/types.js';
 
 export type EvaluationMode = 'full' | 'sentinels' | 'single';
 export type EvaluationStatus =
@@ -48,6 +49,18 @@ export interface EvaluationError {
   readonly providerCategory?: string;
 }
 
+export type StrategicIssueSeverity = 'questionable' | 'poor' | 'dangerous';
+
+export interface EvaluationQualityReview {
+  readonly reviewedAt: string;
+  readonly reviewer: string;
+  readonly factualErrors: readonly string[];
+  readonly strategicIssues: readonly {
+    readonly severity: StrategicIssueSeverity;
+    readonly note: string;
+  }[];
+}
+
 export interface EvaluationResult {
   readonly id: string;
   readonly input: Omit<MatchupAnalysisInput, 'locale' | 'patchContext'>;
@@ -59,6 +72,8 @@ export interface EvaluationResult {
   readonly analysis?: MatchupAnalysis;
   readonly error?: EvaluationError;
   readonly violations?: readonly AnalysisConformanceViolation[];
+  readonly knowledgeCoverage?: KnowledgeCoverage;
+  readonly qualityReview?: EvaluationQualityReview;
   readonly attempts: readonly EvaluationAttempt[];
 }
 
@@ -104,5 +119,18 @@ export interface EvaluationSummary extends EvaluationSummaryCounts {
   readonly averageLatencyMs: number | null;
   readonly medianLatencyMs: number | null;
   readonly violationCodes: Readonly<Record<string, number>>;
+  readonly rejectionCategories: Readonly<Record<string, number>>;
+  readonly knowledgeCoverage: {
+    readonly full: number;
+    readonly partial: number;
+    readonly none: number;
+    readonly averageCoveredChampions: number | null;
+    readonly averageRelevantKnowledgeCount: number | null;
+  };
+  readonly quality: {
+    readonly reviewed: number;
+    readonly factualErrors: number;
+    readonly strategicIssues: Readonly<Record<StrategicIssueSeverity, number>>;
+  };
   readonly sentinels: EvaluationSummaryCounts;
 }

@@ -193,6 +193,7 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
       });
       const attemptStarted = now();
       let observedMetadata: ProviderRetryMetadata | undefined;
+      let observedKnowledgeCoverage: EvaluationResult['knowledgeCoverage'];
       try {
         const analysis = await options.service.analyze({
           ...inputFor(matchup),
@@ -200,6 +201,7 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
           patchContext: patchResolution.context,
         }, {
           onMetadata(metadata) { observedMetadata = metadata; },
+          onKnowledgeCoverage(coverage) { observedKnowledgeCoverage = coverage; },
         });
         const durationMs = Math.max(0, now().getTime() - attemptStarted.getTime());
         const attempt = attemptFrom(
@@ -215,6 +217,7 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
           completedAt: now().toISOString(),
           durationMs: [...result.attempts, attempt].reduce((sum, item) => sum + item.durationMs, 0),
           analysis,
+          ...(observedKnowledgeCoverage === undefined ? {} : { knowledgeCoverage: observedKnowledgeCoverage }),
           attempts: [...result.attempts, attempt],
         };
       } catch (error) {
@@ -287,6 +290,9 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
             attempts: [...result.attempts, attempt],
           };
         }
+      }
+      if (observedKnowledgeCoverage !== undefined && result.knowledgeCoverage === undefined) {
+        result = { ...result, knowledgeCoverage: observedKnowledgeCoverage };
       }
       results[resultIndex] = result;
       await persist();

@@ -6,6 +6,8 @@ import type {
   ChampionGameplayContext,
   GameplayContext,
 } from '../gameplay-context/types.js';
+import { normalizeChampionKey } from '../knowledge/KnowledgeResolver.js';
+import type { KnowledgeEntry, ResolvedKnowledgeContext } from '../knowledge/types.js';
 
 export type AnalysisConformanceCode =
   | 'ABILITY_UNAVAILABLE_AT_LEVEL'
@@ -20,12 +22,24 @@ export type AnalysisConformanceCode =
   | 'UNSUPPORTED_EXACT_VALUE'
   | 'UNSUPPORTED_LETHAL_CLAIM'
   | 'TEMPORAL_INCONSISTENCY'
+  | 'KNOWLEDGE_CONTRADICTION'
   | 'TACTICAL_PLAN_CONTRADICTION';
+
+export type AnalysisRejectionCategory =
+  | 'ABILITY_NOT_AVAILABLE'
+  | 'INVALID_ABILITY_EFFECT'
+  | 'IMPOSSIBLE_INTERACTION'
+  | 'INVALID_TIMING'
+  | 'KNOWLEDGE_CONTRADICTION'
+  | 'OTHER';
 
 export interface AnalysisConformanceViolation {
   readonly code: AnalysisConformanceCode;
+  readonly category?: AnalysisRejectionCategory;
   readonly severity: 'error' | 'warning';
   readonly path: string;
+  readonly subject?: string;
+  readonly knowledgeId?: string;
 }
 
 export interface AnalysisConformanceResult {
@@ -124,8 +138,26 @@ const DEFAULT_SEVERITY: Readonly<
   UNSUPPORTED_COOLDOWN_RESET: 'error',
   UNSUPPORTED_LETHAL_CLAIM: 'error',
   TEMPORAL_INCONSISTENCY: 'error',
+  KNOWLEDGE_CONTRADICTION: 'error',
 
   TACTICAL_PLAN_CONTRADICTION: 'warning',
+};
+
+const REJECTION_CATEGORY: Readonly<Record<AnalysisConformanceCode, AnalysisRejectionCategory>> = {
+  ABILITY_UNAVAILABLE_AT_LEVEL: 'ABILITY_NOT_AVAILABLE',
+  ABILITY_CHAMPION_MISMATCH: 'INVALID_ABILITY_EFFECT',
+  ABILITY_SLOT_MISMATCH: 'INVALID_ABILITY_EFFECT',
+  ABILITY_NAME_MISMATCH: 'INVALID_ABILITY_EFFECT',
+  ABILITY_EFFECT_MISMATCH: 'INVALID_ABILITY_EFFECT',
+  ABILITY_TARGETING_MISMATCH: 'INVALID_ABILITY_EFFECT',
+  UNSUPPORTED_ABILITY_INTERACTION: 'IMPOSSIBLE_INTERACTION',
+  UNSUPPORTED_CC_INTERACTION: 'IMPOSSIBLE_INTERACTION',
+  UNSUPPORTED_COOLDOWN_RESET: 'IMPOSSIBLE_INTERACTION',
+  UNSUPPORTED_EXACT_VALUE: 'OTHER',
+  UNSUPPORTED_LETHAL_CLAIM: 'OTHER',
+  TEMPORAL_INCONSISTENCY: 'INVALID_TIMING',
+  KNOWLEDGE_CONTRADICTION: 'KNOWLEDGE_CONTRADICTION',
+  TACTICAL_PLAN_CONTRADICTION: 'OTHER',
 };
 
 function normalize(value: string): string {
@@ -227,11 +259,44 @@ function addViolation(
   code: AnalysisConformanceCode,
   path: string,
   severity: 'error' | 'warning' = DEFAULT_SEVERITY[code],
+  details?: Pick<AnalysisConformanceViolation, 'subject' | 'knowledgeId'>,
 ): void {
   if (!violations.some(
     (violation) => violation.code === code && violation.path === path,
   )) {
-    violations.push(Object.freeze({ code, severity, path }));
+    violations.push(Object.freeze({
+      code,
+      category: REJECTION_CATEGORY[code],
+      severity,
+      path,
+      ...details,
+    }));
+  }
+}
+
+function validateKnowledgeContradictions(
+  field: AnalysisTextField,
+  mentions: readonly AbilityMention[],
+  facts: readonly KnowledgeEntry[],
+  violations: AnalysisConformanceViolation[],
+): void {
+  const declaredEffects = EFFECT_PATTERNS
+    .filter(([, pattern]) => pattern.test(normalize(field.text)))
+    .map(([effect]) => effect);
+  const mechanics = mentions.flatMap(({ champion, ability }) => facts.filter((entry) =>
+      entry.mechanic?.complete === true
+      && entry.mechanic.effects !== undefined
+      && normalizeChampionKey(entry.mechanic.championKey) === normalizeChampionKey(champion.champion)
+      && entry.mechanic.slot === ability.slot));
+  const unsupported = declaredEffects.find((effect) => !mechanics.some(
+    ({ mechanic }) => mechanic?.effects?.includes(effect) === true,
+  ));
+  const evidence = mechanics[0];
+  if (unsupported !== undefined && evidence !== undefined) {
+    addViolation(violations, 'KNOWLEDGE_CONTRADICTION', field.path, 'error', {
+      subject: evidence.subject,
+      knowledgeId: evidence.id,
+    });
   }
 }
 
@@ -498,9 +563,15 @@ export function findAnalysisConformanceFailure(error: unknown): AnalysisConforma
 export class AnalysisConformanceValidator {
   validate(
     analysis: MatchupAnalysis,
-    context: GameplayContext,
+    contextOrKnowledge: ResolvedKnowledgeContext | GameplayContext,
     patchContext?: PatchContext,
   ): AnalysisConformanceResult {
+    const context = 'gameplay' in contextOrKnowledge
+      ? contextOrKnowledge.gameplay
+      : contextOrKnowledge;
+    const blockingKnowledge = 'gameplay' in contextOrKnowledge
+      ? [...contextOrKnowledge.officialFacts, ...contextOrKnowledge.derivedMechanics]
+      : [];
     const violations: AnalysisConformanceViolation[] = [];
     for (const field of fields(analysis)) {
       const mentions = mentionsIn(field.text, context);
@@ -520,6 +591,7 @@ export class AnalysisConformanceValidator {
       validateExplicitAssociations(field, context, violations);
       validateAvailability(field, mentions, violations);
       validateAbilityEffects(field, mentions, violations);
+      validateKnowledgeContradictions(field, mentions, blockingKnowledge, violations);
       validateTargeting(field, mentions, violations);
       validateAbilityInteractions(field, mentions, violations, patchFacts);
       validateCrowdControl(field, mentions, violations, patchFacts);

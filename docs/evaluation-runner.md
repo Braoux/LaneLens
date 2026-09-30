@@ -146,12 +146,17 @@ La politique par défaut autorise **3 tentatives** :
 npm run eval:gameplay -- --corpus <path> --max-attempts 3
 ```
 
-La baseline pré-KB conserve `knowledgeBaseVersion: null`. Une exécution future
-peut identifier explicitement une version sans changer le format du runner :
+La baseline pré-KB conserve `knowledgeBaseVersion: null` et compose explicitement
+le resolver sans enrichissement KB. Une exécution post-KB active la version
+runtime correspondante ; une valeur arbitraire est refusée :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --knowledge-base-version <version>
+npm run eval:gameplay -- --corpus <path> --knowledge-base-version lan-032-kb-v1
 ```
+
+Avec le launcher Windows, ce choix est obligatoire pour chaque nouveau run et l’argument est construit automatiquement. Le préflight affiche l’état/version KB et calcule localement la couverture de la sélection avant confirmation et avant tout appel provider. Une couverture `none` sur 100 % d’un run annoncé avec KB bloque le lancement.
+
+Lors d’une reprise, la valeur de `run.json` est immuable. Le runtime doit charger exactement cette version ; une baseline ne peut pas devenir post-KB et un run KB ne peut pas être repris sans sa version.
 
 Seuls les rate limits sont retentés automatiquement. Après un HTTP 429 :
 
@@ -171,9 +176,10 @@ Chaque répertoire de run contient :
 - `run.json` : identité du corpus, hash, commit Git, provider, modèle, mode,
   timestamps, délai, tentatives et `knowledgeBaseVersion` ;
 - `results.json` : input de chaque matchup, statut, analyse réussie, erreur
-  métier contrôlée, violations de conformité et tentatives provider ;
+  métier contrôlée, violations de conformité, couverture KB, éventuelle revue
+  qualité et tentatives provider ;
 - `summary.json` : totaux, cas évaluables gameplay, statuts, retries, latences,
-  sentinelles et distribution des violations.
+  sentinelles, catégories de rejet, couverture et classification qualité.
 
 Statuts terminaux :
 
@@ -205,6 +211,15 @@ Pour une baseline réelle, utiliser le provider configuré et un output privé :
 1. exécuter les sentinelles et effectuer leur revue humaine ;
 2. exécuter ensuite le corpus complet ;
 3. conserver le corpus figé et les répertoires de run pour la comparaison future.
+
+Les revues humaines distinguent `factualErrors` des `strategicIssues`, ces derniers
+étant classés `questionable`, `poor` ou `dangerous`. Après les deux runs complets :
+
+```sh
+npm run eval:compare -- --before <pre-kb-summary.json> --after <post-kb-summary.json>
+```
+
+Le comparateur lit aussi le `run.json` situé à côté de chaque summary. Il exige un run `before` avec `knowledgeBaseVersion: null` et un run `after` avec une version non nulle ; deux runs pré-KB ou un `before` déjà enrichi sont refusés. Le nom du dossier n’est jamais une preuve d’activation : « post-KB » signifie que le runtime a réellement persisté une version KB non nulle.
 
 Les tests automatisés utilisent uniquement des providers déterministes hors
 réseau et ne consomment aucun crédit.

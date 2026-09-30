@@ -4,8 +4,14 @@ import { mkdtemp, mkdir, readFile, rm, utimes, writeFile } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import test from 'node:test';
-import { interactiveMain, type MenuIO } from '../scripts/evaluation/interactive-runner.js';
 import {
+  interactiveMain,
+  knowledgeBaseVersionForChoice,
+  launchNewEvaluation,
+  type MenuIO,
+} from '../scripts/evaluation/interactive-runner.js';
+import {
+  CURRENT_KNOWLEDGE_BASE_VERSION,
   EvaluationLauncherError,
   assertCompatibleNodeVersion,
   assertMatchupExists,
@@ -14,8 +20,10 @@ import {
   createRunOutputPath,
   discoverCorpusPath,
   discoverEvaluationRuns,
+  formatEvaluationConfiguration,
   latestIncompleteRun,
   preflightEvaluation,
+  preflightKnowledgeCoverage,
   preflightProvider,
   resolveResultsRoot,
   saveLauncherConfig,
@@ -58,6 +66,7 @@ async function writeRun(options: {
   completed: number;
   completedAt?: string | null;
   updatedAt: Date;
+  knowledgeBaseVersion?: string | null;
 }): Promise<void> {
   await mkdir(options.directory, { recursive: true });
   const selectedIds = ['LLC-001', 'LLC-002'];
@@ -87,7 +96,7 @@ async function writeRun(options: {
     selectedIds,
     delayMs: 0,
     maxAttempts: 1,
-    knowledgeBaseVersion: null,
+    knowledgeBaseVersion: options.knowledgeBaseVersion ?? null,
   };
   const files = [
     ['run.json', run],
@@ -125,18 +134,126 @@ test('launcher builds exact existing runner arguments for every execution mode',
   const corpus = resolve('corpus.json');
   const output = resolve('output');
   const resume = resolve('resume');
-  assert.deepEqual(buildEvaluationArguments({ mode: 'full', corpusPath: corpus, outputDirectory: output }), [
+  assert.deepEqual(buildEvaluationArguments({
+    mode: 'full', corpusPath: corpus, outputDirectory: output, knowledgeBaseVersion: null,
+  }), [
     '--corpus', corpus, '--output', output,
   ]);
-  assert.deepEqual(buildEvaluationArguments({ mode: 'sentinels', corpusPath: corpus, outputDirectory: output }), [
+  assert.deepEqual(buildEvaluationArguments({
+    mode: 'sentinels', corpusPath: corpus, outputDirectory: output, knowledgeBaseVersion: null,
+  }), [
     '--corpus', corpus, '--output', output, '--sentinels',
   ]);
-  assert.deepEqual(buildEvaluationArguments({ mode: 'single', corpusPath: corpus, outputDirectory: output, matchupId: 'LLC-009' }), [
+  assert.deepEqual(buildEvaluationArguments({
+    mode: 'sentinels', corpusPath: corpus, outputDirectory: output,
+    knowledgeBaseVersion: CURRENT_KNOWLEDGE_BASE_VERSION,
+  }), [
+    '--corpus', corpus, '--output', output, '--sentinels',
+    '--knowledge-base-version', CURRENT_KNOWLEDGE_BASE_VERSION,
+  ]);
+  assert.deepEqual(buildEvaluationArguments({
+    mode: 'single', corpusPath: corpus, outputDirectory: output,
+    matchupId: 'LLC-009', knowledgeBaseVersion: null,
+  }), [
     '--corpus', corpus, '--output', output, '--id', 'LLC-009',
   ]);
-  assert.deepEqual(buildEvaluationArguments({ mode: 'resume', corpusPath: corpus, resumeDirectory: resume }), [
+  assert.deepEqual(buildEvaluationArguments({
+    mode: 'resume', corpusPath: corpus, resumeDirectory: resume, knowledgeBaseVersion: null,
+  }), [
     '--corpus', corpus, '--resume', resume,
   ]);
+  assert.deepEqual(buildEvaluationArguments({
+    mode: 'resume', corpusPath: corpus, resumeDirectory: resume,
+    knowledgeBaseVersion: CURRENT_KNOWLEDGE_BASE_VERSION,
+  }), [
+    '--corpus', corpus, '--resume', resume,
+    '--knowledge-base-version', CURRENT_KNOWLEDGE_BASE_VERSION,
+  ]);
+});
+
+test('knowledge mode is explicit and preflight summaries make baseline and KB impossible to confuse', () => {
+  assert.equal(knowledgeBaseVersionForChoice('1'), null);
+  assert.equal(knowledgeBaseVersionForChoice('2'), CURRENT_KNOWLEDGE_BASE_VERSION);
+  assert.equal(knowledgeBaseVersionForChoice('0'), undefined);
+  assert.throws(() => knowledgeBaseVersionForChoice(''), /invalide/u);
+
+  const base = {
+    corpusFile: 'lan-032-corpus-v1.json',
+    mode: 'full' as const,
+    provider: 'groq',
+    model: 'test-model',
+    outputDirectory: 'pre-kb-run',
+  };
+  const baseline = formatEvaluationConfiguration({ ...base, knowledgeBaseVersion: null });
+  assert.match(baseline, /DÉSACTIVÉE — BASELINE PRÉ-KB/u);
+  assert.match(baseline, /Version KB {6}: aucune/u);
+  const kb = formatEvaluationConfiguration({
+    ...base,
+    knowledgeBaseVersion: CURRENT_KNOWLEDGE_BASE_VERSION,
+    coverage: {
+      version: CURRENT_KNOWLEDGE_BASE_VERSION,
+      selectedMatchups: 25,
+      nonEmptyCoverage: 23,
+      emptyCoverage: 2,
+    },
+  });
+  assert.match(kb, /Knowledge Base {2}: ACTIVÉE/u);
+  assert.match(kb, new RegExp(`Version KB {6}: ${CURRENT_KNOWLEDGE_BASE_VERSION}`, 'u'));
+  assert.match(kb, /couverture non nulle attendue : 23/u);
+});
+
+test('KB coverage preflight is local and blocks a selection with 100% none coverage', async (t) => {
+  const directory = await tempDirectory(t);
+  const coveredCorpus = await writeCorpus(directory);
+  const covered = await preflightKnowledgeCoverage({
+    corpusPath: coveredCorpus,
+    mode: 'sentinels',
+    knowledgeBaseVersion: CURRENT_KNOWLEDGE_BASE_VERSION,
+  });
+  assert.equal(covered.selectedMatchups, 1);
+  assert.ok(covered.nonEmptyCoverage > 0);
+
+  const uncoveredPath = join(directory, 'uncovered.json');
+  const uncovered = {
+    ...corpusValue,
+    rules: { expectedMatchups: 1, expectedSentinels: 1 },
+    matchups: [{
+      id: 'LLC-999', patch: '26.19',
+      ally: { carry: 'Aatrox', support: 'Ahri' },
+      enemy: { carry: 'Akali', support: 'Alistar' },
+      tags: ['fallback'], sentinel: true,
+    }],
+  };
+  await writeFile(uncoveredPath, JSON.stringify(uncovered), 'utf8');
+  await assert.rejects(preflightKnowledgeCoverage({
+    corpusPath: uncoveredPath,
+    mode: 'full',
+    knowledgeBaseVersion: CURRENT_KNOWLEDGE_BASE_VERSION,
+  }), /couverture locale est nulle.*Aucun appel provider/u);
+});
+
+test('mandatory configuration confirmation happens before the runner can consume tokens', async (t) => {
+  const directory = await tempDirectory(t);
+  const corpus = await writeCorpus(directory);
+  const answers = ['1', 'n'];
+  let output = '';
+  let runnerCalls = 0;
+  const io: MenuIO = {
+    async question() { return answers.shift() ?? 'n'; },
+    write(message) { output += message; },
+    close() {},
+  };
+  await launchNewEvaluation({
+    io,
+    workingDirectory: process.cwd(),
+    config: { corpusPath: corpus, resultsRoot: join(directory, 'runs') },
+    mode: 'full',
+    environment: { AI_PROVIDER: 'groq', GROQ_API_KEY: 'fake-test-key' },
+    async executeEvaluation() { runnerCalls += 1; },
+  });
+  assert.match(output, /Configuration de l’évaluation/u);
+  assert.match(output, /DÉSACTIVÉE — BASELINE PRÉ-KB/u);
+  assert.equal(runnerCalls, 0);
 });
 
 test('matchup validation is friendly and corpus discovery remains configurable', async (t) => {
@@ -175,13 +292,26 @@ test('preflight rejects unsupported Node, missing provider config, missing corpu
     corpusPath: join(directory, 'missing.json'),
     environment: { GROQ_API_KEY: 'must-not-appear', AI_PROVIDER: 'groq' },
     nodeVersion: '22.13.1',
+    knowledgeBaseVersion: null,
   }), /Corpus introuvable/u);
 
   const existing = join(directory, 'existing');
   await mkdir(existing);
   await assert.rejects(assertNewOutputPath(existing), /existe déjà/u);
-  const generated = await createRunOutputPath({ resultsRoot: directory, now: new Date('2026-09-30T12:00:00Z'), id: 'fixed' });
-  assert.equal(generated, resolve(directory, '2026-09-30T12-00-00-000Z-fixed'));
+  const generated = await createRunOutputPath({
+    resultsRoot: directory,
+    knowledgeBaseVersion: null,
+    now: new Date('2026-09-30T12:00:00Z'),
+    id: 'fixed',
+  });
+  assert.equal(generated, resolve(directory, 'pre-kb-2026-09-30T12-00-00-000Z-fixed'));
+  const kbGenerated = await createRunOutputPath({
+    resultsRoot: directory,
+    knowledgeBaseVersion: CURRENT_KNOWLEDGE_BASE_VERSION,
+    now: new Date('2026-09-30T12:00:00Z'),
+    id: 'kb-fixed',
+  });
+  assert.equal(kbGenerated, resolve(directory, `kb-${CURRENT_KNOWLEDGE_BASE_VERSION}-2026-09-30T12-00-00-000Z-kb-fixed`));
   assert.doesNotMatch(JSON.stringify({ error: 'GROQ_API_KEY n’est pas configurée.' }), /must-not-appear/u);
 });
 
@@ -201,7 +331,32 @@ test('information mode reads the latest run without provider configuration or ru
   await interactiveMain(io, directory);
   assert.match(output, /Progression : 1 \/ 2/u);
   assert.match(output, /Provider \/ modèle : groq \/ test-model/u);
+  assert.match(output, /Knowledge Base : DÉSACTIVÉE — BASELINE PRÉ-KB/u);
   assert.doesNotMatch(output, /n’est pas configurée|Statut : running/u);
+});
+
+test('run information exposes the immutable KB version for resumed and inspected runs', async (t) => {
+  const directory = await tempDirectory(t);
+  const corpus = await writeCorpus(directory);
+  const resultsRoot = join(directory, 'runs');
+  await writeRun({
+    directory: join(resultsRoot, 'kb-latest'),
+    completed: 2,
+    completedAt: '2026-09-30T12:00:00Z',
+    updatedAt: new Date('2026-09-30T12:00:00Z'),
+    knowledgeBaseVersion: CURRENT_KNOWLEDGE_BASE_VERSION,
+  });
+  await saveLauncherConfig(directory, { corpusPath: corpus, resultsRoot });
+  const answers = ['6', '', '0'];
+  let output = '';
+  const io: MenuIO = {
+    async question() { return answers.shift() ?? '0'; },
+    write(message) { output += message; },
+    close() {},
+  };
+  await interactiveMain(io, directory);
+  assert.match(output, /Knowledge Base : ACTIVÉE/u);
+  assert.match(output, new RegExp(`Version KB : ${CURRENT_KNOWLEDGE_BASE_VERSION}`, 'u'));
 });
 
 test('Windows launcher is thin and exposes a provider-free smoke mode', async () => {

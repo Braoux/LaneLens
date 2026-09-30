@@ -1,12 +1,14 @@
 import 'dotenv/config';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
-import { resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import type { AIEnvironment } from '../../server/analysis/providers/ai-provider-config.js';
 import { main as runEvaluation } from './evaluate-gameplay.js';
 import { loadEvaluationCorpus } from './corpus.js';
 import {
   EvaluationLauncherError,
+  CURRENT_KNOWLEDGE_BASE_VERSION,
   assertCompatibleNodeVersion,
   assertLocalDependencies,
   assertMatchupExists,
@@ -14,9 +16,11 @@ import {
   createRunOutputPath,
   discoverCorpusPath,
   discoverEvaluationRuns,
+  formatEvaluationConfiguration,
   latestIncompleteRun,
   loadLauncherConfig,
   preflightEvaluation,
+  preflightKnowledgeCoverage,
   readRunInfo,
   resolveResultsRoot,
   runSearchRoots,
@@ -48,10 +52,37 @@ function displayRun(io: MenuIO, run: EvaluationRunInfo): void {
   io.write(`Succès : ${run.success} · Échecs techniques ou conformité : ${run.failed}\n`);
   io.write(`Corpus : ${run.corpusFile}\n`);
   io.write(`Provider / modèle : ${run.provider} / ${run.model}\n`);
+  displayKnowledgeBase(io, run.knowledgeBaseVersion);
   io.write(`Début : ${formatDate(run.startedAt)}\n`);
   io.write(`Dernier état : ${formatDate(run.updatedAt)}\n`);
   io.write(`Résultats : ${run.resultsPath}\n`);
   io.write(`Summary : ${run.summaryPath}\n`);
+}
+
+function displayKnowledgeBase(io: MenuIO, version: string | null): void {
+  if (version === null) {
+    io.write('Knowledge Base : DÉSACTIVÉE — BASELINE PRÉ-KB\n');
+    io.write('Version KB : aucune\n');
+    return;
+  }
+  io.write('Knowledge Base : ACTIVÉE\n');
+  io.write(`Version KB : ${version}\n`);
+}
+
+async function chooseKnowledgeBaseMode(io: MenuIO): Promise<string | null | undefined> {
+  io.write('\nMode de connaissance\n\n');
+  io.write('1. Baseline pré-KB — Knowledge Base désactivée\n');
+  io.write(`2. Évaluation avec Knowledge Base — ${CURRENT_KNOWLEDGE_BASE_VERSION}\n`);
+  io.write('0. Retour\n\n');
+  const choice = (await io.question('Votre choix : ')).trim();
+  return knowledgeBaseVersionForChoice(choice);
+}
+
+export function knowledgeBaseVersionForChoice(choice: string): string | null | undefined {
+  if (choice.trim() === '0') return undefined;
+  if (choice.trim() === '1') return null;
+  if (choice.trim() === '2') return CURRENT_KNOWLEDGE_BASE_VERSION;
+  throw new EvaluationLauncherError('Mode de connaissance invalide.');
 }
 
 async function confirm(io: MenuIO, prompt: string): Promise<boolean> {
@@ -93,11 +124,13 @@ async function allRuns(
   return discoverEvaluationRuns(runSearchRoots({ corpusPath, resultsRoot }));
 }
 
-async function launchNewEvaluation(options: {
+export async function launchNewEvaluation(options: {
   readonly io: MenuIO;
   readonly workingDirectory: string;
   readonly config: LauncherConfig;
   readonly mode: Exclude<LauncherExecutionMode, 'resume'>;
+  readonly environment?: AIEnvironment;
+  readonly executeEvaluation?: typeof runEvaluation;
 }): Promise<LauncherConfig> {
   const corpus = await ensureCorpusPath(options.io, options.workingDirectory, options.config);
   const resultsRoot = resolveResultsRoot({
@@ -112,27 +145,42 @@ async function launchNewEvaluation(options: {
       await options.io.question('ID du matchup (ex. LLC-009) : '),
     );
   }
-  const outputDirectory = await createRunOutputPath({ resultsRoot });
-  options.io.write(`\nCorpus : ${corpus.path}\n`);
-  options.io.write(`Nouveau run : ${outputDirectory}\n`);
-  if (!(await confirm(options.io, 'Lancer cette évaluation ?'))) return corpus.config;
-
+  const knowledgeBaseVersion = await chooseKnowledgeBaseMode(options.io);
+  if (knowledgeBaseVersion === undefined) return corpus.config;
+  const outputDirectory = await createRunOutputPath({ resultsRoot, knowledgeBaseVersion });
   const provider = await preflightEvaluation({
     workingDirectory: options.workingDirectory,
     corpusPath: corpus.path,
     outputDirectory,
-    environment: process.env,
+    environment: options.environment ?? process.env,
+    knowledgeBaseVersion,
   });
-  options.io.write(`Provider : ${provider.provider} · Modèle : ${provider.model}\n`);
+  const coverage = knowledgeBaseVersion === null ? undefined : await preflightKnowledgeCoverage({
+    corpusPath: corpus.path,
+    mode: options.mode,
+    ...(matchupId === undefined ? {} : { matchupId }),
+    knowledgeBaseVersion,
+  });
+  options.io.write(`\n${formatEvaluationConfiguration({
+    corpusFile: basename(corpus.path),
+    mode: options.mode,
+    provider: provider.provider,
+    model: provider.model,
+    knowledgeBaseVersion,
+    outputDirectory,
+    ...(coverage === undefined ? {} : { coverage }),
+  })}`);
+  if (!(await confirm(options.io, 'Confirmer le lancement ?'))) return corpus.config;
   options.io.write('Statut : running\n\n');
   const args = buildEvaluationArguments({
     mode: options.mode,
     corpusPath: corpus.path,
     outputDirectory,
     ...(matchupId === undefined ? {} : { matchupId }),
+    knowledgeBaseVersion,
   });
   try {
-    await runEvaluation(args);
+    await (options.executeEvaluation ?? runEvaluation)(args);
   } catch (error) {
     options.io.write(`\nRun interrompu. Dossier conservé : ${outputDirectory}\n`);
     try {
@@ -161,20 +209,22 @@ async function resumeRun(options: {
   }
   const corpus = await ensureCorpusPath(options.io, options.workingDirectory, options.config);
   displayRun(options.io, options.run);
-  if (!(await confirm(options.io, 'Reprendre ce run ?'))) return corpus.config;
   const provider = await preflightEvaluation({
     workingDirectory: options.workingDirectory,
     corpusPath: corpus.path,
     resumeDirectory: options.run.directory,
     environment: process.env,
+    knowledgeBaseVersion: options.run.knowledgeBaseVersion,
   });
   options.io.write(`Provider : ${provider.provider} · Modèle : ${provider.model}\n`);
+  if (!(await confirm(options.io, 'Reprendre ce run avec cette configuration immuable ?'))) return corpus.config;
   options.io.write('Statut : running\n\n');
   try {
     await runEvaluation(buildEvaluationArguments({
       mode: 'resume',
       corpusPath: corpus.path,
       resumeDirectory: options.run.directory,
+      knowledgeBaseVersion: options.run.knowledgeBaseVersion,
     }));
   } catch (error) {
     options.io.write(`\nReprise interrompue. Dossier conservé : ${options.run.directory}\n`);
@@ -193,7 +243,8 @@ async function chooseRun(io: MenuIO, runs: readonly EvaluationRunInfo[]): Promis
   }
   io.write('\nÉvaluations disponibles :\n');
   runs.forEach((run, index) => {
-    io.write(`${index + 1}. ${run.name} — ${run.completed}/${run.total} — ${run.isComplete ? 'terminé' : 'incomplet'}\n`);
+    const kb = run.knowledgeBaseVersion === null ? 'pré-KB' : `KB ${run.knowledgeBaseVersion}`;
+    io.write(`${index + 1}. ${run.name} — ${kb} — ${run.completed}/${run.total} — ${run.isComplete ? 'terminé' : 'incomplet'}\n`);
   });
   const raw = (await io.question('Numéro du run (Entrée pour annuler) : ')).trim();
   if (raw.length === 0) return undefined;
