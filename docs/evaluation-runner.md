@@ -1,5 +1,7 @@
 # Runner d’évaluation gameplay
 
+Pour l’usage quotidien sous Windows, voir le [launcher interactif](interactive-evaluation-runner.md) : un double-clic suffit pour lancer, reprendre ou inspecter un run. Les commandes ci-dessous restent la référence pour les développeurs et l’automatisation.
+
 Le runner exécute un corpus JSON externe contre le pipeline métier réel de
 LaneLens, sans démarrer Hono et sans appeler `POST /api/matchup`.
 
@@ -21,7 +23,7 @@ un second LLM.
 
 ## Prérequis
 
-- Node.js `>=22.13.1 <23` ;
+- Node.js `>=22.13.1 <25` ;
 - dépendances installées avec `npm ci` ;
 - un provider LaneLens configuré dans `.env` (`AI_PROVIDER` et sa clé serveur) ;
 - un corpus externe conforme au schéma V1.
@@ -31,9 +33,9 @@ serveur. Il ne démarre aucun serveur HTTP.
 
 ## Format du corpus V1
 
-Le corpus détaillé peut rester dans un dépôt privé. Le chemin est toujours passé
-par `--corpus` et LaneLens ne contient aucune référence codée en dur vers un autre
-dépôt.
+Le corpus détaillé peut rester dans un dépôt privé. En CLI, le chemin est toujours
+passé par `--corpus`. Le launcher conserve également ce chemin configurable et ne
+fait qu’une détection locale optionnelle de l’arborescence de développement habituelle.
 
 Exemple synthétique :
 

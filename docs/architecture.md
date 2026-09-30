@@ -649,7 +649,7 @@ Le backend ne charge que la configuration correspondant au provider sélectionn�
 Prérequis :
 
 ```text
-Node.js >= 22.12.0
+Node.js >= 22.13.1 < 25
 npm
 ```
 
