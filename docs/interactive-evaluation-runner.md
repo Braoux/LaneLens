@@ -19,6 +19,17 @@ Le menu propose :
 
 Le fichier `.cmd` ne contient aucune logique d’évaluation ni aucun secret. Il vérifie seulement la présence de Node et de `tsx`, puis démarre `scripts/evaluation/interactive-runner.ts`.
 
+## Choix pré-KB ou avec KB
+
+Chaque nouveau run demande explicitement l’un des deux modes :
+
+1. **Baseline pré-KB — Knowledge Base désactivée** ;
+2. **Évaluation avec Knowledge Base — `lan-032-kb-v1`**.
+
+Aucun défaut silencieux n’est appliqué. Avant confirmation, le launcher affiche le corpus, le mode de sélection, le provider, le modèle, l’état et la version KB ainsi que le dossier de résultats. En mode KB, il résout localement la couverture attendue sur toute la sélection, sans appel LLM. Il bloque le lancement si tous les matchups ont une couverture `none`.
+
+La confirmation `[o/N]` intervient après ce résumé et avant le démarrage du runner. « Post-KB » ne désigne jamais un dossier nommé manuellement : cela signifie que `run.json` contient une `knowledgeBaseVersion` non nulle réellement chargée par le runtime.
+
 ## Corpus et résultats
 
 Le chemin du corpus reste configurable. Le launcher utilise, dans l’ordre :
@@ -30,7 +41,7 @@ Le chemin du corpus reste configurable. Le launcher utilise, dans l’ordre :
 
 Le dernier choix est mémorisé dans `.lanelens-evaluation/launcher.json`. Ce dossier est ignoré par Git : aucun chemin privé ni contenu de corpus n’est versionné.
 
-Les nouveaux runs sont créés dans `.lanelens-evaluation/runs/` par défaut. Un autre dossier peut être défini avec `LANELENS_EVALUATION_RESULTS`. Chaque run obtient un dossier horodaté unique ; un chemin existant est refusé et n’est jamais écrasé.
+Les nouveaux runs sont créés dans `.lanelens-evaluation/runs/` par défaut. Un autre dossier peut être défini avec `LANELENS_EVALUATION_RESULTS`. Chaque run obtient un dossier horodaté unique préfixé par `pre-kb-` ou `kb-lan-032-kb-v1-` ; un chemin existant est refusé et n’est jamais écrasé.
 
 Pour la reprise et l’affichage d’état, le launcher cherche les runs locaux ainsi que les éventuels dossiers `results/` situés à côté du corpus configuré.
 
@@ -43,10 +54,12 @@ Avant toute composition du provider, le launcher vérifie :
 - l’accessibilité et le format complet du corpus ;
 - le provider, le modèle et la présence de la variable de clé correspondante ;
 - l’accès en écriture au dossier de sortie ou au run repris.
+- la compatibilité de la version KB du run avec le runtime local ;
+- la couverture locale attendue lorsque la KB est activée.
 
 Les valeurs des secrets ne sont jamais affichées. Une erreur de configuration produit un message actionnable puis revient au menu.
 
-La reprise appelle le runner existant avec `--resume`. Elle conserve donc l’identité, les métadonnées et les tentatives du run, et ne rejoue pas les cas terminés.
+La reprise affiche l’état et la version KB enregistrés, puis appelle le runner existant avec `--resume`. Elle conserve donc l’identité, les métadonnées, la version KB et les tentatives du run, et ne rejoue pas les cas terminés. Il n’existe aucun choix permettant de transformer une baseline en run KB, ou l’inverse, pendant une reprise.
 
 ## Pendant et après l’exécution
 

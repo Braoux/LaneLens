@@ -36,6 +36,20 @@ export interface EvaluationCliArguments {
   readonly maxAttemptsProvided: boolean;
 }
 
+export function resolveRunKnowledgeBaseVersion(
+  requestedVersion: string | undefined,
+  resumedVersion?: string | null,
+): string | null {
+  if (
+    resumedVersion !== undefined
+    && requestedVersion !== undefined
+    && requestedVersion !== resumedVersion
+  ) {
+    throw new Error('--knowledge-base-version ne peut pas modifier un run repris.');
+  }
+  return requestedVersion ?? resumedVersion ?? null;
+}
+
 function parseNonNegativeInteger(value: string | undefined, option: string): number {
   if (value === undefined || !/^\d+$/u.test(value)) {
     throw new Error(`${option} attend un entier positif ou nul.`);
@@ -159,9 +173,10 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
   const resumeSnapshot = arguments_.resume === undefined
     ? undefined
     : await loadEvaluationRun(resolve(arguments_.resume));
-  const requestedKnowledgeBaseVersion = arguments_.knowledgeBaseVersion
-    ?? resumeSnapshot?.run.knowledgeBaseVersion
-    ?? null;
+  const requestedKnowledgeBaseVersion = resolveRunKnowledgeBaseVersion(
+    arguments_.knowledgeBaseVersion,
+    resumeSnapshot?.run.knowledgeBaseVersion,
+  );
   const analysisRuntime = createAnalysisRuntime({
     knowledgeBaseEnabled: requestedKnowledgeBaseVersion !== null,
   });

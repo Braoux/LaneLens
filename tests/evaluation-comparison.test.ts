@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { compareEvaluationSummaries } from '../scripts/evaluation/comparison.js';
+import {
+  compareEvaluationSummaries,
+  compareKnowledgeBaseImpact,
+} from '../scripts/evaluation/comparison.js';
 import { buildEvaluationSummary } from '../scripts/evaluation/summary.js';
 import type { EvaluationResult } from '../scripts/evaluation/types.js';
 
@@ -53,4 +56,21 @@ test('evaluation summaries separate rejection categories, coverage, factual erro
   assert.equal(comparison.after.rejectRate, 0);
   assert.equal(comparison.deltas.factualErrors, -1);
   assert.equal(comparison.strategicIssues.after.questionable, 1);
+});
+
+test('KB impact comparison refuses two pre-KB runs and records a real post-KB version', () => {
+  const summary = buildEvaluationSummary([result('a', 'success')], ['a']);
+  assert.throws(() => compareKnowledgeBaseImpact(
+    { summary, run: { knowledgeBaseVersion: null } },
+    { summary, run: { knowledgeBaseVersion: null } },
+  ), /les deux runs ont la Knowledge Base désactivée/u);
+  assert.throws(() => compareKnowledgeBaseImpact(
+    { summary, run: { knowledgeBaseVersion: 'lan-032-kb-v1' } },
+    { summary, run: { knowledgeBaseVersion: 'lan-032-kb-v1' } },
+  ), /run before utilise/u);
+  const comparison = compareKnowledgeBaseImpact(
+    { summary, run: { knowledgeBaseVersion: null } },
+    { summary, run: { knowledgeBaseVersion: 'lan-032-kb-v1' } },
+  );
+  assert.deepEqual(comparison.knowledgeBase, { before: null, after: 'lan-032-kb-v1' });
 });

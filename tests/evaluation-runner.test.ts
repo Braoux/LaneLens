@@ -23,6 +23,7 @@ import {
   DEFAULT_DELAY_MS,
   DEFAULT_MAX_ATTEMPTS,
   parseEvaluationArguments,
+  resolveRunKnowledgeBaseVersion,
 } from '../scripts/evaluation/evaluate-gameplay.js';
 import {
   loadEvaluationRun,
@@ -285,6 +286,20 @@ test('CLI parsing applies safe defaults and rejects ambiguous resume options', (
   assert.throws(
     () => parseEvaluationArguments(['--corpus', 'c.json', '--delay-ms', '3600001']),
     /3600000/u,
+  );
+});
+
+test('resume preserves baseline or KB mode and refuses a version change', () => {
+  assert.equal(resolveRunKnowledgeBaseVersion(undefined, null), null);
+  assert.equal(resolveRunKnowledgeBaseVersion(undefined, 'lan-032-kb-v1'), 'lan-032-kb-v1');
+  assert.equal(resolveRunKnowledgeBaseVersion('lan-032-kb-v1', 'lan-032-kb-v1'), 'lan-032-kb-v1');
+  assert.throws(
+    () => resolveRunKnowledgeBaseVersion('lan-032-kb-v1', null),
+    /ne peut pas modifier un run repris/u,
+  );
+  assert.throws(
+    () => resolveRunKnowledgeBaseVersion('another-kb', 'lan-032-kb-v1'),
+    /ne peut pas modifier un run repris/u,
   );
 });
 

@@ -49,6 +49,10 @@ Une évaluation sans `--knowledge-base-version` compose explicitement le pipelin
 npm run eval:gameplay -- --corpus "C:\LaneLens-Internal\docs\delivery\LAN-032\evaluation\lan-032-corpus-v1.json" --knowledge-base-version lan-032-kb-v1
 ```
 
+Le launcher Windows demande explicitement **Baseline pré-KB** ou **Évaluation avec Knowledge Base** pour chaque nouveau run. En mode KB, il résout la sélection localement et affiche le nombre de matchups à couverture non nulle/nulle avant toute confirmation ou consommation de tokens. Une sélection intégralement à `none` est refusée.
+
+Un run n’est post-KB que si son `run.json` contient une `knowledgeBaseVersion` non nulle effectivement chargée. Un nom de dossier ou une intention opérateur ne suffit pas. Cette valeur reste immuable pendant une reprise.
+
 Les résultats conservent la couverture. Les revues humaines peuvent distinguer `factualErrors` et `strategicIssues` (`questionable`, `poor`, `dangerous`), que le résumé agrège séparément. Une fois les deux runs complets :
 
 ```powershell
@@ -56,3 +60,4 @@ npm run eval:compare -- --before <pre-kb-summary.json> --after <post-kb-summary.
 ```
 
 La comparaison calcule les taux de rejet, erreurs factuelles et problèmes stratégiques sans inventer de seuil de succès.
+Elle vérifie également le protocole : `before` doit être pré-KB et `after` doit porter une version KB réelle, sinon elle échoue avant de produire un rapport.

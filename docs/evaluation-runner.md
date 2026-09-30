@@ -154,6 +154,10 @@ runtime correspondante ; une valeur arbitraire est refusée :
 npm run eval:gameplay -- --corpus <path> --knowledge-base-version lan-032-kb-v1
 ```
 
+Avec le launcher Windows, ce choix est obligatoire pour chaque nouveau run et l’argument est construit automatiquement. Le préflight affiche l’état/version KB et calcule localement la couverture de la sélection avant confirmation et avant tout appel provider. Une couverture `none` sur 100 % d’un run annoncé avec KB bloque le lancement.
+
+Lors d’une reprise, la valeur de `run.json` est immuable. Le runtime doit charger exactement cette version ; une baseline ne peut pas devenir post-KB et un run KB ne peut pas être repris sans sa version.
+
 Seuls les rate limits sont retentés automatiquement. Après un HTTP 429 :
 
 1. `retry-after` Groq est utilisé lorsqu’il est présent ;
@@ -214,6 +218,8 @@ Les revues humaines distinguent `factualErrors` des `strategicIssues`, ces derni
 ```sh
 npm run eval:compare -- --before <pre-kb-summary.json> --after <post-kb-summary.json>
 ```
+
+Le comparateur lit aussi le `run.json` situé à côté de chaque summary. Il exige un run `before` avec `knowledgeBaseVersion: null` et un run `after` avec une version non nulle ; deux runs pré-KB ou un `before` déjà enrichi sont refusés. Le nom du dossier n’est jamais une preuve d’activation : « post-KB » signifie que le runtime a réellement persisté une version KB non nulle.
 
 Les tests automatisés utilisent uniquement des providers déterministes hors
 réseau et ne consomment aucun crédit.
