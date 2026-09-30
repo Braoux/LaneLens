@@ -46,7 +46,7 @@ Les violations exposent une catégorie stable : `ABILITY_NOT_AVAILABLE`, `INVALI
 Une évaluation sans `--knowledge-base-version` compose explicitement le pipeline pré-KB. Pour activer la KB V1 :
 
 ```powershell
-npm run eval:gameplay -- --corpus "C:\LaneLens-Internal\docs\delivery\LAN-032\evaluation\lan-032-corpus-v1.json" --knowledge-base-version lan-032-kb-v1
+npm run eval:gameplay -- --corpus "evaluation/corpus/lan-032-corpus-v1.json" --knowledge-base-version lan-032-kb-v1
 ```
 
 Le launcher Windows demande explicitement **Baseline pré-KB** ou **Évaluation avec Knowledge Base** pour chaque nouveau run. En mode KB, il résout la sélection localement et affiche le nombre de matchups à couverture non nulle/nulle avant toute confirmation ou consommation de tokens. Une sélection intégralement à `none` est refusée.
