@@ -87,7 +87,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - déploiement Render depuis la branche `production` ;
 - healthcheck Render sur `GET /api/health` ;
 - smoke test de production GitHub Actions ;
-- runner CLI d'évaluation gameplay reproductible sur corpus externe, avec reprise et gestion des rate limits.
+- runner d'évaluation gameplay reproductible sur corpus externe, avec reprise, gestion des rate limits et [launcher Windows interactif](docs/interactive-evaluation-runner.md).
 
 ## En cours / avant ouverture plus large
 
@@ -124,7 +124,7 @@ CI/CD        GitHub Actions
 LaneLens utilise Node.js :
 
 ```text
->= 22.13.1 < 23
+>= 22.13.1 < 25
 ```
 
 ## Démarrage local
