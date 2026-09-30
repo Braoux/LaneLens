@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.13.1 <23"
+    "node": ">=22.13.1 <25"
   },
   "scripts": {
     "test": "tsx --test tests/*.test.ts",
@@ -17,7 +17,8 @@
     "start:server": "node dist/server/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "eval:gameplay": "tsx scripts/evaluation/evaluate-gameplay.ts"
+    "eval:gameplay": "tsx scripts/evaluation/evaluate-gameplay.ts",
+    "eval:interactive": "tsx scripts/evaluation/interactive-runner.ts"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",
