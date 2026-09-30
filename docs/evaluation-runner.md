@@ -33,9 +33,10 @@ serveur. Il ne démarre aucun serveur HTTP.
 
 ## Format du corpus V1
 
-Le corpus détaillé peut rester dans un dépôt privé. En CLI, le chemin est toujours
-passé par `--corpus`. Le launcher conserve également ce chemin configurable et ne
-fait qu’une détection locale optionnelle de l’arborescence de développement habituelle.
+Le corpus de référence V1 est versionné publiquement dans
+`evaluation/corpus/lan-032-corpus-v1.json`. En CLI, le chemin reste toujours passé
+par `--corpus`, ce qui permet également d’exécuter un corpus alternatif. Le launcher
+peut détecter automatiquement le corpus canonique local.
 
 Exemple synthétique :
 
@@ -68,19 +69,19 @@ le nombre réel doit correspondre.
 Corpus complet :
 
 ```sh
-npm run eval:gameplay -- --corpus <path>
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json
 ```
 
 Sentinelles uniquement :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --sentinels
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --sentinels
 ```
 
 Un matchup :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --id EXAMPLE-001
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --id EXAMPLE-001
 ```
 
 Un ID absent provoque une erreur CLI explicite.
@@ -88,7 +89,7 @@ Un ID absent provoque une erreur CLI explicite.
 Répertoire de sortie explicite :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --output <run-directory>
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --output <run-directory>
 ```
 
 Le répertoire doit être vide. Le runner ne remplace jamais silencieusement un
@@ -104,7 +105,7 @@ Pour conserver des résultats privés hors du dépôt public, toujours fournir u
 Reprendre un run interrompu :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --resume <run-directory>
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --resume <run-directory>
 ```
 
 La reprise vérifie le hash et la version du corpus, le patch, le provider et le
@@ -137,13 +138,13 @@ L’exécution est strictement séquentielle (`concurrency = 1`). Le délai pré
 par défaut est de **2000 ms** entre deux matchups :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --delay-ms 3000
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --delay-ms 3000
 ```
 
 La politique par défaut autorise **3 tentatives** :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --max-attempts 3
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --max-attempts 3
 ```
 
 La baseline pré-KB conserve `knowledgeBaseVersion: null` et compose explicitement
@@ -151,10 +152,12 @@ le resolver sans enrichissement KB. Une exécution post-KB active la version
 runtime correspondante ; une valeur arbitraire est refusée :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --knowledge-base-version lan-032-kb-v1
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --knowledge-base-version lan-032-kb-v1
 ```
 
 Avec le launcher Windows, ce choix est obligatoire pour chaque nouveau run et l’argument est construit automatiquement. Le préflight affiche l’état/version KB et calcule localement la couverture de la sélection avant confirmation et avant tout appel provider. Une couverture `none` sur 100 % d’un run annoncé avec KB bloque le lancement.
+
+La couverture affichée par la V1 est **une couverture par champion**, pas une preuve de couverture mécanique exhaustive. Ainsi, `full` (4/4 champions) peut coexister avec des capacités ou interactions insuffisamment structurées pour être rejetées automatiquement en cas d’hallucination. Les sentinelles et la revue humaine restent donc nécessaires pour mesurer les faux verts (`success` mais factuellement incorrects). Voir LAN-042 (#92).
 
 Lors d’une reprise, la valeur de `run.json` est immuable. Le runtime doit charger exactement cette version ; une baseline ne peut pas devenir post-KB et un run KB ne peut pas être repris sans sa version.
 
@@ -183,7 +186,7 @@ Chaque répertoire de run contient :
 
 Statuts terminaux :
 
-- `success` : analyse valide et évaluable ;
+- `success` : analyse conforme au contrat et n’ayant déclenché aucun validator bloquant ; ce statut ne constitue pas une certification humaine de l’exactitude factuelle ou stratégique ;
 - `invalid_analysis` : sortie invalide ou rejetée par les validators, évaluable
   pour le taux de conformité ;
 - `rate_limited` : quota épuisé, non évaluable gameplay ;

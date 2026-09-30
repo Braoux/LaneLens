@@ -155,12 +155,8 @@ export async function discoverCorpusPath(options: {
 
   const conventional = resolve(
     options.workingDirectory,
-    '..',
-    'LaneLens-Internal',
-    'docs',
-    'delivery',
-    'LAN-032',
     'evaluation',
+    'corpus',
     'lan-032-corpus-v1.json',
   );
   return await exists(conventional) ? conventional : undefined;
