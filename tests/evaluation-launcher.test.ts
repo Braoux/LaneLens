@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import {
   interactiveMain,
@@ -276,7 +276,7 @@ test('matchup validation is friendly and corpus discovery remains configurable',
   t.after(() => rm(canonicalDirectory, { recursive: true, force: true }));
   const canonicalCorpus = join(canonicalDirectory, 'evaluation', 'corpus', 'lan-032-corpus-v1.json');
   await mkdir(dirname(canonicalCorpus), { recursive: true });
-  await writeFile(canonicalCorpus, JSON.stringify(TEST_CORPUS), 'utf8');
+  await writeFile(canonicalCorpus, JSON.stringify(corpusValue), 'utf8');
   assert.equal(
     await discoverCorpusPath({ workingDirectory: canonicalDirectory, environment: {} }),
     resolve(canonicalCorpus),
