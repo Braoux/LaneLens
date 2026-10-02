@@ -142,7 +142,7 @@ test('blank prepared input fields are rejected before provider invocation', asyn
     new MatchupAnalysisService(provider).analyze({ ...input, allyCarry: '   ' }),
     expectCode('ANALYSIS_FAILED'),
   );
-  assert.equal(provider.requests.length, 50);
+  assert.equal(provider.requests.length, 0);
 });
 
 test('every mandatory response string must be non-blank', async () => {
