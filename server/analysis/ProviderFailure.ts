@@ -1,5 +1,6 @@
 export type ProviderFailureCategory =
   | 'authentication'
+  | 'insufficient_balance'
   | 'rate_limit'
   | 'model_not_found'
   | 'invalid_request'
@@ -15,10 +16,16 @@ export interface ProviderFailureDetails {
   readonly status?: number;
   readonly errorName?: string;
   readonly errorMessage?: string;
+  readonly providerRequestId?: string;
   readonly retryMetadata?: ProviderRetryMetadata;
 }
 
 export interface ProviderRetryMetadata {
+  readonly providerRequestId?: string;
+  readonly inputTokens?: number;
+  readonly outputTokens?: number;
+  readonly totalTokens?: number;
+  readonly reasoningTokens?: number;
   readonly retryAfterMs?: number;
   readonly rateLimitLimitRequests?: number;
   readonly rateLimitLimitTokens?: number;
@@ -83,6 +90,16 @@ function readSafeErrorMessage(error: unknown): string | undefined {
   return value.length === 0 ? undefined : value;
 }
 
+function readProviderRequestId(error: unknown): string | undefined {
+  if (!isRecord(error)) return undefined;
+  const rawValue = error.requestID ?? error.request_id;
+  const messageValue = typeof error.message === 'string'
+    ? /\brequest_id:\s*([A-Za-z0-9_-]{1,200})/u.exec(error.message)?.[1]
+    : undefined;
+  const value = (typeof rawValue === 'string' ? rawValue : messageValue)?.trim() ?? '';
+  return value.length > 0 && value.length <= 200 ? value : undefined;
+}
+
 export function classifyProviderFailure(error: unknown): Pick<
   ProviderFailureDetails,
   'category' | 'status'
@@ -93,11 +110,15 @@ export function classifyProviderFailure(error: unknown): Pick<
 
   if (status === 429) {
     category = 'rate_limit';
+  } else if (status === 402) {
+    category = 'insufficient_balance';
   } else if (status === 401 || status === 403) {
     category = 'authentication';
   } else if (status === 404 && /model/.test(text)) {
     category = 'model_not_found';
-  } else if (status === 400 || status === 404) {
+  } else if ((status === 400 || status === 404 || status === 422) && /model.*(?:not.?found|unavailable)|(?:not.?found|unavailable).*model/.test(text)) {
+    category = 'model_not_found';
+  } else if (status === 400 || status === 404 || status === 422) {
     category = 'invalid_request';
   } else if (status !== undefined && status >= 500) {
     category = 'provider_server_error';
@@ -123,6 +144,7 @@ export class ProviderFailureError extends Error {
   readonly status?: number;
   readonly errorName?: string;
   readonly errorMessage?: string;
+  readonly providerRequestId?: string;
   readonly retryMetadata?: ProviderRetryMetadata;
 
   constructor(
@@ -137,6 +159,7 @@ export class ProviderFailureError extends Error {
     this.status = details.status;
     this.errorName = details.errorName;
     this.errorMessage = details.errorMessage;
+    this.providerRequestId = details.providerRequestId;
     this.retryMetadata = details.retryMetadata;
   }
 }
@@ -153,6 +176,7 @@ export function providerFailureDetails(
     ...classifyProviderFailure(error),
     errorName: readSafeErrorName(error),
     errorMessage: readSafeErrorMessage(error),
+    providerRequestId: readProviderRequestId(error),
     ...(retryMetadata === undefined ? {} : { retryMetadata }),
   };
 }

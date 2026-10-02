@@ -67,7 +67,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - portraits et données champions via Riot Data Dragon ;
 - gestion des matchups miroir ;
 - moteur d'analyse backend provider-agnostic ;
-- providers OpenAI, Google Gemini et Groq ;
+- providers OpenAI, Google Gemini, Groq et DeepSeek ;
 - contexte de patch versionné ;
 - API `POST /api/matchup` ;
 - endpoint `GET /api/analysis-context` ;
@@ -110,7 +110,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 Frontend     TypeScript · Vite · HTML · CSS
 Backend      Node.js · Hono
 Data         Riot Data Dragon
-AI           MatchupAnalysisProvider · OpenAI · Gemini · Groq
+AI           MatchupAnalysisProvider · OpenAI · Gemini · Groq · DeepSeek
 Storage      localStorage / sessionStorage côté navigateur
 Feedback     GitHub Issues configurable côté serveur
 Logs         JSONL en local · stdout/stderr en production
@@ -212,6 +212,20 @@ GEMINI_API_KEY=
 GEMINI_MODEL=gemini-3.8-flash
 GEMINI_TIMEOUT_MS=30000
 ```
+
+### DeepSeek
+
+```env
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_TIMEOUT_MS=30000
+```
+
+`deepseek-v4-pro` peut être sélectionné via `DEEPSEEK_MODEL`. L’intégration utilise
+Chat Completions en JSON Output, sans outil, avec le mode thinking explicitement
+activé et `reasoning_effort=high` pour rendre les campagnes comparables.
 
 Une valeur `AI_PROVIDER` absente conserve OpenAI pour compatibilité avec les configurations existantes.
 
