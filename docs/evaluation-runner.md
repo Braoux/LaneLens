@@ -1,5 +1,7 @@
 # Runner d’évaluation gameplay
 
+Pour l’usage quotidien sous Windows, voir le [launcher interactif](interactive-evaluation-runner.md) : un double-clic suffit pour lancer, reprendre ou inspecter un run. Les commandes ci-dessous restent la référence pour les développeurs et l’automatisation.
+
 Le runner exécute un corpus JSON externe contre le pipeline métier réel de
 LaneLens, sans démarrer Hono et sans appeler `POST /api/matchup`.
 
@@ -21,7 +23,7 @@ un second LLM.
 
 ## Prérequis
 
-- Node.js `>=22.13.1 <23` ;
+- Node.js `>=22.13.1 <25` ;
 - dépendances installées avec `npm ci` ;
 - un provider LaneLens configuré dans `.env` (`AI_PROVIDER` et sa clé serveur) ;
 - un corpus externe conforme au schéma V1.
@@ -29,11 +31,35 @@ un second LLM.
 Le runner utilise exactement la même sélection de provider et de modèle que le
 serveur. Il ne démarre aucun serveur HTTP.
 
+DeepSeek est sélectionnable sans modification de code :
+
+```env
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_EVALUATION_TIMEOUT_MS=120000
+DEEPSEEK_EVALUATION_TRANSPORT_TIMEOUT_MS=130000
+```
+
+`deepseek-v4-pro` peut être utilisé pour un run distinct en modifiant uniquement
+`DEEPSEEK_MODEL`. Les runs DeepSeek enregistrent aussi dans `run.json` le format
+`json_object`, le mode thinking `enabled` et l’effort `high`. Chaque tentative
+conserve sa durée, son statut HTTP/erreur normalisée et, lorsque DeepSeek les
+retourne, le request ID provider ainsi que les tokens d’entrée, sortie, total et
+raisonnement.
+
+La deadline DeepSeek du runner et son timeout transport sont enregistrés dans
+`run.json` avec les autres paramètres de génération. La valeur runner par défaut
+est de 120 s et ne dépend pas de la deadline applicative de 90 s. Ces paramètres
+sont comparés à la reprise afin de préserver la reproductibilité de la campagne.
+
 ## Format du corpus V1
 
-Le corpus détaillé peut rester dans un dépôt privé. Le chemin est toujours passé
-par `--corpus` et LaneLens ne contient aucune référence codée en dur vers un autre
-dépôt.
+Le corpus de référence V1 est versionné publiquement dans
+`evaluation/corpus/lan-032-corpus-v1.json`. En CLI, le chemin reste toujours passé
+par `--corpus`, ce qui permet également d’exécuter un corpus alternatif. Le launcher
+peut détecter automatiquement le corpus canonique local.
 
 Exemple synthétique :
 
@@ -66,19 +92,19 @@ le nombre réel doit correspondre.
 Corpus complet :
 
 ```sh
-npm run eval:gameplay -- --corpus <path>
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json
 ```
 
 Sentinelles uniquement :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --sentinels
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --sentinels
 ```
 
 Un matchup :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --id EXAMPLE-001
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --id EXAMPLE-001
 ```
 
 Un ID absent provoque une erreur CLI explicite.
@@ -86,7 +112,7 @@ Un ID absent provoque une erreur CLI explicite.
 Répertoire de sortie explicite :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --output <run-directory>
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --output <run-directory>
 ```
 
 Le répertoire doit être vide. Le runner ne remplace jamais silencieusement un
@@ -102,7 +128,7 @@ Pour conserver des résultats privés hors du dépôt public, toujours fournir u
 Reprendre un run interrompu :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --resume <run-directory>
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --resume <run-directory>
 ```
 
 La reprise vérifie le hash et la version du corpus, le patch, le provider et le
@@ -135,21 +161,28 @@ L’exécution est strictement séquentielle (`concurrency = 1`). Le délai pré
 par défaut est de **2000 ms** entre deux matchups :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --delay-ms 3000
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --delay-ms 3000
 ```
 
 La politique par défaut autorise **3 tentatives** :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --max-attempts 3
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --max-attempts 3
 ```
 
-La baseline pré-KB conserve `knowledgeBaseVersion: null`. Une exécution future
-peut identifier explicitement une version sans changer le format du runner :
+La baseline pré-KB conserve `knowledgeBaseVersion: null` et compose explicitement
+le resolver sans enrichissement KB. Une exécution post-KB active la version
+runtime correspondante ; une valeur arbitraire est refusée :
 
 ```sh
-npm run eval:gameplay -- --corpus <path> --knowledge-base-version <version>
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --knowledge-base-version lan-032-kb-v1
 ```
+
+Avec le launcher Windows, ce choix est obligatoire pour chaque nouveau run et l’argument est construit automatiquement. Le préflight affiche l’état/version KB et calcule localement la couverture de la sélection avant confirmation et avant tout appel provider. Une couverture `none` sur 100 % d’un run annoncé avec KB bloque le lancement.
+
+La couverture affichée par la V1 est **une couverture par champion**, pas une preuve de couverture mécanique exhaustive. Ainsi, `full` (4/4 champions) peut coexister avec des capacités ou interactions insuffisamment structurées pour être rejetées automatiquement en cas d’hallucination. Les sentinelles et la revue humaine restent donc nécessaires pour mesurer les faux verts (`success` mais factuellement incorrects). Voir LAN-042 (#92).
+
+Lors d’une reprise, la valeur de `run.json` est immuable. Le runtime doit charger exactement cette version ; une baseline ne peut pas devenir post-KB et un run KB ne peut pas être repris sans sa version.
 
 Seuls les rate limits sont retentés automatiquement. Après un HTTP 429 :
 
@@ -157,6 +190,10 @@ Seuls les rate limits sont retentés automatiquement. Après un HTTP 429 :
 2. sinon, le runner applique un backoff exponentiel borné avec un petit jitter ;
 3. chaque tentative est persistée avant l’attente suivante ;
 4. après épuisement, le cas devient `rate_limited` et le corpus continue.
+
+Un timeout ou toute autre erreur provider n’est jamais retenté automatiquement :
+le cas devient immédiatement `provider_error`. `maxAttempts` ne concerne que les
+rate limits explicitement classés comme tels.
 
 Les quotas Groq ne sont jamais hardcodés. Les métadonnées conservées sont
 limitées à `retry-after` et aux headers `x-ratelimit-*` documentés. Aucun header
@@ -166,16 +203,18 @@ d’authentification n’est écrit.
 
 Chaque répertoire de run contient :
 
-- `run.json` : identité du corpus, hash, commit Git, provider, modèle, mode,
-  timestamps, délai, tentatives et `knowledgeBaseVersion` ;
+- `run.json` : identité du corpus, hash, commit Git, provider, modèle, paramètres
+  de génération utiles, mode, timestamps, délai, tentatives et
+  `knowledgeBaseVersion` ;
 - `results.json` : input de chaque matchup, statut, analyse réussie, erreur
-  métier contrôlée, violations de conformité et tentatives provider ;
+  métier contrôlée, violations de conformité, couverture KB, éventuelle revue
+  qualité et tentatives provider ;
 - `summary.json` : totaux, cas évaluables gameplay, statuts, retries, latences,
-  sentinelles et distribution des violations.
+  sentinelles, catégories de rejet, couverture et classification qualité.
 
 Statuts terminaux :
 
-- `success` : analyse valide et évaluable ;
+- `success` : analyse conforme au contrat et n’ayant déclenché aucun validator bloquant ; ce statut ne constitue pas une certification humaine de l’exactitude factuelle ou stratégique ;
 - `invalid_analysis` : sortie invalide ou rejetée par les validators, évaluable
   pour le taux de conformité ;
 - `rate_limited` : quota épuisé, non évaluable gameplay ;
@@ -203,6 +242,15 @@ Pour une baseline réelle, utiliser le provider configuré et un output privé :
 1. exécuter les sentinelles et effectuer leur revue humaine ;
 2. exécuter ensuite le corpus complet ;
 3. conserver le corpus figé et les répertoires de run pour la comparaison future.
+
+Les revues humaines distinguent `factualErrors` des `strategicIssues`, ces derniers
+étant classés `questionable`, `poor` ou `dangerous`. Après les deux runs complets :
+
+```sh
+npm run eval:compare -- --before <pre-kb-summary.json> --after <post-kb-summary.json>
+```
+
+Le comparateur lit aussi le `run.json` situé à côté de chaque summary. Il exige un run `before` avec `knowledgeBaseVersion: null` et un run `after` avec une version non nulle ; deux runs pré-KB ou un `before` déjà enrichi sont refusés. Le nom du dossier n’est jamais une preuve d’activation : « post-KB » signifie que le runtime a réellement persisté une version KB non nulle.
 
 Les tests automatisés utilisent uniquement des providers déterministes hors
 réseau et ne consomment aucun crédit.

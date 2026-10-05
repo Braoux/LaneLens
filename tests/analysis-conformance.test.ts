@@ -281,6 +281,7 @@ test('tactical plan contradictions remain non-blocking warnings unless a transit
   assert.equal(result.valid, true);
   assert.deepEqual(result.violations.filter(({ severity }) => severity === 'warning'), [{
     code: 'TACTICAL_PLAN_CONTRADICTION',
+    category: 'OTHER',
     severity: 'warning',
     path: 'lanePlan,wavePlan',
   }]);

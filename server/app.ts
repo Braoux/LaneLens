@@ -326,6 +326,15 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
             patch: request.patch,
             violationCodes: conformanceFailure.violationCodes,
             violationPaths: conformanceFailure.violationPaths,
+            violationCategories: [...new Set(conformanceFailure.violations.map(
+              ({ category }) => category ?? 'OTHER',
+            ))],
+            violationSubjects: [...new Set(conformanceFailure.violations.flatMap(
+              ({ subject }) => subject === undefined ? [] : [subject],
+            ))],
+            knowledgeIds: [...new Set(conformanceFailure.violations.flatMap(
+              ({ knowledgeId }) => knowledgeId === undefined ? [] : [knowledgeId],
+            ))],
           });
         }
       }
@@ -342,6 +351,10 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
           status: providerFailure?.status,
           errorName: providerFailure?.errorName,
           errorMessage: providerFailure?.errorMessage,
+          providerRequestId: providerFailure?.providerRequestId,
+          executionContext: providerFailure?.executionContext,
+          deadlineMs: providerFailure?.deadlineMs,
+          durationMs: providerFailure?.durationMs,
           errorCode: code,
         };
         logger.error('analysis_provider_failed', {
@@ -387,7 +400,27 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
     };
 
     try {
-      const result = await analysisService.analyze(input);
+      const result = await analysisService.analyze(input, {
+        onMetadata(metadata) {
+          logger.info('matchup_analysis_provider_metadata', {
+            requestId,
+            provider: dependencies.analysisProviderName,
+            model: dependencies.analysisProviderModel,
+            ...metadata,
+          });
+        },
+        onKnowledgeCoverage(coverage, version) {
+          logger.info('matchup_analysis_knowledge_resolved', {
+            requestId,
+            patch: request.patch,
+            knowledgeBaseVersion: version === 'disabled' ? null : version,
+            knowledgeCoverageStatus: coverage.status,
+            knowledgeCoveredChampions: coverage.coveredChampions,
+            knowledgeTotalChampions: coverage.totalChampions,
+            knowledgeRelevantCount: coverage.relevantKnowledgeCount,
+          });
+        },
+      });
       logger.info('matchup_analysis_completed', {
         requestId,
         patch: request.patch,
