@@ -17,6 +17,7 @@ import type { RunFiles } from './result-writer.js';
 import { executeEvaluation } from './runner.js';
 import { ConsoleEvaluationProgress } from './progress.js';
 import type { EvaluationResult, EvaluationRun } from './types.js';
+import { withEvaluationDeepSeekTimeout } from './deepseek-timeout.js';
 
 export const DEFAULT_DELAY_MS = 2_000;
 export const DEFAULT_MAX_ATTEMPTS = 3;
@@ -187,7 +188,9 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
     resumeSnapshot?.run.knowledgeBaseVersion,
   );
   const analysisRuntime = createAnalysisRuntime({
+    environment: withEvaluationDeepSeekTimeout(process.env),
     knowledgeBaseEnabled: requestedKnowledgeBaseVersion !== null,
+    executionContext: 'evaluation',
   });
   if (analysisRuntime === undefined) {
     throw new Error('Aucun provider d’analyse configuré pour le runner.');

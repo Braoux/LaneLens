@@ -31,7 +31,8 @@ export interface DeepSeekRequest {
   readonly thinking: { readonly type: typeof DEEPSEEK_THINKING_MODE };
   readonly reasoningEffort: typeof DEEPSEEK_REASONING_EFFORT;
   readonly tools: [];
-  readonly timeoutMs: number;
+  readonly signal: AbortSignal;
+  readonly transportTimeoutMs: number;
 }
 
 export interface DeepSeekTokenUsage {
@@ -67,9 +68,20 @@ interface DeepSeekChatCompletionBody extends ChatCompletionCreateParamsNonStream
 }
 
 export class DeepSeekProviderError extends ProviderFailureError {
-  constructor(model: string, cause: unknown) {
+  constructor(
+    model: string,
+    cause: unknown,
+    executionContext: 'application' | 'evaluation',
+    deadlineMs: number,
+    durationMs: number,
+  ) {
     super(
-      providerFailureDetails('deepseek', model, cause),
+      {
+        ...providerFailureDetails('deepseek', model, cause),
+        executionContext,
+        deadlineMs,
+        durationMs,
+      },
       'Le provider DeepSeek est indisponible.',
     );
     this.name = 'DeepSeekProviderError';
@@ -97,7 +109,8 @@ export function createDeepSeekSDKClient(
         stream: false as const,
       } satisfies DeepSeekChatCompletionBody;
       const pending = client.chat.completions.create(body, {
-        timeout: request.timeoutMs,
+        signal: request.signal,
+        timeout: request.transportTimeoutMs,
         maxRetries: 0,
       });
       const { data, request_id: providerRequestId } = await pending.withResponse();
@@ -126,7 +139,9 @@ export class DeepSeekProvider implements MatchupAnalysisProvider {
   constructor(
     private readonly client: DeepSeekClient,
     private readonly model: string,
-    private readonly timeoutMs: number,
+    private readonly deadlineMs: number,
+    private readonly transportTimeoutMs: number,
+    private readonly executionContext: 'application' | 'evaluation' = 'application',
   ) {}
 
   async analyze(
@@ -134,8 +149,18 @@ export class DeepSeekProvider implements MatchupAnalysisProvider {
     options?: MatchupAnalysisProviderOptions,
   ): Promise<unknown> {
     let response: DeepSeekResult;
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<never>((_, reject) => {
+      deadlineTimer = setTimeout(() => {
+        const error = new DOMException('LaneLens DeepSeek deadline exceeded.', 'TimeoutError');
+        controller.abort(error);
+        reject(error);
+      }, this.deadlineMs);
+    });
     try {
-      response = await this.client.generate({
+      const generation = this.client.generate({
         model: this.model,
         instructions: request.instructions,
         input: JSON.stringify(request.input),
@@ -143,10 +168,20 @@ export class DeepSeekProvider implements MatchupAnalysisProvider {
         thinking: { type: DEEPSEEK_THINKING_MODE },
         reasoningEffort: DEEPSEEK_REASONING_EFFORT,
         tools: [],
-        timeoutMs: this.timeoutMs,
+        signal: controller.signal,
+        transportTimeoutMs: this.transportTimeoutMs,
       });
+      response = await Promise.race([generation, deadline]);
     } catch (error) {
-      throw new DeepSeekProviderError(this.model, error);
+      throw new DeepSeekProviderError(
+        this.model,
+        error,
+        this.executionContext,
+        this.deadlineMs,
+        Math.max(0, Date.now() - startedAt),
+      );
+    } finally {
+      if (deadlineTimer !== undefined) clearTimeout(deadlineTimer);
     }
 
     const usage = response.tokenUsage;
@@ -181,19 +216,27 @@ export class DeepSeekProvider implements MatchupAnalysisProvider {
 export function createDeepSeekProvider(
   config: DeepSeekConfig,
   clientFactory: DeepSeekClientFactory = defaultClientFactory,
+  executionContext: 'application' | 'evaluation' = 'application',
 ): DeepSeekProvider {
   const normalizedConfig = loadDeepSeekConfig({
     DEEPSEEK_API_KEY: config.apiKey,
     DEEPSEEK_MODEL: config.model,
     DEEPSEEK_BASE_URL: config.baseURL,
-    DEEPSEEK_TIMEOUT_MS: String(config.timeoutMs),
+    DEEPSEEK_TIMEOUT_MS: String(config.deadlineMs),
+    DEEPSEEK_TRANSPORT_TIMEOUT_MS: String(config.transportTimeoutMs),
   });
   const client = clientFactory({
     apiKey: normalizedConfig.apiKey,
     baseURL: normalizedConfig.baseURL,
-    timeout: normalizedConfig.timeoutMs,
+    timeout: normalizedConfig.transportTimeoutMs,
     maxRetries: 0,
     logLevel: 'off',
   });
-  return new DeepSeekProvider(client, normalizedConfig.model, normalizedConfig.timeoutMs);
+  return new DeepSeekProvider(
+    client,
+    normalizedConfig.model,
+    normalizedConfig.deadlineMs,
+    normalizedConfig.transportTimeoutMs,
+    executionContext,
+  );
 }

@@ -220,12 +220,20 @@ AI_PROVIDER=deepseek
 DEEPSEEK_API_KEY=
 DEEPSEEK_MODEL=deepseek-flash
 DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_TIMEOUT_MS=30000
+DEEPSEEK_TIMEOUT_MS=90000
+DEEPSEEK_TRANSPORT_TIMEOUT_MS=100000
+DEEPSEEK_EVALUATION_TIMEOUT_MS=120000
+DEEPSEEK_EVALUATION_TRANSPORT_TIMEOUT_MS=130000
 ```
 
 `deepseek-v4-pro` peut être sélectionné via `DEEPSEEK_MODEL`. L’intégration utilise
 Chat Completions en JSON Output, sans outil, avec le mode thinking explicitement
 activé et `reasoning_effort=high` pour rendre les campagnes comparables.
+
+La deadline applicative DeepSeek est de 90 s. Le timeout SDK reste supérieur afin
+que LaneLens contrôle explicitement l’annulation. Les lignes vides de keep-alive
+DeepSeek restent au niveau transport jusqu’au JSON final. Le runner utilise sa
+propre deadline de 120 s, configurable séparément.
 
 Une valeur `AI_PROVIDER` absente conserve OpenAI pour compatibilité avec les configurations existantes.
 

@@ -7,9 +7,12 @@ import type {
 import type { FeedbackAcceptedResponse, FeedbackRequest } from '../shared/feedback-contract';
 import { isAnalysisContextResponse, isMatchupAnalysis } from './analysis';
 
-const REQUEST_TIMEOUT_MS = 30_000;
+export const ANALYSIS_REQUEST_TIMEOUT_MS = 90_000;
 
-export function analysisRequestSignal(signal?: AbortSignal, timeoutMs = REQUEST_TIMEOUT_MS): AbortSignal {
+export function analysisRequestSignal(
+  signal?: AbortSignal,
+  timeoutMs = ANALYSIS_REQUEST_TIMEOUT_MS,
+): AbortSignal {
   const timeoutSignal = AbortSignal.timeout(timeoutMs);
   return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
 }

@@ -241,6 +241,12 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
             ...(providerFailure.providerRequestId === undefined
               ? {}
               : { providerRequestId: providerFailure.providerRequestId }),
+            ...(providerFailure.executionContext === undefined
+              ? {}
+              : { executionContext: providerFailure.executionContext }),
+            ...(providerFailure.deadlineMs === undefined
+              ? {}
+              : { deadlineMs: providerFailure.deadlineMs }),
           };
           const attempt = attemptFrom(
             attemptNumber,
@@ -269,6 +275,12 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
             ...(providerFailure.providerRequestId === undefined
               ? {}
               : { providerRequestId: providerFailure.providerRequestId }),
+            ...(providerFailure.executionContext === undefined
+              ? {}
+              : { executionContext: providerFailure.executionContext }),
+            ...(providerFailure.deadlineMs === undefined
+              ? {}
+              : { deadlineMs: providerFailure.deadlineMs }),
           };
           const attempt = attemptFrom(
             attemptNumber,
