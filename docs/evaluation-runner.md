@@ -31,6 +31,29 @@ un second LLM.
 Le runner utilise exactement la même sélection de provider et de modèle que le
 serveur. Il ne démarre aucun serveur HTTP.
 
+DeepSeek est sélectionnable sans modification de code :
+
+```env
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_EVALUATION_TIMEOUT_MS=120000
+DEEPSEEK_EVALUATION_TRANSPORT_TIMEOUT_MS=130000
+```
+
+`deepseek-v4-pro` peut être utilisé pour un run distinct en modifiant uniquement
+`DEEPSEEK_MODEL`. Les runs DeepSeek enregistrent aussi dans `run.json` le format
+`json_object`, le mode thinking `enabled` et l’effort `high`. Chaque tentative
+conserve sa durée, son statut HTTP/erreur normalisée et, lorsque DeepSeek les
+retourne, le request ID provider ainsi que les tokens d’entrée, sortie, total et
+raisonnement.
+
+La deadline DeepSeek du runner et son timeout transport sont enregistrés dans
+`run.json` avec les autres paramètres de génération. La valeur runner par défaut
+est de 120 s et ne dépend pas de la deadline applicative de 90 s. Ces paramètres
+sont comparés à la reprise afin de préserver la reproductibilité de la campagne.
+
 ## Format du corpus V1
 
 Le corpus de référence V1 est versionné publiquement dans
@@ -168,6 +191,10 @@ Seuls les rate limits sont retentés automatiquement. Après un HTTP 429 :
 3. chaque tentative est persistée avant l’attente suivante ;
 4. après épuisement, le cas devient `rate_limited` et le corpus continue.
 
+Un timeout ou toute autre erreur provider n’est jamais retenté automatiquement :
+le cas devient immédiatement `provider_error`. `maxAttempts` ne concerne que les
+rate limits explicitement classés comme tels.
+
 Les quotas Groq ne sont jamais hardcodés. Les métadonnées conservées sont
 limitées à `retry-after` et aux headers `x-ratelimit-*` documentés. Aucun header
 d’authentification n’est écrit.
@@ -176,8 +203,9 @@ d’authentification n’est écrit.
 
 Chaque répertoire de run contient :
 
-- `run.json` : identité du corpus, hash, commit Git, provider, modèle, mode,
-  timestamps, délai, tentatives et `knowledgeBaseVersion` ;
+- `run.json` : identité du corpus, hash, commit Git, provider, modèle, paramètres
+  de génération utiles, mode, timestamps, délai, tentatives et
+  `knowledgeBaseVersion` ;
 - `results.json` : input de chaque matchup, statut, analyse réussie, erreur
   métier contrôlée, violations de conformité, couverture KB, éventuelle revue
   qualité et tentatives provider ;

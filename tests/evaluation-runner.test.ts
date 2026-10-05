@@ -26,6 +26,11 @@ import {
   resolveRunKnowledgeBaseVersion,
 } from '../scripts/evaluation/evaluate-gameplay.js';
 import {
+  DEFAULT_DEEPSEEK_EVALUATION_TIMEOUT_MS,
+  withEvaluationDeepSeekTimeout,
+} from '../scripts/evaluation/deepseek-timeout.js';
+import { loadDeepSeekConfig } from '../server/analysis/providers/deepseek-config.js';
+import {
   loadEvaluationRun,
   prepareNewRunDirectory,
   replaceFileSafely,
@@ -156,6 +161,31 @@ test('corpus parsing validates schema, JSON, files, and duplicate IDs', async (t
   const loaded = await loadEvaluationCorpus(path);
   assert.equal(loaded.corpus.matchups.length, 2);
   assert.match(loaded.sha256, /^[a-f0-9]{64}$/u);
+});
+
+test('DeepSeek evaluation deadline is distinct, configurable, and reproducible', () => {
+  const defaults = loadDeepSeekConfig(withEvaluationDeepSeekTimeout({
+    AI_PROVIDER: 'deepseek',
+    DEEPSEEK_API_KEY: 'test-key',
+    DEEPSEEK_TIMEOUT_MS: '90000',
+    DEEPSEEK_TRANSPORT_TIMEOUT_MS: '100000',
+  }));
+  assert.equal(defaults.deadlineMs, DEFAULT_DEEPSEEK_EVALUATION_TIMEOUT_MS);
+  assert.equal(defaults.transportTimeoutMs, DEFAULT_DEEPSEEK_EVALUATION_TIMEOUT_MS + 10_000);
+
+  const configured = loadDeepSeekConfig(withEvaluationDeepSeekTimeout({
+    AI_PROVIDER: 'deepseek',
+    DEEPSEEK_API_KEY: 'test-key',
+    DEEPSEEK_EVALUATION_TIMEOUT_MS: '150000',
+    DEEPSEEK_EVALUATION_TRANSPORT_TIMEOUT_MS: '165000',
+  }));
+  assert.deepEqual(configured, {
+    apiKey: 'test-key',
+    model: 'deepseek-flash',
+    baseURL: 'https://api.deepseek.com',
+    deadlineMs: 150_000,
+    transportTimeoutMs: 165_000,
+  });
 });
 
 test('a new run never overwrites a non-empty output directory', async (t) => {
@@ -388,6 +418,49 @@ test('provider errors stay non-gameplay and structured conformance violations ar
   assert.equal(summary.providerErrors, 1);
 });
 
+test('a provider timeout is persisted once with runner deadline context and never retried', async (t) => {
+  const { files } = await temporaryRun(t);
+  let calls = 0;
+  const service = {
+    async analyze() {
+      calls += 1;
+      throw new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE', {
+        cause: new ProviderFailureError({
+          provider: 'deepseek',
+          model: 'deepseek-flash',
+          category: 'timeout',
+          executionContext: 'evaluation',
+          deadlineMs: 120_000,
+        }),
+      });
+    },
+  };
+
+  await executeEvaluation({
+    service,
+    patchContextResolver: new VersionedPatchContextResolver(),
+    matchups: [matchups[0]!],
+    files,
+    run: {
+      ...run(['LLC-001']),
+      provider: 'deepseek',
+      model: 'deepseek-flash',
+      generationParameters: { deadlineMs: 120_000, transportTimeoutMs: 130_000 },
+      maxAttempts: 3,
+    },
+    sleep: async () => {},
+  });
+
+  const persisted = await loadEvaluationRun(files.directory);
+  assert.equal(calls, 1);
+  assert.equal(persisted.results[0]?.status, 'provider_error');
+  assert.equal(persisted.results[0]?.error?.providerCategory, 'timeout');
+  assert.equal(persisted.results[0]?.attempts.length, 1);
+  assert.equal(persisted.results[0]?.attempts[0]?.executionContext, 'evaluation');
+  assert.equal(persisted.results[0]?.attempts[0]?.deadlineMs, 120_000);
+  assert.ok((persisted.results[0]?.attempts[0]?.durationMs ?? -1) >= 0);
+});
+
 test('rate limits honor retry-after, remain traceable, and do not bias gameplay errors', async (t) => {
   const { files } = await temporaryRun(t);
   const waits: number[] = [];
@@ -401,6 +474,7 @@ test('rate limits honor retry-after, remain traceable, and do not bias gameplay 
           model: 'fake-model',
           category: 'rate_limit',
           status: 429,
+          providerRequestId: 'provider-rate-limit-request',
           errorMessage: 'api_key=must-not-be-persisted',
           retryMetadata: {
             retryAfterMs: 1_500,
@@ -408,7 +482,14 @@ test('rate limits honor retry-after, remain traceable, and do not bias gameplay 
           },
         });
       }
-      options?.onMetadata?.({ rateLimitRemainingRequests: 9 });
+      options?.onMetadata?.({
+        providerRequestId: 'provider-success-request',
+        rateLimitRemainingRequests: 9,
+        inputTokens: 100,
+        outputTokens: 50,
+        totalTokens: 150,
+        reasoningTokens: 25,
+      });
       return validAnalysis(request);
     },
   };
@@ -429,7 +510,20 @@ test('rate limits honor retry-after, remain traceable, and do not bias gameplay 
     'success',
   ]);
   assert.equal(persisted.results[0]?.attempts[0]?.retryAfterMs, 1_500);
+  assert.equal(persisted.results[0]?.attempts[0]?.providerRequestId, 'provider-rate-limit-request');
   assert.equal(persisted.results[0]?.attempts[1]?.rateLimitRemainingRequests, 9);
+  assert.deepEqual(persisted.results[0]?.attempts[1], {
+    attempt: 2,
+    startedAt: persisted.results[0]?.attempts[1]?.startedAt,
+    durationMs: persisted.results[0]?.attempts[1]?.durationMs,
+    outcome: 'success',
+    providerRequestId: 'provider-success-request',
+    rateLimitRemainingRequests: 9,
+    inputTokens: 100,
+    outputTokens: 50,
+    totalTokens: 150,
+    reasoningTokens: 25,
+  });
   assert.deepEqual(waits, [1_500]);
   const persistedText = await readFile(files.results, 'utf8');
   assert.doesNotMatch(persistedText, /must-not-be-persisted|api_key/u);

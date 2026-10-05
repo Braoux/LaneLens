@@ -5,7 +5,8 @@ Le launcher Windows permet d’utiliser le runner d’évaluation sans mémorise
 ## Démarrage en trois étapes
 
 1. Installer Node.js `>= 22.13.1 < 25` et les dépendances du projet.
-2. Configurer le provider LaneLens dans `.env` comme pour le serveur local.
+2. Configurer le provider LaneLens dans `.env` comme pour le serveur local. Les
+   valeurs acceptées sont `openai`, `gemini`, `groq` et `deepseek`.
 3. Double-cliquer sur **`run-gameplay-evaluation.cmd`** à la racine du projet.
 
 Le menu propose :

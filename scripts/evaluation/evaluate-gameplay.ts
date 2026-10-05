@@ -17,6 +17,7 @@ import type { RunFiles } from './result-writer.js';
 import { executeEvaluation } from './runner.js';
 import { ConsoleEvaluationProgress } from './progress.js';
 import type { EvaluationResult, EvaluationRun } from './types.js';
+import { withEvaluationDeepSeekTimeout } from './deepseek-timeout.js';
 
 export const DEFAULT_DELAY_MS = 2_000;
 export const DEFAULT_MAX_ATTEMPTS = 3;
@@ -167,6 +168,15 @@ function assertResumeMatches(
   }
 }
 
+function stableParameters(
+  value: Readonly<Record<string, string | number | boolean>> | undefined,
+): string {
+  if (value === undefined) return '';
+  return JSON.stringify(Object.fromEntries(Object.entries(value).sort(([left], [right]) => (
+    left.localeCompare(right)
+  ))));
+}
+
 export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<void> {
   const arguments_ = parseEvaluationArguments(argv);
   const loadedCorpus = await loadEvaluationCorpus(resolve(arguments_.corpus));
@@ -178,7 +188,9 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
     resumeSnapshot?.run.knowledgeBaseVersion,
   );
   const analysisRuntime = createAnalysisRuntime({
+    environment: withEvaluationDeepSeekTimeout(process.env),
     knowledgeBaseEnabled: requestedKnowledgeBaseVersion !== null,
+    executionContext: 'evaluation',
   });
   if (analysisRuntime === undefined) {
     throw new Error('Aucun provider d’analyse configuré pour le runner.');
@@ -197,8 +209,10 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
     if (
       resumed.run.provider !== analysisRuntime.provider
       || resumed.run.model !== analysisRuntime.model
+      || stableParameters(resumed.run.generationParameters)
+        !== stableParameters(analysisRuntime.generationParameters)
     ) {
-      throw new Error('Le provider ou le modèle configuré ne correspond pas au run à reprendre.');
+      throw new Error('Le provider, le modèle ou les paramètres de génération ne correspondent pas au run à reprendre.');
     }
     run = resumed.run;
     initialResults = resumed.results;
@@ -226,6 +240,9 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
       gitCommit: gitCommit(),
       provider: analysisRuntime.provider,
       model: analysisRuntime.model,
+      ...(analysisRuntime.generationParameters === undefined
+        ? {}
+        : { generationParameters: analysisRuntime.generationParameters }),
       startedAt: startedAt.toISOString(),
       completedAt: null,
       mode: selection.mode,
