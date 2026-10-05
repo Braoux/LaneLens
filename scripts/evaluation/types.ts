@@ -88,6 +88,7 @@ export interface EvaluationRun {
   readonly gitCommit: string;
   readonly provider: string;
   readonly model: string;
+  readonly generationParameters?: Readonly<Record<string, string | number | boolean>>;
   readonly startedAt: string;
   readonly completedAt: string | null;
   readonly mode: EvaluationMode;

@@ -256,6 +256,18 @@ test('mandatory configuration confirmation happens before the runner can consume
   assert.equal(runnerCalls, 0);
 });
 
+test('launcher preflight recognizes DeepSeek without exposing its key', () => {
+  const preflight = preflightProvider({
+    AI_PROVIDER: 'deepseek',
+    DEEPSEEK_API_KEY: 'must-not-appear',
+    DEEPSEEK_MODEL: 'deepseek-v4-pro',
+    DEEPSEEK_BASE_URL: 'https://api.deepseek.com',
+    DEEPSEEK_TIMEOUT_MS: '30000',
+  });
+  assert.deepEqual(preflight, { provider: 'deepseek', model: 'deepseek-v4-pro' });
+  assert.doesNotMatch(JSON.stringify(preflight), /must-not-appear/u);
+});
+
 test('matchup validation is friendly and corpus discovery remains configurable', async (t) => {
   const directory = await tempDirectory(t);
   const corpus = await writeCorpus(directory);

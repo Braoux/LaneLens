@@ -516,7 +516,7 @@ analyzeMatchup()
 `analyzeMatchup()` :
 
 - envoie `POST /api/matchup` ;
-- utilise un timeout de 30 secondes par défaut ;
+- utilise une deadline de 90 secondes par défaut ;
 - conserve le statut HTTP ;
 - conserve un code LaneLens connu ;
 - conserve le `X-Request-Id` ;
@@ -657,9 +657,25 @@ GEMINI_TIMEOUT_MS=30000
 GROQ_API_KEY=
 GROQ_MODEL=openai/gpt-oss-120b
 GROQ_TIMEOUT_MS=30000
+
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_TIMEOUT_MS=90000
+DEEPSEEK_TRANSPORT_TIMEOUT_MS=100000
+DEEPSEEK_EVALUATION_TIMEOUT_MS=120000
+DEEPSEEK_EVALUATION_TRANSPORT_TIMEOUT_MS=130000
 ```
 
 Le backend ne charge que la configuration correspondant au provider sélectionné.
+DeepSeek réutilise le SDK OpenAI exclusivement côté serveur avec son `baseURL`,
+Chat Completions, JSON Output, aucun outil et un raisonnement `high` explicitement
+activé. Le JSON parsé reste une valeur `unknown` jusqu’à la validation LaneLens.
+Pour DeepSeek, `DEEPSEEK_TIMEOUT_MS` exprime la deadline fonctionnelle LaneLens.
+Un `AbortSignal` annule la requête à son terme, tandis que le timeout SDK garde
+une marge supérieure. Les keep-alive non-streaming (lignes vides) restent du
+whitespace HTTP jusqu’au JSON final. Le runner applique explicitement ses
+variables `DEEPSEEK_EVALUATION_*` et persiste les deux valeurs dans le run.
 
 ---
 
