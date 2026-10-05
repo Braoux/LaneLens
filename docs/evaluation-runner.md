@@ -31,6 +31,23 @@ un second LLM.
 Le runner utilise exactement la même sélection de provider et de modèle que le
 serveur. Il ne démarre aucun serveur HTTP.
 
+DeepSeek est sélectionnable sans modification de code :
+
+```env
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_TIMEOUT_MS=30000
+```
+
+`deepseek-v4-pro` peut être utilisé pour un run distinct en modifiant uniquement
+`DEEPSEEK_MODEL`. Les runs DeepSeek enregistrent aussi dans `run.json` le format
+`json_object`, le mode thinking `enabled` et l’effort `high`. Chaque tentative
+conserve sa durée, son statut HTTP/erreur normalisée et, lorsque DeepSeek les
+retourne, le request ID provider ainsi que les tokens d’entrée, sortie, total et
+raisonnement.
+
 ## Format du corpus V1
 
 Le corpus de référence V1 est versionné publiquement dans
@@ -176,8 +193,9 @@ d’authentification n’est écrit.
 
 Chaque répertoire de run contient :
 
-- `run.json` : identité du corpus, hash, commit Git, provider, modèle, mode,
-  timestamps, délai, tentatives et `knowledgeBaseVersion` ;
+- `run.json` : identité du corpus, hash, commit Git, provider, modèle, paramètres
+  de génération utiles, mode, timestamps, délai, tentatives et
+  `knowledgeBaseVersion` ;
 - `results.json` : input de chaque matchup, statut, analyse réussie, erreur
   métier contrôlée, violations de conformité, couverture KB, éventuelle revue
   qualité et tentatives provider ;

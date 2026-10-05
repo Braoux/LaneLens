@@ -657,9 +657,17 @@ GEMINI_TIMEOUT_MS=30000
 GROQ_API_KEY=
 GROQ_MODEL=openai/gpt-oss-120b
 GROQ_TIMEOUT_MS=30000
+
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_TIMEOUT_MS=30000
 ```
 
 Le backend ne charge que la configuration correspondant au provider sélectionné.
+DeepSeek réutilise le SDK OpenAI exclusivement côté serveur avec son `baseURL`,
+Chat Completions, JSON Output, aucun outil et un raisonnement `high` explicitement
+activé. Le JSON parsé reste une valeur `unknown` jusqu’à la validation LaneLens.
 
 ---
 

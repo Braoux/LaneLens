@@ -12,6 +12,7 @@ import { basename, dirname, resolve } from 'node:path';
 import { loadGeminiConfig } from '../../server/analysis/providers/gemini-config.js';
 import { loadGroqConfig } from '../../server/analysis/providers/groq-config.js';
 import { loadOpenAIConfig } from '../../server/analysis/providers/openai-config.js';
+import { loadDeepSeekConfig } from '../../server/analysis/providers/deepseek-config.js';
 import {
   resolveAIProvider,
   type AIEnvironment,
@@ -401,12 +402,13 @@ export function preflightProvider(
   try {
     provider = resolveAIProvider(environment.AI_PROVIDER);
   } catch {
-    throw new EvaluationLauncherError('AI_PROVIDER est invalide. Valeurs acceptées : openai, gemini, groq.');
+    throw new EvaluationLauncherError('AI_PROVIDER est invalide. Valeurs acceptées : openai, gemini, groq, deepseek.');
   }
   const keyName = {
     openai: 'OPENAI_API_KEY',
     gemini: 'GEMINI_API_KEY',
     groq: 'GROQ_API_KEY',
+    deepseek: 'DEEPSEEK_API_KEY',
   }[provider];
   if ((environment[keyName]?.trim() ?? '').length === 0) {
     throw new EvaluationLauncherError(`${keyName} n’est pas configurée. Configurez la variable puis relancez le launcher.`);
@@ -416,6 +418,7 @@ export function preflightProvider(
       openai: loadOpenAIConfig,
       gemini: loadGeminiConfig,
       groq: loadGroqConfig,
+      deepseek: loadDeepSeekConfig,
     }[provider](environment);
     return Object.freeze({ provider, model: config.model });
   } catch {

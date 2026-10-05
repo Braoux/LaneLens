@@ -401,6 +401,7 @@ test('rate limits honor retry-after, remain traceable, and do not bias gameplay 
           model: 'fake-model',
           category: 'rate_limit',
           status: 429,
+          providerRequestId: 'provider-rate-limit-request',
           errorMessage: 'api_key=must-not-be-persisted',
           retryMetadata: {
             retryAfterMs: 1_500,
@@ -408,7 +409,14 @@ test('rate limits honor retry-after, remain traceable, and do not bias gameplay 
           },
         });
       }
-      options?.onMetadata?.({ rateLimitRemainingRequests: 9 });
+      options?.onMetadata?.({
+        providerRequestId: 'provider-success-request',
+        rateLimitRemainingRequests: 9,
+        inputTokens: 100,
+        outputTokens: 50,
+        totalTokens: 150,
+        reasoningTokens: 25,
+      });
       return validAnalysis(request);
     },
   };
@@ -429,7 +437,20 @@ test('rate limits honor retry-after, remain traceable, and do not bias gameplay 
     'success',
   ]);
   assert.equal(persisted.results[0]?.attempts[0]?.retryAfterMs, 1_500);
+  assert.equal(persisted.results[0]?.attempts[0]?.providerRequestId, 'provider-rate-limit-request');
   assert.equal(persisted.results[0]?.attempts[1]?.rateLimitRemainingRequests, 9);
+  assert.deepEqual(persisted.results[0]?.attempts[1], {
+    attempt: 2,
+    startedAt: persisted.results[0]?.attempts[1]?.startedAt,
+    durationMs: persisted.results[0]?.attempts[1]?.durationMs,
+    outcome: 'success',
+    providerRequestId: 'provider-success-request',
+    rateLimitRemainingRequests: 9,
+    inputTokens: 100,
+    outputTokens: 50,
+    totalTokens: 150,
+    reasoningTokens: 25,
+  });
   assert.deepEqual(waits, [1_500]);
   const persistedText = await readFile(files.results, 'utf8');
   assert.doesNotMatch(persistedText, /must-not-be-persisted|api_key/u);
