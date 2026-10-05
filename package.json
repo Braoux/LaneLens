@@ -27,7 +27,7 @@
     "dotenv": "^18.0.3",
     "groq-sdk": "^1.6.0",
     "hono": "^4.13.9",
-    "openai": "^7.23.0"
+    "openai": "^7.27.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
