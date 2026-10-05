@@ -25,6 +25,11 @@ import type { CorpusMatchup, EvaluationMode, EvaluationResult } from './types.js
 import { KnowledgeResolver } from '../../server/knowledge/KnowledgeResolver.js';
 import { StaticKnowledgeRepository } from '../../server/knowledge/StaticKnowledgeRepository.js';
 import { KNOWLEDGE_BASE_VERSION } from '../../server/knowledge/data/knowledge.js';
+import { effectiveRepeat, resultMatchupId } from './observation-plan.js';
+import {
+  assertMechanicalCoverageGate,
+} from './mechanical-coverage.js';
+import type { MechanicalCoverageGateResult } from '../../server/knowledge/MechanicalCoverageGate.js';
 
 const CONFIG_RELATIVE_PATH = '.lanelens-evaluation/launcher.json';
 const DEFAULT_RESULTS_RELATIVE_PATH = '.lanelens-evaluation/runs';
@@ -54,6 +59,7 @@ export interface EvaluationRunInfo {
   readonly provider: string;
   readonly model: string;
   readonly knowledgeBaseVersion: string | null;
+  readonly repeat: number;
   readonly startedAt: string;
   readonly updatedAt: string;
   readonly completed: number;
@@ -75,6 +81,7 @@ export interface LauncherExecutionRequest {
   readonly resumeDirectory?: string;
   readonly matchupId?: string;
   readonly knowledgeBaseVersion: string | null;
+  readonly repeat?: number;
 }
 
 export interface KnowledgeCoveragePreflight {
@@ -90,8 +97,11 @@ export interface EvaluationConfigurationSummary {
   readonly provider: string;
   readonly model: string;
   readonly knowledgeBaseVersion: string | null;
+  readonly repeat: number;
+  readonly selectedMatchups: number;
   readonly outputDirectory: string;
   readonly coverage?: KnowledgeCoveragePreflight;
+  readonly mechanicalCoverage?: MechanicalCoverageGateResult;
 }
 
 export const CURRENT_KNOWLEDGE_BASE_VERSION = KNOWLEDGE_BASE_VERSION;
@@ -193,9 +203,10 @@ async function latestMtime(paths: readonly string[]): Promise<string> {
 
 export async function readRunInfo(directory: string): Promise<EvaluationRunInfo> {
   const loaded = await loadEvaluationRun(directory);
-  const total = loaded.run.selectedIds.length;
+  const repeat = effectiveRepeat(loaded.run);
+  const total = loaded.run.selectedIds.length * repeat;
   const completedResults = loaded.results.filter(
-    (result) => loaded.run.selectedIds.includes(result.id) && terminal(result),
+    (result) => loaded.run.selectedIds.includes(resultMatchupId(result)) && terminal(result),
   );
   const completed = completedResults.length;
   const success = completedResults.filter(({ status }) => status === 'success').length;
@@ -209,6 +220,7 @@ export async function readRunInfo(directory: string): Promise<EvaluationRunInfo>
     provider: loaded.run.provider,
     model: loaded.run.model,
     knowledgeBaseVersion: loaded.run.knowledgeBaseVersion ?? null,
+    repeat,
     startedAt: loaded.run.startedAt,
     updatedAt,
     completed,
@@ -279,7 +291,15 @@ export function buildEvaluationArguments(request: LauncherExecutionRequest): rea
     args.push('--id', request.matchupId);
   }
   if (request.knowledgeBaseVersion) args.push('--knowledge-base-version', request.knowledgeBaseVersion);
+  if ((request.repeat ?? 1) !== 1) args.push('--repeat', String(request.repeat));
   return args;
+}
+
+export async function preflightMechanicalCoverage(
+  corpusPath: string,
+): Promise<MechanicalCoverageGateResult | undefined> {
+  const loaded = await loadEvaluationCorpus(resolve(corpusPath));
+  return assertMechanicalCoverageGate(loaded.corpus);
 }
 
 export function assertSupportedKnowledgeBaseVersion(version: string | null): void {
@@ -355,10 +375,18 @@ export function formatEvaluationConfiguration(config: EvaluationConfigurationSum
     '',
     `Corpus          : ${config.corpusFile}`,
     `Mode            : ${formatEvaluationMode(config.mode)}`,
+    `Matchups        : ${config.selectedMatchups}`,
+    `Répétitions     : ${config.repeat}`,
+    `Observations    : ${config.selectedMatchups * config.repeat}`,
     `Provider        : ${config.provider}`,
     `Modèle          : ${config.model}`,
     knowledge,
     `Résultats       : ${config.outputDirectory}`,
+    config.mechanicalCoverage === undefined ? '' : [
+      'Mechanical coverage gate',
+      `- couverture : ${config.mechanicalCoverage.coveredMatchups}/${config.mechanicalCoverage.totalMatchups} FULL`,
+      `- golden truth : ${config.mechanicalCoverage.goldenTruthVersion}`,
+    ].join('\n'),
     coverage,
     '',
   ].join('\n');

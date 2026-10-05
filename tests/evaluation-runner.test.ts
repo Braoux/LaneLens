@@ -22,8 +22,11 @@ import {
 import {
   DEFAULT_DELAY_MS,
   DEFAULT_MAX_ATTEMPTS,
+  DEFAULT_REPEAT,
+  assertResumeMatches,
   parseEvaluationArguments,
   resolveRunKnowledgeBaseVersion,
+  resolveRunRepeat,
 } from '../scripts/evaluation/evaluate-gameplay.js';
 import {
   DEFAULT_DEEPSEEK_EVALUATION_TIMEOUT_MS,
@@ -37,6 +40,8 @@ import {
 } from '../scripts/evaluation/result-writer.js';
 import { ConsoleEvaluationProgress } from '../scripts/evaluation/progress.js';
 import { executeEvaluation, type EvaluationProgress } from '../scripts/evaluation/runner.js';
+import { buildObservationPlan } from '../scripts/evaluation/observation-plan.js';
+import { buildEvaluationSummary } from '../scripts/evaluation/summary.js';
 import type {
   CorpusMatchup,
   EvaluationCorpus,
@@ -297,13 +302,23 @@ test('CLI parsing applies safe defaults and rejects ambiguous resume options', (
     sentinels: false,
     delayMs: DEFAULT_DELAY_MS,
     maxAttempts: DEFAULT_MAX_ATTEMPTS,
+    repeat: DEFAULT_REPEAT,
     delayProvided: false,
     maxAttemptsProvided: false,
+    repeatProvided: false,
   });
   assert.equal(
     parseEvaluationArguments(['--corpus', 'c.json', '--sentinels', '--delay-ms', '0']).sentinels,
     true,
   );
+  assert.equal(parseEvaluationArguments(['--corpus', 'c.json', '--repeat', '1']).repeat, 1);
+  assert.equal(parseEvaluationArguments(['--corpus', 'c.json', '--repeat', '5']).repeat, 5);
+  for (const value of ['0', '-1', '1.5', 'abc']) {
+    assert.throws(
+      () => parseEvaluationArguments(['--corpus', 'c.json', '--repeat', value]),
+      /--repeat/u,
+    );
+  }
   assert.throws(() => parseEvaluationArguments([]), /--corpus/u);
   assert.throws(
     () => parseEvaluationArguments(['--corpus', 'c.json', '--resume', 'run', '--id', 'LLC-001']),
@@ -331,6 +346,225 @@ test('resume preserves baseline or KB mode and refuses a version change', () => 
     () => resolveRunKnowledgeBaseVersion('another-kb', 'lan-032-kb-v1'),
     /ne peut pas modifier un run repris/u,
   );
+});
+
+test('resume preserves repeat and rejects an explicit change', () => {
+  assert.equal(resolveRunRepeat(1, false, 5), 5);
+  assert.equal(resolveRunRepeat(5, true, 5), 5);
+  assert.throws(() => resolveRunRepeat(1, true, 5), /--repeat/u);
+  assert.equal(resolveRunRepeat(5, true), 5);
+});
+
+test('resume keeps corpus hash and repetition configuration immutable', () => {
+  const resumedRun = { ...run(), repeat: 5, expectedObservations: 10 };
+  const loaded = { corpus, sha256: 'abc', file: 'corpus.json' };
+  assert.doesNotThrow(() => assertResumeMatches(
+    resumedRun,
+    loaded,
+    parseEvaluationArguments(['--corpus', 'corpus.json', '--repeat', '5']),
+  ));
+  assert.throws(() => assertResumeMatches(
+    resumedRun,
+    { ...loaded, sha256: 'changed' },
+    parseEvaluationArguments(['--corpus', 'corpus.json']),
+  ), /corpus fourni/u);
+  assert.throws(() => assertResumeMatches(
+    resumedRun,
+    loaded,
+    parseEvaluationArguments(['--corpus', 'corpus.json', '--repeat', '4']),
+  ), /--repeat/u);
+});
+
+test('observation plan is matchup-major and assigns unique repetition identities', () => {
+  const plan = buildObservationPlan(matchups, 5);
+  assert.equal(plan.length, 10);
+  assert.deepEqual(plan.slice(0, 6).map(({ observationId }) => observationId), [
+    'LLC-001#1', 'LLC-001#2', 'LLC-001#3', 'LLC-001#4', 'LLC-001#5', 'LLC-002#1',
+  ]);
+  assert.equal(new Set(plan.map(({ observationId }) => observationId)).size, 10);
+});
+
+test('repeat five produces five distinct successful observations for one matchup', async (t) => {
+  const { files } = await temporaryRun(t);
+  let calls = 0;
+  const result = await executeEvaluation({
+    service: {
+      async analyze(input) {
+        calls += 1;
+        return validAnalysis({ input, instructions: '' });
+      },
+    },
+    patchContextResolver: new VersionedPatchContextResolver(),
+    matchups: [matchups[0]!],
+    files,
+    run: { ...run(['LLC-001']), repeat: 5, expectedObservations: 5 },
+    sleep: async () => {},
+  });
+  assert.equal(calls, 5);
+  assert.deepEqual(result.results.map(({ id }) => id), [
+    'LLC-001#1', 'LLC-001#2', 'LLC-001#3', 'LLC-001#4', 'LLC-001#5',
+  ]);
+  assert.deepEqual(result.results.map(({ repetition }) => repetition), [1, 2, 3, 4, 5]);
+  assert.ok(result.results.every(({ matchupId, status }) => matchupId === 'LLC-001' && status === 'success'));
+  const persisted = await loadEvaluationRun(files.directory);
+  assert.equal(persisted.run.repeat, 5);
+  assert.equal(persisted.run.expectedObservations, 5);
+  const summary = JSON.parse(await readFile(files.summary, 'utf8')) as Record<string, unknown>;
+  assert.equal(summary.observationsExpected, 5);
+  assert.equal(summary.observationsCompleted, 5);
+});
+
+test('mechanical coverage snapshot is attached to every observation', async (t) => {
+  const { files } = await temporaryRun(t);
+  const executed = await executeEvaluation({
+    service: {
+      async analyze(input) { return validAnalysis({ input, instructions: '' }); },
+    },
+    patchContextResolver: new VersionedPatchContextResolver(),
+    matchups: [matchups[0]!],
+    files,
+    run: {
+      ...run(['LLC-001']),
+      repeat: 2,
+      expectedObservations: 2,
+      goldenTruthVersion: 'mechanical-golden-v1',
+      mechanicalCoverage: {
+        goldenTruthVersion: 'mechanical-golden-v1',
+        patch: '26.19',
+        fullyCovered: true,
+        coveredChampions: 4,
+        totalChampions: 4,
+        coveredMatchups: 1,
+        totalMatchups: 1,
+        champions: [],
+        matchups: [{ id: 'LLC-001', fullyCovered: true, champions: [], missing: [] }],
+      },
+    },
+    sleep: async () => {},
+  });
+  assert.ok(executed.results.every(({ mechanicalCoverage }) => (
+    mechanicalCoverage?.goldenTruthVersion === 'mechanical-golden-v1'
+    && mechanicalCoverage.fullyCovered
+    && mechanicalCoverage.missing.length === 0
+  )));
+});
+
+test('multi-repeat keeps mixed outcomes independent and aggregates stability', async (t) => {
+  const { files } = await temporaryRun(t);
+  let call = 0;
+  const result = await executeEvaluation({
+    service: {
+      async analyze(input) {
+        call += 1;
+        if (call === 2) throw new MatchupAnalysisError('INVALID_ANALYSIS_RESPONSE');
+        if (call === 3) {
+          throw new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE', {
+            cause: new ProviderFailureError({ provider: 'fake', category: 'network' }),
+          });
+        }
+        return validAnalysis({ input, instructions: '' });
+      },
+    },
+    patchContextResolver: new VersionedPatchContextResolver(),
+    matchups: [matchups[0]!],
+    files,
+    run: { ...run(['LLC-001']), repeat: 5, expectedObservations: 5 },
+    sleep: async () => {},
+  });
+  assert.deepEqual(result.results.map(({ status }) => status), [
+    'success', 'invalid_analysis', 'provider_error', 'success', 'success',
+  ]);
+  const summary = buildEvaluationSummary(result.results, ['LLC-001'], 5);
+  assert.equal(summary.observationsExpected, 5);
+  assert.equal(summary.success, 3);
+  assert.equal(summary.invalidAnalysis, 1);
+  assert.equal(summary.providerErrors, 1);
+  assert.equal(summary.byMatchup[0]?.stability, 'unstable');
+});
+
+test('resume skips completed repetitions without duplicating observations', async (t) => {
+  const { files } = await temporaryRun(t);
+  const initialResults: EvaluationResult[] = [1, 2, 3].map((repetition) => ({
+    id: `LLC-001#${repetition}`,
+    matchupId: 'LLC-001',
+    repetition,
+    input: {
+      allyCarry: 'Jinx', allySupport: 'Thresh', enemyCarry: 'Caitlyn', enemySupport: 'Lux', patch: '26.19',
+    },
+    sentinel: true,
+    status: 'success',
+    startedAt: `2026-09-28T10:00:0${repetition}.000Z`,
+    completedAt: `2026-09-28T10:00:0${repetition}.500Z`,
+    durationMs: 500,
+    analysis: validAnalysis({
+      input: {
+        allyCarry: 'Jinx', allySupport: 'Thresh', enemyCarry: 'Caitlyn', enemySupport: 'Lux', patch: '26.19',
+        locale: 'fr-FR',
+        patchContext: { patch: '26.19', contextVersion: 'fixture', facts: [] },
+      },
+      instructions: '',
+    }),
+    attempts: [{ attempt: 1, startedAt: '2026-09-28T10:00:00.000Z', durationMs: 500, outcome: 'success' }],
+  }));
+  let calls = 0;
+  const resumed = await executeEvaluation({
+    service: {
+      async analyze(input) {
+        calls += 1;
+        return validAnalysis({ input, instructions: '' });
+      },
+    },
+    patchContextResolver: new VersionedPatchContextResolver(),
+    matchups: [matchups[0]!],
+    files,
+    run: { ...run(['LLC-001']), repeat: 5, expectedObservations: 5 },
+    initialResults,
+    sleep: async () => {},
+  });
+  assert.equal(calls, 2);
+  assert.equal(resumed.results.length, 5);
+  assert.equal(new Set(resumed.results.map(({ id }) => id)).size, 5);
+  assert.deepEqual(resumed.results.map(({ id }) => id), [
+    'LLC-001#1', 'LLC-001#2', 'LLC-001#3', 'LLC-001#4', 'LLC-001#5',
+  ]);
+});
+
+test('summary classifies stable success, stable failure, and unstable matchups', () => {
+  const statuses: Record<string, EvaluationResult['status'][]> = {
+    'LLC-001': ['success', 'success', 'success', 'success', 'success'],
+    'LLC-002': ['invalid_analysis', 'invalid_analysis', 'provider_error', 'execution_error', 'rate_limited'],
+    'LLC-003': ['success', 'invalid_analysis', 'success', 'provider_error', 'success'],
+  };
+  const results = Object.entries(statuses).flatMap(([matchupId, values]) => values.map((status, index) => ({
+    id: `${matchupId}#${index + 1}`,
+    matchupId,
+    repetition: index + 1,
+    input: {
+      allyCarry: 'Jinx', allySupport: 'Thresh', enemyCarry: 'Caitlyn', enemySupport: 'Lux', patch: '26.19',
+    },
+    sentinel: true,
+    status,
+    startedAt: '2026-09-28T10:00:00.000Z',
+    completedAt: '2026-09-28T10:00:01.000Z',
+    durationMs: 1_000,
+    attempts: [{
+      attempt: 1,
+      startedAt: '2026-09-28T10:00:00.000Z',
+      durationMs: 1_000,
+      outcome: status === 'in_progress' ? 'execution_error' as const : status,
+      inputTokens: 10,
+      outputTokens: 20,
+      totalTokens: 30,
+    }],
+  } satisfies EvaluationResult)));
+  const summary = buildEvaluationSummary(results, Object.keys(statuses), 5);
+  assert.deepEqual(summary.stability, { stableSuccess: 1, stableFailure: 1, unstable: 1 });
+  assert.deepEqual(summary.byMatchup.map(({ stability }) => stability), [
+    'stable_success', 'stable_failure', 'unstable',
+  ]);
+  assert.equal(summary.observationsExpected, 15);
+  assert.equal(summary.observationsCompleted, 15);
+  assert.equal(summary.tokens.averageTotalTokens, 30);
 });
 
 test('runner executes sequentially, continues after failures, and writes a summary', async (t) => {
@@ -531,6 +765,37 @@ test('rate limits honor retry-after, remain traceable, and do not bias gameplay 
   assert.equal(summary.success, 1);
   assert.equal(summary.rateLimited, 0);
   assert.equal(summary.retryCount, 1);
+});
+
+test('a rate-limit retry stays inside one repetition', async (t) => {
+  const { files } = await temporaryRun(t);
+  let calls = 0;
+  const provider: MatchupAnalysisProvider = {
+    async analyze(request) {
+      calls += 1;
+      if (calls === 1) {
+        throw new ProviderFailureError({
+          provider: 'fake', category: 'rate_limit', status: 429,
+          retryMetadata: { retryAfterMs: 10 },
+        });
+      }
+      return validAnalysis(request);
+    },
+  };
+  const executed = await executeEvaluation({
+    service: new MatchupAnalysisService(provider),
+    patchContextResolver: new VersionedPatchContextResolver(),
+    matchups: [matchups[0]!],
+    files,
+    run: { ...run(['LLC-001']), repeat: 2, expectedObservations: 2 },
+    sleep: async () => {},
+  });
+  assert.equal(calls, 3);
+  assert.deepEqual(executed.results.map(({ id }) => id), ['LLC-001#1', 'LLC-001#2']);
+  assert.deepEqual(executed.results.map(({ attempts }) => attempts.length), [2, 1]);
+  assert.deepEqual(executed.results[0]?.attempts.map(({ outcome }) => outcome), [
+    'rate_limited', 'success',
+  ]);
 });
 
 test('exhausted rate limits are non-evaluable and use bounded exponential fallback', async (t) => {

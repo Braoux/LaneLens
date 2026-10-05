@@ -125,16 +125,41 @@ run existant. Sans `--output`, il crée un répertoire ignoré par Git sous :
 Pour conserver des résultats privés hors du dépôt public, toujours fournir un
 `--output` situé dans l’espace privé prévu à cet effet.
 
+## Répétitions expérimentales
+
+`--repeat` rejoue volontairement chaque matchup comme une nouvelle observation
+indépendante. Sa valeur par défaut est `1` et elle doit être un entier positif :
+
+```sh
+npm run eval:gameplay -- --corpus <corpus> --repeat 5
+```
+
+Avec 10 matchups et `--repeat 5`, le run contient 50 observations. L'ordre est
+**matchup-major** : les répétitions 1 à 5 du premier matchup sont exécutées,
+puis celles du deuxième. Une observation reçoit une identité stable telle que
+`EXAMPLE-001#3`, ainsi qu'un `matchupId` et un index `repetition` distincts.
+
+Les deux paramètres suivants ont des responsabilités différentes :
+
+- `repeat` = réplication expérimentale produisant une nouvelle observation ;
+- `maxAttempts` = retry technique, uniquement à l'intérieur de la même
+  observation lorsqu'un rate limit est explicitement reconnu.
+
+Ainsi, une observation peut contenir une tentative rate-limited puis une
+tentative réussie sans consommer une répétition supplémentaire.
+
 Reprendre un run interrompu :
 
 ```sh
 npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --resume <run-directory>
 ```
 
-La reprise vérifie le hash et la version du corpus, le patch, le provider et le
-modèle. Elle conserve l’identité et les paramètres initiaux, ignore les cas
-terminés et continue les cas `in_progress`. `--resume` ne se combine pas avec
-`--output`, `--sentinels` ou `--id`.
+La reprise vérifie le hash et la version du corpus, le patch, le provider, le
+modèle, les paramètres de génération, la golden truth et le nombre de
+répétitions. Elle conserve l’identité et les paramètres initiaux, ignore les
+observations terminées et continue les observations `in_progress`. Un
+`--repeat` explicitement différent est refusé. `--resume` ne se combine pas
+avec `--output`, `--sentinels` ou `--id`.
 
 ## Progression en temps réel
 
@@ -158,7 +183,7 @@ logs lisibles.
 ## Rythme et retries
 
 L’exécution est strictement séquentielle (`concurrency = 1`). Le délai préventif
-par défaut est de **2000 ms** entre deux matchups :
+par défaut est de **2000 ms** entre deux observations :
 
 ```sh
 npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --delay-ms 3000
@@ -204,13 +229,26 @@ d’authentification n’est écrit.
 Chaque répertoire de run contient :
 
 - `run.json` : identité du corpus, hash, commit Git, provider, modèle, paramètres
-  de génération utiles, mode, timestamps, délai, tentatives et
-  `knowledgeBaseVersion` ;
-- `results.json` : input de chaque matchup, statut, analyse réussie, erreur
+  de génération utiles, mode, timestamps, délai, retries techniques,
+  `repeat`, observations attendues, `knowledgeBaseVersion`, version de golden
+  truth et snapshot du mechanical coverage gate ;
+- `results.json` : identité de chaque observation (`id`, `matchupId`,
+  `repetition`), input, statut, analyse réussie, erreur
   métier contrôlée, violations de conformité, couverture KB, éventuelle revue
-  qualité et tentatives provider ;
-- `summary.json` : totaux, cas évaluables gameplay, statuts, retries, latences,
+  qualité, couverture mécanique et tentatives provider ;
+- `summary.json` : agrégats globaux et par matchup, observations attendues et
+  terminées, statuts, taux de succès, stabilité, retries, latences, tokens,
   sentinelles, catégories de rejet, couverture et classification qualité.
+
+La stabilité par matchup utilise trois états simples :
+
+- `stable_success` : toutes les répétitions sont terminées et réussies ;
+- `stable_failure` : toutes les répétitions sont terminées et aucune ne réussit ;
+- `unstable` : mélange de succès/échecs ou matchup encore incomplet.
+
+Les moyennes de tokens ne sont produites que lorsque le provider expose ces
+métadonnées. Aucun coût n'est inventé lorsqu'aucune donnée tarifaire fiable
+n'est disponible.
 
 Statuts terminaux :
 

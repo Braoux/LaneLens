@@ -5,7 +5,7 @@ import { basename, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { AIEnvironment } from '../../server/analysis/providers/ai-provider-config.js';
 import { main as runEvaluation } from './evaluate-gameplay.js';
-import { loadEvaluationCorpus } from './corpus.js';
+import { loadEvaluationCorpus, selectCorpusMatchups } from './corpus.js';
 import {
   EvaluationLauncherError,
   CURRENT_KNOWLEDGE_BASE_VERSION,
@@ -21,6 +21,7 @@ import {
   loadLauncherConfig,
   preflightEvaluation,
   preflightKnowledgeCoverage,
+  preflightMechanicalCoverage,
   readRunInfo,
   resolveResultsRoot,
   runSearchRoots,
@@ -49,6 +50,7 @@ function displayRun(io: MenuIO, run: EvaluationRunInfo): void {
   io.write(`Identifiant : ${run.runId}\n`);
   io.write(`Statut : ${run.isComplete ? 'terminé' : 'incomplet'}\n`);
   io.write(`Progression : ${run.completed} / ${run.total} (${run.remaining} restant(s))\n`);
+  io.write(`Répétitions : ${run.repeat}\n`);
   io.write(`Succès : ${run.success} · Échecs techniques ou conformité : ${run.failed}\n`);
   io.write(`Corpus : ${run.corpusFile}\n`);
   io.write(`Provider / modèle : ${run.provider} / ${run.model}\n`);
@@ -83,6 +85,19 @@ export function knowledgeBaseVersionForChoice(choice: string): string | null | u
   if (choice.trim() === '1') return null;
   if (choice.trim() === '2') return CURRENT_KNOWLEDGE_BASE_VERSION;
   throw new EvaluationLauncherError('Mode de connaissance invalide.');
+}
+
+export function repeatForInput(value: string): number {
+  const normalized = value.trim();
+  if (normalized.length === 0) return 1;
+  if (!/^\d+$/u.test(normalized)) {
+    throw new EvaluationLauncherError('Le nombre de répétitions doit être un entier positif.');
+  }
+  const repeat = Number(normalized);
+  if (!Number.isSafeInteger(repeat) || repeat < 1) {
+    throw new EvaluationLauncherError('Le nombre de répétitions doit être un entier positif.');
+  }
+  return repeat;
 }
 
 async function confirm(io: MenuIO, prompt: string): Promise<boolean> {
@@ -147,6 +162,13 @@ export async function launchNewEvaluation(options: {
   }
   const knowledgeBaseVersion = await chooseKnowledgeBaseMode(options.io);
   if (knowledgeBaseVersion === undefined) return corpus.config;
+  const repeat = repeatForInput(await options.io.question('Répétitions expérimentales [1] : '));
+  const loadedCorpus = await loadEvaluationCorpus(corpus.path);
+  const selection = selectCorpusMatchups(loadedCorpus.corpus, {
+    sentinels: options.mode === 'sentinels',
+    ...(matchupId === undefined ? {} : { id: matchupId }),
+  });
+  const mechanicalCoverage = await preflightMechanicalCoverage(corpus.path);
   const outputDirectory = await createRunOutputPath({ resultsRoot, knowledgeBaseVersion });
   const provider = await preflightEvaluation({
     workingDirectory: options.workingDirectory,
@@ -167,7 +189,10 @@ export async function launchNewEvaluation(options: {
     provider: provider.provider,
     model: provider.model,
     knowledgeBaseVersion,
+    repeat,
+    selectedMatchups: selection.matchups.length,
     outputDirectory,
+    ...(mechanicalCoverage === undefined ? {} : { mechanicalCoverage }),
     ...(coverage === undefined ? {} : { coverage }),
   })}`);
   if (!(await confirm(options.io, 'Confirmer le lancement ?'))) return corpus.config;
@@ -178,6 +203,7 @@ export async function launchNewEvaluation(options: {
     outputDirectory,
     ...(matchupId === undefined ? {} : { matchupId }),
     knowledgeBaseVersion,
+    repeat,
   });
   try {
     await (options.executeEvaluation ?? runEvaluation)(args);

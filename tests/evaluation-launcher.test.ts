@@ -8,6 +8,7 @@ import {
   interactiveMain,
   knowledgeBaseVersionForChoice,
   launchNewEvaluation,
+  repeatForInput,
   type MenuIO,
 } from '../scripts/evaluation/interactive-runner.js';
 import {
@@ -140,6 +141,11 @@ test('launcher builds exact existing runner arguments for every execution mode',
     '--corpus', corpus, '--output', output,
   ]);
   assert.deepEqual(buildEvaluationArguments({
+    mode: 'full', corpusPath: corpus, outputDirectory: output, knowledgeBaseVersion: null, repeat: 5,
+  }), [
+    '--corpus', corpus, '--output', output, '--repeat', '5',
+  ]);
+  assert.deepEqual(buildEvaluationArguments({
     mode: 'sentinels', corpusPath: corpus, outputDirectory: output, knowledgeBaseVersion: null,
   }), [
     '--corpus', corpus, '--output', output, '--sentinels',
@@ -176,6 +182,11 @@ test('knowledge mode is explicit and preflight summaries make baseline and KB im
   assert.equal(knowledgeBaseVersionForChoice('2'), CURRENT_KNOWLEDGE_BASE_VERSION);
   assert.equal(knowledgeBaseVersionForChoice('0'), undefined);
   assert.throws(() => knowledgeBaseVersionForChoice(''), /invalide/u);
+  assert.equal(repeatForInput(''), 1);
+  assert.equal(repeatForInput('5'), 5);
+  assert.throws(() => repeatForInput('0'), /entier positif/u);
+  assert.throws(() => repeatForInput('-1'), /entier positif/u);
+  assert.throws(() => repeatForInput('1.5'), /entier positif/u);
 
   const base = {
     corpusFile: 'lan-032-corpus-v1.json',
@@ -183,6 +194,8 @@ test('knowledge mode is explicit and preflight summaries make baseline and KB im
     provider: 'groq',
     model: 'test-model',
     outputDirectory: 'pre-kb-run',
+    repeat: 1,
+    selectedMatchups: 2,
   };
   const baseline = formatEvaluationConfiguration({ ...base, knowledgeBaseVersion: null });
   assert.match(baseline, /DÉSACTIVÉE — BASELINE PRÉ-KB/u);
@@ -235,7 +248,7 @@ test('KB coverage preflight is local and blocks a selection with 100% none cover
 test('mandatory configuration confirmation happens before the runner can consume tokens', async (t) => {
   const directory = await tempDirectory(t);
   const corpus = await writeCorpus(directory);
-  const answers = ['1', 'n'];
+  const answers = ['1', '5', 'n'];
   let output = '';
   let runnerCalls = 0;
   const io: MenuIO = {
@@ -253,6 +266,37 @@ test('mandatory configuration confirmation happens before the runner can consume
   });
   assert.match(output, /Configuration de l’évaluation/u);
   assert.match(output, /DÉSACTIVÉE — BASELINE PRÉ-KB/u);
+  assert.match(output, /Répétitions {5}: 5/u);
+  assert.match(output, /Observations {4}: 10/u);
+  assert.equal(runnerCalls, 0);
+});
+
+test('mechanical coverage failure blocks the launcher before runner execution', async (t) => {
+  const directory = await tempDirectory(t);
+  const corpus = join(directory, 'gated-corpus.json');
+  await writeFile(corpus, JSON.stringify({
+    ...corpusValue,
+    rules: { expectedMatchups: 1, expectedSentinels: 1, fullCoverageGate: 'required' },
+    matchups: [{
+      ...corpusValue.matchups[0],
+      ally: { carry: 'Ahri', support: 'Thresh' },
+    }],
+  }), 'utf8');
+  const answers = ['1', '5'];
+  let runnerCalls = 0;
+  const io: MenuIO = {
+    async question() { return answers.shift() ?? ''; },
+    write() {},
+    close() {},
+  };
+  await assert.rejects(launchNewEvaluation({
+    io,
+    workingDirectory: process.cwd(),
+    config: { corpusPath: corpus, resultsRoot: join(directory, 'runs') },
+    mode: 'full',
+    environment: { AI_PROVIDER: 'groq', GROQ_API_KEY: 'fake-test-key' },
+    async executeEvaluation() { runnerCalls += 1; },
+  }), /NOT FULLY COVERED|couverture mécanique/u);
   assert.equal(runnerCalls, 0);
 });
 

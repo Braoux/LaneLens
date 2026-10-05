@@ -26,13 +26,16 @@ export function formatMechanicalCoverageReport(result: MechanicalCoverageGateRes
   return lines.join('\n');
 }
 
-export function assertMechanicalCoverageGate(corpus: EvaluationCorpus): void {
+export function assertMechanicalCoverageGate(
+  corpus: EvaluationCorpus,
+): MechanicalCoverageGateResult | undefined {
   const result = mechanicalCoverageReport(corpus);
   if (result !== undefined && !result.fullyCovered) {
     throw new EvaluationCorpusError(
       `Corpus bloqué par le gate de couverture mécanique.\n${formatMechanicalCoverageReport(result)}`,
     );
   }
+  return result;
 }
 
 async function findDefaultGoldenCorpus(): Promise<string> {

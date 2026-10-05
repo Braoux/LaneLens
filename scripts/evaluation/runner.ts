@@ -7,6 +7,7 @@ import {
 } from '../../server/analysis/ProviderFailure.js';
 import type { PatchContextResolver } from '../../server/patch-context/PatchContextResolver.js';
 import { buildEvaluationSummary } from './summary.js';
+import { buildObservationPlan, effectiveRepeat } from './observation-plan.js';
 import { persistEvaluation, type RunFiles } from './result-writer.js';
 import type {
   CorpusMatchup,
@@ -103,17 +104,22 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
   const random = options.random ?? Math.random;
   let run = options.run;
   const results = [...(options.initialResults ?? [])];
-  const selectedIds = new Set(run.selectedIds);
+  const repeat = effectiveRepeat(run);
+  const observations = buildObservationPlan(options.matchups, repeat);
+  const observationIds = new Set(observations.map(({ observationId }) => observationId));
+  const mechanicalCoverage = new Map(
+    run.mechanicalCoverage?.matchups.map((matchup) => [matchup.id, matchup]) ?? [],
+  );
 
   const completedCount = () => results.filter(
-    ({ id, status }) => selectedIds.has(id) && terminal(status),
+    ({ id, status }) => observationIds.has(id) && terminal(status),
   ).length;
   const reportProgress = (progress: Omit<EvaluationProgress, 'completed' | 'total'>) => {
     try {
       options.onProgress?.({
         ...progress,
         completed: completedCount(),
-        total: run.selectedIds.length,
+        total: observations.length,
       });
     } catch {
       // Console observability must never interrupt or alter an evaluation run.
@@ -125,26 +131,37 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
       options.files,
       run,
       results,
-      buildEvaluationSummary(results, run.selectedIds),
+      buildEvaluationSummary(results, run.selectedIds, repeat),
     );
   };
 
   reportProgress({ phase: 'preparing' });
 
-  for (let matchupIndex = 0; matchupIndex < options.matchups.length; matchupIndex += 1) {
-    const matchup = options.matchups[matchupIndex]!;
-    let resultIndex = results.findIndex(({ id }) => id === matchup.id);
+  for (let observationIndex = 0; observationIndex < observations.length; observationIndex += 1) {
+    const observation = observations[observationIndex]!;
+    const { matchup } = observation;
+    let resultIndex = results.findIndex(({ id }) => id === observation.observationId);
     if (resultIndex >= 0 && terminal(results[resultIndex]!.status)) continue;
 
-    reportProgress({ phase: 'preparing', currentId: matchup.id });
+    reportProgress({ phase: 'preparing', currentId: observation.observationId });
 
     if (resultIndex < 0) {
+      const matchupMechanicalCoverage = mechanicalCoverage.get(matchup.id);
       results.push({
-        id: matchup.id,
+        id: observation.observationId,
+        matchupId: matchup.id,
+        repetition: observation.repetition,
         input: inputFor(matchup),
         sentinel: matchup.sentinel,
         status: 'in_progress',
         startedAt: now().toISOString(),
+        ...(matchupMechanicalCoverage === undefined || run.goldenTruthVersion === undefined ? {} : {
+          mechanicalCoverage: {
+            goldenTruthVersion: run.goldenTruthVersion,
+            fullyCovered: matchupMechanicalCoverage.fullyCovered,
+            missing: matchupMechanicalCoverage.missing,
+          },
+        }),
         attempts: [],
       });
       resultIndex = results.length - 1;
@@ -164,7 +181,7 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
       await persist();
       reportProgress({
         phase: 'case_completed',
-        currentId: matchup.id,
+        currentId: observation.observationId,
         status: result.status,
       });
       continue;
@@ -175,7 +192,7 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
       const waitMs = retryDelay(previousAttempt.attempt, previousAttempt.retryAfterMs, random);
       reportProgress({
         phase: 'waiting_rate_limit',
-        currentId: matchup.id,
+        currentId: observation.observationId,
         attempt: previousAttempt.attempt,
         maxAttempts: run.maxAttempts,
         waitMs,
@@ -187,7 +204,7 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
       const attemptNumber = result.attempts.length + 1;
       reportProgress({
         phase: 'analyzing',
-        currentId: matchup.id,
+        currentId: observation.observationId,
         attempt: attemptNumber,
         maxAttempts: run.maxAttempts,
       });
@@ -325,7 +342,7 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
         const waitMs = retryDelay(lastAttempt.attempt, lastAttempt.retryAfterMs, random);
         reportProgress({
           phase: 'waiting_rate_limit',
-          currentId: matchup.id,
+          currentId: observation.observationId,
           attempt: lastAttempt.attempt,
           maxAttempts: run.maxAttempts,
           waitMs,
@@ -353,18 +370,18 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
 
     reportProgress({
       phase: 'case_completed',
-      currentId: matchup.id,
+      currentId: observation.observationId,
       status: result.status,
     });
 
-    const remaining = options.matchups.slice(matchupIndex + 1).some((candidate) => {
-      const existing = results.find(({ id }) => id === candidate.id);
+    const remaining = observations.slice(observationIndex + 1).some((candidate) => {
+      const existing = results.find(({ id }) => id === candidate.observationId);
       return existing === undefined || !terminal(existing.status);
     });
     if (remaining && run.delayMs > 0) {
       reportProgress({
         phase: 'waiting_delay',
-        currentId: matchup.id,
+        currentId: observation.observationId,
         waitMs: run.delayMs,
       });
       await sleep(run.delayMs);

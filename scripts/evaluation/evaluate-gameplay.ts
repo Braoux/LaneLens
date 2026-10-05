@@ -22,6 +22,7 @@ import { assertMechanicalCoverageGate } from './mechanical-coverage.js';
 
 export const DEFAULT_DELAY_MS = 2_000;
 export const DEFAULT_MAX_ATTEMPTS = 3;
+export const DEFAULT_REPEAT = 1;
 const MAX_DELAY_MS = 3_600_000;
 const MAX_ATTEMPTS = 10;
 
@@ -33,9 +34,11 @@ export interface EvaluationCliArguments {
   readonly id?: string;
   readonly delayMs: number;
   readonly maxAttempts: number;
+  readonly repeat: number;
   readonly knowledgeBaseVersion?: string;
   readonly delayProvided: boolean;
   readonly maxAttemptsProvided: boolean;
+  readonly repeatProvided: boolean;
 }
 
 export function resolveRunKnowledgeBaseVersion(
@@ -50,6 +53,18 @@ export function resolveRunKnowledgeBaseVersion(
     throw new Error('--knowledge-base-version ne peut pas modifier un run repris.');
   }
   return requestedVersion ?? resumedVersion ?? null;
+}
+
+export function resolveRunRepeat(
+  requestedRepeat: number,
+  repeatProvided: boolean,
+  resumedRepeat?: number,
+): number {
+  const stored = resumedRepeat ?? 1;
+  if (resumedRepeat !== undefined && repeatProvided && requestedRepeat !== stored) {
+    throw new Error('--repeat ne peut pas modifier le nombre de répétitions d’un run repris.');
+  }
+  return resumedRepeat === undefined ? requestedRepeat : stored;
 }
 
 function parseNonNegativeInteger(value: string | undefined, option: string): number {
@@ -83,6 +98,7 @@ export function parseEvaluationArguments(argv: readonly string[]): EvaluationCli
       '--id',
       '--delay-ms',
       '--max-attempts',
+      '--repeat',
       '--knowledge-base-version',
     ].includes(argument)) {
       throw new Error(`Option inconnue : ${argument}`);
@@ -111,6 +127,9 @@ export function parseEvaluationArguments(argv: readonly string[]): EvaluationCli
     ? parsePositiveInteger(values.get('--max-attempts'), '--max-attempts')
     : DEFAULT_MAX_ATTEMPTS;
   if (maxAttempts > MAX_ATTEMPTS) throw new Error('--max-attempts ne peut pas dépasser 10.');
+  const repeat = values.has('--repeat')
+    ? parsePositiveInteger(values.get('--repeat'), '--repeat')
+    : DEFAULT_REPEAT;
   return {
     corpus,
     sentinels,
@@ -120,8 +139,10 @@ export function parseEvaluationArguments(argv: readonly string[]): EvaluationCli
     ...(knowledgeBaseVersion === undefined ? {} : { knowledgeBaseVersion }),
     delayMs,
     maxAttempts,
+    repeat,
     delayProvided: values.has('--delay-ms'),
     maxAttemptsProvided: values.has('--max-attempts'),
+    repeatProvided: values.has('--repeat'),
   };
 }
 
@@ -142,7 +163,7 @@ function defaultOutputDirectory(now: Date): string {
   return resolve('.lanelens-evaluation', 'runs', `${timestamp}-${randomUUID()}`);
 }
 
-function assertResumeMatches(
+export function assertResumeMatches(
   run: EvaluationRun,
   corpus: Awaited<ReturnType<typeof loadEvaluationCorpus>>,
   arguments_: EvaluationCliArguments,
@@ -160,6 +181,20 @@ function assertResumeMatches(
   }
   if (arguments_.maxAttemptsProvided && arguments_.maxAttempts !== run.maxAttempts) {
     throw new Error('--max-attempts ne peut pas modifier la configuration d’un run repris.');
+  }
+  const storedRepeat = run.repeat ?? 1;
+  resolveRunRepeat(arguments_.repeat, arguments_.repeatProvided, storedRepeat);
+  if (
+    run.expectedObservations !== undefined
+    && run.expectedObservations !== run.selectedIds.length * storedRepeat
+  ) {
+    throw new Error('Le nombre d’observations attendu du run repris est incohérent.');
+  }
+  if (
+    run.goldenTruthVersion !== undefined
+    && run.mechanicalCoverage?.goldenTruthVersion !== run.goldenTruthVersion
+  ) {
+    throw new Error('Le snapshot de couverture mécanique du run repris est incohérent.');
   }
   if (
     arguments_.knowledgeBaseVersion !== undefined
@@ -182,7 +217,7 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
   const arguments_ = parseEvaluationArguments(argv);
   const loadedCorpus = await loadEvaluationCorpus(resolve(arguments_.corpus));
   // This preflight intentionally runs before provider configuration or any LLM call.
-  assertMechanicalCoverageGate(loadedCorpus.corpus);
+  const mechanicalCoverage = assertMechanicalCoverageGate(loadedCorpus.corpus);
   const resumeSnapshot = arguments_.resume === undefined
     ? undefined
     : await loadEvaluationRun(resolve(arguments_.resume));
@@ -190,6 +225,12 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
     arguments_.knowledgeBaseVersion,
     resumeSnapshot?.run.knowledgeBaseVersion,
   );
+  if (
+    resumeSnapshot !== undefined
+    && resumeSnapshot.run.goldenTruthVersion !== mechanicalCoverage?.goldenTruthVersion
+  ) {
+    throw new Error('La version de golden truth ne correspond pas au run à reprendre.');
+  }
   const analysisRuntime = createAnalysisRuntime({
     environment: withEvaluationDeepSeekTimeout(process.env),
     knowledgeBaseEnabled: requestedKnowledgeBaseVersion !== null,
@@ -250,12 +291,26 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
       completedAt: null,
       mode: selection.mode,
       selectedIds: matchups.map(({ id }) => id),
+      repeat: arguments_.repeat,
+      expectedObservations: matchups.length * arguments_.repeat,
       delayMs: arguments_.delayMs,
       maxAttempts: arguments_.maxAttempts,
-      knowledgeBaseVersion: arguments_.knowledgeBaseVersion ?? null,
+      knowledgeBaseVersion: requestedKnowledgeBaseVersion,
+      ...(mechanicalCoverage === undefined ? {} : {
+        goldenTruthVersion: mechanicalCoverage.goldenTruthVersion,
+        mechanicalCoverage,
+      }),
     };
   }
 
+  if (mechanicalCoverage !== undefined) {
+    process.stdout.write('Golden benchmark\n');
+    process.stdout.write(
+      `Mechanical coverage: ${mechanicalCoverage.coveredMatchups}/${mechanicalCoverage.totalMatchups} FULL\n`,
+    );
+  }
+  process.stdout.write(`Répétitions: ${run.repeat ?? 1}\n`);
+  process.stdout.write(`Observations attendues: ${run.selectedIds.length * (run.repeat ?? 1)}\n`);
   process.stdout.write(`Résultats : ${files.directory}\n`);
   const progress = new ConsoleEvaluationProgress();
   try {

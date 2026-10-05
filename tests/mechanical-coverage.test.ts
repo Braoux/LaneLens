@@ -22,6 +22,7 @@ import {
   formatMechanicalCoverageReport,
 } from '../scripts/evaluation/mechanical-coverage.js';
 import type { CorpusMatchup } from '../scripts/evaluation/types.js';
+import { buildObservationPlan } from '../scripts/evaluation/observation-plan.js';
 
 const corpusDirectory = fileURLToPath(new URL('../evaluation/corpus/', import.meta.url));
 const goldenCorpusFile = readdirSync(corpusDirectory).find((file) => {
@@ -86,6 +87,14 @@ test('the frozen golden corpus passes the global mechanical coverage gate', asyn
   assert.equal(result.fullyCovered, true);
   assert.doesNotThrow(() => assertMechanicalCoverageGate(corpus));
   assert.match(formatMechanicalCoverageReport(result), /10\/10 mechanically fully covered/u);
+});
+
+test('golden corpus repeat five expands deterministically to fifty observations', async () => {
+  const corpus = await goldenCorpus();
+  const observations = buildObservationPlan(corpus.matchups, 5);
+  assert.equal(observations.length, 50);
+  assert.equal(new Set(observations.map(({ observationId }) => observationId)).size, 50);
+  assert.deepEqual(observations.slice(0, 5).map(({ repetition }) => repetition), [1, 2, 3, 4, 5]);
 });
 
 test('the gate explains a missing mechanic and marks only affected matchups partial', async () => {

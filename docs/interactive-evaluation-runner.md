@@ -27,7 +27,17 @@ Chaque nouveau run demande explicitement l’un des deux modes :
 1. **Baseline pré-KB — Knowledge Base désactivée** ;
 2. **Évaluation avec Knowledge Base — `lan-032-kb-v1`**.
 
-Aucun défaut silencieux n’est appliqué. Avant confirmation, le launcher affiche le corpus, le mode de sélection, le provider, le modèle, l’état et la version KB ainsi que le dossier de résultats. En mode KB, il résout localement la couverture attendue sur toute la sélection, sans appel LLM. Il bloque le lancement si tous les matchups ont une couverture `none`.
+Aucun défaut silencieux n’est appliqué. Chaque nouveau run demande aussi le
+nombre de répétitions expérimentales, avec `1` par défaut. Avant confirmation,
+le launcher affiche le corpus, le mode de sélection, le nombre de matchups, les
+répétitions, le total d'observations, le provider, le modèle, l’état et la
+version KB ainsi que le dossier de résultats. En mode KB, il résout localement
+la couverture attendue sur toute la sélection, sans appel LLM. Il bloque le
+lancement si tous les matchups ont une couverture `none`.
+
+Lorsqu'un corpus déclare `fullCoverageGate`, le launcher exécute aussi le gate
+mécanique sur le corpus complet avant la confirmation et avant tout appel LLM.
+Un seul matchup incomplet bloque le run et affiche les mécaniques manquantes.
 
 La confirmation `[o/N]` intervient après ce résumé et avant le démarrage du runner. « Post-KB » ne désigne jamais un dossier nommé manuellement : cela signifie que `run.json` contient une `knowledgeBaseVersion` non nulle réellement chargée par le runtime.
 
@@ -57,16 +67,23 @@ Avant toute composition du provider, le launcher vérifie :
 - l’accès en écriture au dossier de sortie ou au run repris.
 - la compatibilité de la version KB du run avec le runtime local ;
 - la couverture locale attendue lorsque la KB est activée.
+- le mechanical coverage gate lorsqu'il est requis par le corpus ;
+- le nombre positif de répétitions et le total d'observations.
 
 Les valeurs des secrets ne sont jamais affichées. Une erreur de configuration produit un message actionnable puis revient au menu.
 
-La reprise affiche l’état et la version KB enregistrés, puis appelle le runner existant avec `--resume`. Elle conserve donc l’identité, les métadonnées, la version KB et les tentatives du run, et ne rejoue pas les cas terminés. Il n’existe aucun choix permettant de transformer une baseline en run KB, ou l’inverse, pendant une reprise.
+La reprise affiche l’état, la version KB et le nombre de répétitions enregistrés,
+puis appelle le runner existant avec `--resume`. Elle conserve donc l’identité,
+les métadonnées, la version KB, la golden truth, les répétitions et les
+tentatives du run, et ne rejoue pas les observations terminées. Il n’existe
+aucun choix permettant de transformer une baseline en run KB, de changer
+`repeat`, ou de modifier le corpus pendant une reprise.
 
 ## Pendant et après l’exécution
 
 Le launcher affiche le nom du run, son provider et son état avant de laisser le runner présenter sa progression. Après une fin normale, il rappelle :
 
-- les cas terminés et restants ;
+- les observations terminées et restantes ;
 - les succès et échecs ;
 - les chemins de `results.json` et `summary.json`.
 

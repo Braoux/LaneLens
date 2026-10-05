@@ -204,6 +204,12 @@ export async function loadEvaluationRun(directory: string): Promise<{
   if (!isRecord(runValue) || runValue.schemaVersion !== 1 || !Array.isArray(runValue.selectedIds)) {
     throw new EvaluationPersistenceError('run.json ne respecte pas le format d’évaluation V1.');
   }
+  if (
+    runValue.repeat !== undefined
+    && (typeof runValue.repeat !== 'number' || !Number.isSafeInteger(runValue.repeat) || runValue.repeat < 1)
+  ) {
+    throw new EvaluationPersistenceError('run.json contient un nombre de répétitions invalide.');
+  }
   if (!isRecord(resultsValue) || resultsValue.schemaVersion !== 1 || !Array.isArray(resultsValue.results)) {
     throw new EvaluationPersistenceError('results.json ne respecte pas le format d’évaluation V1.');
   }
