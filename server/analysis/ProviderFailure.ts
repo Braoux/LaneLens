@@ -18,6 +18,9 @@ export interface ProviderFailureDetails {
   readonly errorMessage?: string;
   readonly providerRequestId?: string;
   readonly retryMetadata?: ProviderRetryMetadata;
+  readonly executionContext?: 'application' | 'evaluation';
+  readonly deadlineMs?: number;
+  readonly durationMs?: number;
 }
 
 export interface ProviderRetryMetadata {
@@ -26,6 +29,8 @@ export interface ProviderRetryMetadata {
   readonly outputTokens?: number;
   readonly totalTokens?: number;
   readonly reasoningTokens?: number;
+  readonly executionContext?: 'application' | 'evaluation';
+  readonly deadlineMs?: number;
   readonly retryAfterMs?: number;
   readonly rateLimitLimitRequests?: number;
   readonly rateLimitLimitTokens?: number;
@@ -146,6 +151,9 @@ export class ProviderFailureError extends Error {
   readonly errorMessage?: string;
   readonly providerRequestId?: string;
   readonly retryMetadata?: ProviderRetryMetadata;
+  readonly executionContext?: 'application' | 'evaluation';
+  readonly deadlineMs?: number;
+  readonly durationMs?: number;
 
   constructor(
     details: ProviderFailureDetails,
@@ -161,6 +169,9 @@ export class ProviderFailureError extends Error {
     this.errorMessage = details.errorMessage;
     this.providerRequestId = details.providerRequestId;
     this.retryMetadata = details.retryMetadata;
+    this.executionContext = details.executionContext;
+    this.deadlineMs = details.deadlineMs;
+    this.durationMs = details.durationMs;
   }
 }
 

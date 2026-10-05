@@ -13,6 +13,7 @@ import { loadGeminiConfig } from '../../server/analysis/providers/gemini-config.
 import { loadGroqConfig } from '../../server/analysis/providers/groq-config.js';
 import { loadOpenAIConfig } from '../../server/analysis/providers/openai-config.js';
 import { loadDeepSeekConfig } from '../../server/analysis/providers/deepseek-config.js';
+import { withEvaluationDeepSeekTimeout } from './deepseek-timeout.js';
 import {
   resolveAIProvider,
   type AIEnvironment,
@@ -414,12 +415,13 @@ export function preflightProvider(
     throw new EvaluationLauncherError(`${keyName} n’est pas configurée. Configurez la variable puis relancez le launcher.`);
   }
   try {
+    const providerEnvironment = withEvaluationDeepSeekTimeout(environment);
     const config = {
       openai: loadOpenAIConfig,
       gemini: loadGeminiConfig,
       groq: loadGroqConfig,
       deepseek: loadDeepSeekConfig,
-    }[provider](environment);
+    }[provider](providerEnvironment);
     return Object.freeze({ provider, model: config.model });
   } catch {
     throw new EvaluationLauncherError(`La configuration ${provider} est invalide. Vérifiez le modèle et le timeout configurés.`);

@@ -38,7 +38,8 @@ AI_PROVIDER=deepseek
 DEEPSEEK_API_KEY=
 DEEPSEEK_MODEL=deepseek-flash
 DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_TIMEOUT_MS=30000
+DEEPSEEK_EVALUATION_TIMEOUT_MS=120000
+DEEPSEEK_EVALUATION_TRANSPORT_TIMEOUT_MS=130000
 ```
 
 `deepseek-v4-pro` peut être utilisé pour un run distinct en modifiant uniquement
@@ -47,6 +48,11 @@ DEEPSEEK_TIMEOUT_MS=30000
 conserve sa durée, son statut HTTP/erreur normalisée et, lorsque DeepSeek les
 retourne, le request ID provider ainsi que les tokens d’entrée, sortie, total et
 raisonnement.
+
+La deadline DeepSeek du runner et son timeout transport sont enregistrés dans
+`run.json` avec les autres paramètres de génération. La valeur runner par défaut
+est de 120 s et ne dépend pas de la deadline applicative de 90 s. Ces paramètres
+sont comparés à la reprise afin de préserver la reproductibilité de la campagne.
 
 ## Format du corpus V1
 
@@ -184,6 +190,10 @@ Seuls les rate limits sont retentés automatiquement. Après un HTTP 429 :
 2. sinon, le runner applique un backoff exponentiel borné avec un petit jitter ;
 3. chaque tentative est persistée avant l’attente suivante ;
 4. après épuisement, le cas devient `rate_limited` et le corpus continue.
+
+Un timeout ou toute autre erreur provider n’est jamais retenté automatiquement :
+le cas devient immédiatement `provider_error`. `maxAttempts` ne concerne que les
+rate limits explicitement classés comme tels.
 
 Les quotas Groq ne sont jamais hardcodés. Les métadonnées conservées sont
 limitées à `retry-after` et aux headers `x-ratelimit-*` documentés. Aucun header

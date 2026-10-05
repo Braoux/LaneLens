@@ -352,6 +352,9 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
           errorName: providerFailure?.errorName,
           errorMessage: providerFailure?.errorMessage,
           providerRequestId: providerFailure?.providerRequestId,
+          executionContext: providerFailure?.executionContext,
+          deadlineMs: providerFailure?.deadlineMs,
+          durationMs: providerFailure?.durationMs,
           errorCode: code,
         };
         logger.error('analysis_provider_failed', {

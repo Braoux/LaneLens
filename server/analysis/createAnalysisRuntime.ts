@@ -32,6 +32,7 @@ export interface AnalysisRuntimeOptions {
   readonly groqProviderFactory?: (config: GroqConfig) => MatchupAnalysisProvider;
   readonly deepSeekProviderFactory?: (config: DeepSeekConfig) => MatchupAnalysisProvider;
   readonly knowledgeBaseEnabled?: boolean;
+  readonly executionContext?: 'application' | 'evaluation';
 }
 
 export interface AnalysisRuntime {
@@ -73,12 +74,16 @@ export function createAnalysisRuntime(
     }
     case 'deepseek': {
       const config = loadDeepSeekConfig(environment);
-      provider = (options.deepSeekProviderFactory ?? createDeepSeekProvider)(config);
+      provider = options.deepSeekProviderFactory === undefined
+        ? createDeepSeekProvider(config, undefined, options.executionContext ?? 'application')
+        : options.deepSeekProviderFactory(config);
       model = config.model;
       generationParameters = Object.freeze({
         responseFormat: DEEPSEEK_RESPONSE_FORMAT,
         thinking: DEEPSEEK_THINKING_MODE,
         reasoningEffort: DEEPSEEK_REASONING_EFFORT,
+        deadlineMs: config.deadlineMs,
+        transportTimeoutMs: config.transportTimeoutMs,
       });
       break;
     }
