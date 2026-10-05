@@ -31,6 +31,7 @@ export interface EvaluationCorpus {
   readonly corpusVersion: string;
   readonly patch: string;
   readonly frozen: boolean;
+  readonly fullCoverageGate?: string;
   readonly matchups: readonly CorpusMatchup[];
 }
 

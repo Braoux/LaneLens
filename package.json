@@ -18,6 +18,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "eval:gameplay": "tsx scripts/evaluation/evaluate-gameplay.ts",
+    "eval:golden-coverage": "tsx scripts/evaluation/mechanical-coverage.ts",
     "eval:compare": "tsx scripts/evaluation/compare-gameplay.ts",
     "eval:interactive": "tsx scripts/evaluation/interactive-runner.ts"
   },

@@ -10,38 +10,40 @@ const RIOT_SOURCE = Object.freeze({
 const CURATED_SOURCE = Object.freeze({ type: 'curated' as const, name: 'LaneLens gameplay review' });
 
 function officialMechanics(): readonly KnowledgeEntry[] {
-  return Object.entries(TRUSTED_ABILITY_MECHANICS).map(([key, mechanic]) => {
-    const [championKey = '', rawSlot = ''] = key.split(':');
-    const slot = rawSlot.toUpperCase() as 'P' | 'Q' | 'W' | 'E' | 'R';
-    const details = [
-      mechanic.castModel === undefined ? undefined : `cast model ${mechanic.castModel}`,
-      mechanic.effects?.length ? `effects ${mechanic.effects.join(', ')}` : undefined,
-    ].filter((value): value is string => value !== undefined).join('; ');
-    return Object.freeze({
-      id: `ability-${championKey}-${rawSlot}-mechanics`,
-      type: 'official_fact',
-      subjectKind: 'ability',
-      subject: `${championKey}:${slot}`,
-      statement: `${championKey} ${slot}: ${details}.`,
-      championKeys: Object.freeze([championKey]),
-      abilitySlots: Object.freeze([slot]),
-      tags: Object.freeze([...(mechanic.effects ?? []), ...(mechanic.castModel === undefined ? [] : [mechanic.castModel])]),
-      phases: Object.freeze(['lane'] as const),
-      scope: 'structural',
-      confidence: 'high',
-      status: 'verified',
-      verification: 'automatic',
-      sources: Object.freeze([RIOT_SOURCE]),
-      mechanic: Object.freeze({
-        kind: 'ability-mechanic',
-        championKey,
-        slot,
-        castModel: mechanic.castModel,
-        effects: mechanic.effects === undefined ? undefined : Object.freeze([...mechanic.effects]),
-        complete: true,
-      }),
-    } satisfies KnowledgeEntry);
-  });
+  return Object.entries(TRUSTED_ABILITY_MECHANICS)
+    .filter(([, mechanic]) => mechanic.castModel !== undefined || (mechanic.effects?.length ?? 0) > 0)
+    .map(([key, mechanic]) => {
+      const [championKey = '', rawSlot = ''] = key.split(':');
+      const slot = rawSlot.toUpperCase() as 'P' | 'Q' | 'W' | 'E' | 'R';
+      const details = [
+        mechanic.castModel === undefined ? undefined : `cast model ${mechanic.castModel}`,
+        mechanic.effects?.length ? `effects ${mechanic.effects.join(', ')}` : undefined,
+      ].filter((value): value is string => value !== undefined).join('; ');
+      return Object.freeze({
+        id: `ability-${championKey}-${rawSlot}-mechanics`,
+        type: 'official_fact',
+        subjectKind: 'ability',
+        subject: `${championKey}:${slot}`,
+        statement: `${championKey} ${slot}: ${details}.`,
+        championKeys: Object.freeze([championKey]),
+        abilitySlots: Object.freeze([slot]),
+        tags: Object.freeze([...(mechanic.effects ?? []), ...(mechanic.castModel === undefined ? [] : [mechanic.castModel])]),
+        phases: Object.freeze(['lane'] as const),
+        scope: 'structural',
+        confidence: 'high',
+        status: 'verified',
+        verification: 'automatic',
+        sources: Object.freeze([RIOT_SOURCE]),
+        mechanic: Object.freeze({
+          kind: 'ability-mechanic',
+          championKey,
+          slot,
+          castModel: mechanic.castModel,
+          effects: mechanic.effects === undefined ? undefined : Object.freeze([...mechanic.effects]),
+          complete: mechanic.complete === true,
+        }),
+      } satisfies KnowledgeEntry);
+    });
 }
 
 const ENRICHED_KNOWLEDGE: readonly KnowledgeEntry[] = [

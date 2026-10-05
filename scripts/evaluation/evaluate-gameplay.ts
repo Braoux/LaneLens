@@ -18,6 +18,7 @@ import { executeEvaluation } from './runner.js';
 import { ConsoleEvaluationProgress } from './progress.js';
 import type { EvaluationResult, EvaluationRun } from './types.js';
 import { withEvaluationDeepSeekTimeout } from './deepseek-timeout.js';
+import { assertMechanicalCoverageGate } from './mechanical-coverage.js';
 
 export const DEFAULT_DELAY_MS = 2_000;
 export const DEFAULT_MAX_ATTEMPTS = 3;
@@ -180,6 +181,8 @@ function stableParameters(
 export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<void> {
   const arguments_ = parseEvaluationArguments(argv);
   const loadedCorpus = await loadEvaluationCorpus(resolve(arguments_.corpus));
+  // This preflight intentionally runs before provider configuration or any LLM call.
+  assertMechanicalCoverageGate(loadedCorpus.corpus);
   const resumeSnapshot = arguments_.resume === undefined
     ? undefined
     : await loadEvaluationRun(resolve(arguments_.resume));

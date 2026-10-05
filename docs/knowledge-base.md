@@ -37,6 +37,74 @@ La couverture vaut `full`, `partial` ou `none`, avec le nombre de champions couv
 
 Conséquence importante : une analyse peut être `success` avec une couverture `full` tout en contenant une erreur factuelle sur une capacité qui n’est pas suffisamment modélisée par les faits structurés disponibles. Le chantier [LAN-042 (#92)](https://github.com/Braoux/LaneLens/issues/92) suit l’évolution de cette métrique vers une distinction plus explicite entre couverture champion, capacité et mécanique.
 
+## Golden truth mécanique
+
+Le golden benchmark ajoute un gate distinct de `KnowledgeCoverage`. Un matchup est
+`mechanically fully-covered` uniquement lorsque chacun de ses quatre champions
+dispose d'une preuve positive et structurée pour les cinq slots : ownership,
+nom, disponibilité, cooldown utile, description mécanique Data Dragon, cast
+model des sorts actifs et liste fermée des effets normalisés. Une liste
+`effects: []` signifie que la taxonomie normalisée a été relue et ne contient
+aucun des effets déclarés par `AbilityEffect`; une propriété absente ne vaut
+jamais preuve négative. Les heuristiques et observations de matchup ne sont pas
+consultées par ce gate.
+
+La source versionnée
+`server/knowledge/data/mechanical-golden-truth.ts` fixe le domaine (8 champions),
+le patch corpus `26.19`, le snapshot Data Dragon `16.19.1` et les cinq slots.
+Elle ne recopie aucun nom, cooldown ou texte Data Dragon. Les seuls ajouts
+curatés vivent dans `TRUSTED_ABILITY_MECHANICS` : cast model et effets que Data
+Dragon décrit en prose mais n'expose pas sous forme structurée. Le marqueur
+`complete: true` atteste la revue exhaustive de cette taxonomie réduite pour
+une capacité; sans ce marqueur, la capacité échoue le gate.
+
+### Audit des huit champions
+
+| Champion | Data Dragon | Mécaniques structurées initiales | Faits KB déjà présents | Manques critiques comblés |
+| --- | --- | --- | --- | --- |
+| Caitlyn | P/Q/W/E/R, noms, cooldowns, prose | E : dash, slow, directional | E self-peel; heuristique poke/spacing | cast models Q/W/R; root W; fermeture P/Q/R |
+| Jinx | P/Q/W/E/R, noms, cooldowns, prose | aucune | modes Q; heuristique scaling | cast models Q/W/E/R; slow W; root E; fermeture P/Q/R |
+| Ziggs | P/Q/W/E/R, noms, cooldowns, prose | W/E/R; displacement W; slow E | waveclear; W disengage | cast model Q; fermeture P/Q/R |
+| Galio | P/Q/W/E/R, noms, cooldowns, prose | W/E; taunt W; dash/knock-up E | zone W; heuristique engage | cast models Q/R; shield + knock-up R; fermeture P/Q |
+| Leona | P/Q/W/E/R, noms, cooldowns, prose | Q/E; stun Q; root/dash E | engage E; heuristiques; observation Morgana | cast models W/R; stun + slow R; fermeture P/W |
+| Lux | P/Q/W/E/R, noms, cooldowns, prose | W/E; shield W; slow E | heuristique poke/spacing | cast models Q/R; root Q; fermeture P/R |
+| Morgana | P/Q/W/E/R, noms, cooldowns, prose | E : shield, target-ally | observation E contre Leona | cast models Q/W/R; heal P; root Q; slow + stun R |
+| Swain | P/Q/W/E/R, noms, cooldowns, prose | W/E; slow W; root/pull E | fenêtre de catch E; heuristique engage | cast models Q/R; heal P/R; slow R; fermeture Q |
+
+Les ajouts sont justifiés par les descriptions Riot déjà versionnées dans le
+snapshot : ils rendent explicites le ciblage et les effets nécessaires aux
+sentinelles (root, stun, slow, knock-up, displacement, dash, shield, heal), sans
+dupliquer les noms, valeurs ou textes sources. Les passifs n'exigent pas de
+cast model. Les huit ultimes standard doivent être disponibles au niveau 6.
+
+### Gate et vérification
+
+`MechanicalCoverageGate` renvoie un résultat par champion et par matchup. Un
+échec contient des raisons concrètes, par exemple `Jinx E normalized mechanics
+not complete` ou `Morgana E cast model missing`. Le runner d'évaluation exécute
+ce contrôle immédiatement après le chargement d'un corpus qui déclare
+`rules.fullCoverageGate`, avant la configuration du provider et avant tout
+appel LLM.
+
+Vérification autonome, sans réseau :
+
+```powershell
+npm run eval:golden-coverage
+```
+
+Le résultat attendu pour le corpus golden gelé est :
+
+```text
+Golden benchmark
+10/10 mechanically fully covered
+Champions: 8/8
+```
+
+Le gate vérifie également que le profil utilise bien le patch `26.19` et le
+snapshot Data Dragon `16.19.1`. Toute évolution de ces versions demande une
+nouvelle revue explicite de la golden truth; elle ne doit pas être masquée par
+une modification silencieuse du corpus gelé.
+
 ## Conformité et observabilité
 
 Le validateur continue d’utiliser le contexte gameplay Data Dragon et peut également rattacher une contradiction à un fait structuré via `knowledgeId` et `subject`. Les heuristiques ne créent pas de règle bloquante.
