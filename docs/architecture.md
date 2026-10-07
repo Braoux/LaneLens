@@ -1,6 +1,7 @@
 # Architecture — LaneLens
 
-État documenté : architecture livrée au 26 septembre 2026, après mise en production alpha, CI/CD et instrumentation alpha.
+Voir aussi [Knowledge Base gameplay](knowledge-base.md) pour le resolver LAN-032, la politique de validation, le fallback et l’évaluation avant/après.
+État documenté : architecture livrée au 30 septembre 2026, après mise en production alpha, CI/CD, instrumentation alpha, runner d’évaluation gameplay et launcher interactif LAN-039.
 
 Ce document décrit le code actuellement présent dans le dépôt. [ADR-001](decisions/ADR-001-remplacer-openclaw-runtime.md) formalise la décision de rendre le moteur d’analyse indépendant d’OpenClaw.
 
@@ -70,6 +71,40 @@ historique local
 ```
 
 Le provider concret reste interchangeable.
+
+---
+
+## Évaluation gameplay hors HTTP
+
+Le dépôt contient désormais un runner CLI dans `scripts/evaluation/` permettant d'exécuter le pipeline réel sur un corpus externe sans passer par Hono :
+
+```sh
+npm run eval:gameplay -- --corpus <path>
+```
+
+Le runner réutilise le pipeline applicatif, exécute les cas séquentiellement, persiste les résultats de manière incrémentale et sait reprendre un run interrompu sans rejouer les cas terminés. Les erreurs provider, rate limits, retries et rejets de conformité sont conservés séparément afin de ne pas confondre disponibilité technique et qualité gameplay.
+
+### Launcher local LAN-039
+
+LAN-039 ajoute une couche d’usage au-dessus du runner sans dupliquer son moteur :
+
+```text
+run-gameplay-evaluation.cmd
+        ↓
+scripts/evaluation/interactive-runner.ts
+        ↓
+scripts/evaluation/launcher.ts
+        ↓
+evaluate-gameplay.ts
+        ↓
+pipeline métier existant
+```
+
+Le fichier `.cmd` est volontairement fin : il vérifie la présence de Node et des dépendances puis délègue au code TypeScript. Le launcher interactif découvre le corpus et les runs locaux, effectue les contrôles de préflight et traduit les choix du menu en arguments du runner existant.
+
+Les modes proposés couvrent : nouveau run complet, reprise du dernier run incomplet, sélection d’un run à reprendre, sentinelles, matchup individuel et lecture des informations du dernier run sans appel provider. Les chemins locaux sont conservés hors Git dans `.lanelens-evaluation/` et peuvent être surchargés avec `LANELENS_EVALUATION_CORPUS` et `LANELENS_EVALUATION_RESULTS`.
+
+Les artefacts d'évaluation et corpus privés ne font pas partie du runtime public. Voir [Runner d’évaluation gameplay](evaluation-runner.md) et [Launcher interactif](interactive-evaluation-runner.md).
 
 ---
 
@@ -481,7 +516,7 @@ analyzeMatchup()
 `analyzeMatchup()` :
 
 - envoie `POST /api/matchup` ;
-- utilise un timeout de 30 secondes par défaut ;
+- utilise une deadline de 90 secondes par défaut ;
 - conserve le statut HTTP ;
 - conserve un code LaneLens connu ;
 - conserve le `X-Request-Id` ;
@@ -622,9 +657,25 @@ GEMINI_TIMEOUT_MS=30000
 GROQ_API_KEY=
 GROQ_MODEL=openai/gpt-oss-120b
 GROQ_TIMEOUT_MS=30000
+
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_TIMEOUT_MS=90000
+DEEPSEEK_TRANSPORT_TIMEOUT_MS=100000
+DEEPSEEK_EVALUATION_TIMEOUT_MS=120000
+DEEPSEEK_EVALUATION_TRANSPORT_TIMEOUT_MS=130000
 ```
 
 Le backend ne charge que la configuration correspondant au provider sélectionné.
+DeepSeek réutilise le SDK OpenAI exclusivement côté serveur avec son `baseURL`,
+Chat Completions, JSON Output, aucun outil et un raisonnement `high` explicitement
+activé. Le JSON parsé reste une valeur `unknown` jusqu’à la validation LaneLens.
+Pour DeepSeek, `DEEPSEEK_TIMEOUT_MS` exprime la deadline fonctionnelle LaneLens.
+Un `AbortSignal` annule la requête à son terme, tandis que le timeout SDK garde
+une marge supérieure. Les keep-alive non-streaming (lignes vides) restent du
+whitespace HTTP jusqu’au JSON final. Le runner applique explicitement ses
+variables `DEEPSEEK_EVALUATION_*` et persiste les deux valeurs dans le run.
 
 ---
 
@@ -633,7 +684,7 @@ Le backend ne charge que la configuration correspondant au provider sélectionn�
 Prérequis :
 
 ```text
-Node.js >= 22.12.0
+Node.js >= 22.13.1 < 25
 npm
 ```
 
@@ -649,6 +700,9 @@ Commandes :
 | `npm test` | Exécute les tests TypeScript. |
 | `npm run build` | Typecheck, build Vite puis compilation backend. |
 | `npm run start:server` | Lance `dist/server/index.js`. |
+| `npm run eval:gameplay -- --corpus <path>` | Lance directement le runner d’évaluation CLI. |
+| `npm run eval:interactive` | Lance le menu interactif LAN-039 depuis un terminal. |
+| `run-gameplay-evaluation.cmd` | Point d’entrée Windows par double-clic pour l’équipe. |
 
 Build :
 

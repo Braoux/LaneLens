@@ -4,47 +4,19 @@ import {
 } from './data/data-dragon-champions.js';
 import type {
   AbilityAvailability,
-  AbilityCastModel,
-  AbilityEffect,
   AbilityGameplayFact,
   AbilitySlot,
   ChampionGameplayContext,
   GameplayContext,
   GameplayContextResolver,
 } from './types.js';
+import {
+  ATYPICAL_ABILITY_AVAILABILITY,
+  TRUSTED_ABILITY_MECHANICS,
+} from '../knowledge/data/trusted-mechanics.js';
 
 type GeneratedChampion = (typeof DATA_DRAGON_CHAMPION_ABILITIES)[number];
 type GeneratedAbility = GeneratedChampion['abilities'][number];
-
-const ATYPICAL_AVAILABILITY: Readonly<Record<string, Partial<Record<AbilitySlot, AbilityAvailability>>>> = {
-  elise: { R: { earliestLevel: 1, exceptions: ['Forme Araignée disponible dès le niveau 1.'] } },
-  jayce: { R: { earliestLevel: 1, exceptions: ['Transformation disponible dès le niveau 1.'] } },
-  karma: { R: { earliestLevel: 1, exceptions: ['Mantra disponible dès le niveau 1.'] } },
-  nidalee: { R: { earliestLevel: 1, exceptions: ['Aspect du Couguar disponible dès le niveau 1.'] } },
-  udyr: { R: { earliestLevel: 1, exceptions: ['Posture Tempête accessible comme capacité de base.'] } },
-};
-
-interface AbilityMechanicsOverride {
-  readonly castModel?: AbilityCastModel;
-  readonly effects?: readonly AbilityEffect[];
-}
-
-const TRUSTED_MECHANICS: Readonly<Record<string, AbilityMechanicsOverride>> = {
-  'ashe:r': { castModel: 'directional', effects: ['stun', 'slow'] },
-  'caitlyn:e': { castModel: 'directional', effects: ['dash', 'slow'] },
-  'galio:w': { castModel: 'self-centered', effects: ['shield', 'taunt'] },
-  'galio:e': { castModel: 'directional', effects: ['dash', 'knock-up'] },
-  'leona:q': { castModel: 'target-enemy', effects: ['stun'] },
-  'leona:e': { castModel: 'directional', effects: ['root', 'dash'] },
-  'lux:w': { castModel: 'directional', effects: ['shield'] },
-  'lux:e': { castModel: 'ground-targeted', effects: ['slow'] },
-  'morgana:e': { castModel: 'target-ally', effects: ['shield'] },
-  'swain:w': { castModel: 'ground-targeted', effects: ['slow'] },
-  'swain:e': { castModel: 'directional', effects: ['root', 'displacement'] },
-  'ziggs:w': { castModel: 'ground-targeted', effects: ['displacement'] },
-  'ziggs:e': { castModel: 'ground-targeted', effects: ['slow'] },
-  'ziggs:r': { castModel: 'ground-targeted' },
-};
 
 function normalize(value: string): string {
   return value.trim().toLocaleLowerCase('en-US').normalize('NFKD').replaceAll(/\p{M}/gu, '');
@@ -56,12 +28,12 @@ function defaultAvailability(slot: AbilitySlot): AbilityAvailability {
 
 function toAbility(champion: string, ability: GeneratedAbility): AbilityGameplayFact {
   const slot = ability.slot as AbilitySlot;
-  const mechanics = TRUSTED_MECHANICS[`${normalize(champion)}:${slot.toLocaleLowerCase('en-US')}`];
+  const mechanics = TRUSTED_ABILITY_MECHANICS[`${normalize(champion)}:${slot.toLocaleLowerCase('en-US')}`];
   return Object.freeze({
     slot,
     name: ability.name,
     availability: Object.freeze(
-      ATYPICAL_AVAILABILITY[normalize(champion)]?.[slot] ?? defaultAvailability(slot),
+      ATYPICAL_ABILITY_AVAILABILITY[normalize(champion)]?.[slot] ?? defaultAvailability(slot),
     ),
     cooldowns: Object.freeze([...ability.cooldowns]),
     facts: Object.freeze([...ability.facts]),

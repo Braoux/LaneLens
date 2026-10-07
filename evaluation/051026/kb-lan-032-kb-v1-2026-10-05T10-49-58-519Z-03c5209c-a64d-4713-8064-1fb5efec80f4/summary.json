@@ -1,0 +1,56 @@
+{
+  "total": 100,
+  "completed": 100,
+  "gameplayEvaluable": 100,
+  "success": 34,
+  "invalidAnalysis": 66,
+  "rateLimited": 0,
+  "providerErrors": 0,
+  "executionErrors": 0,
+  "retryCount": 0,
+  "durationMs": 2970751,
+  "averageLatencyMs": 29707.51,
+  "medianLatencyMs": 28273,
+  "violationCodes": {
+    "UNSUPPORTED_COOLDOWN_RESET": 17,
+    "ABILITY_EFFECT_MISMATCH": 55,
+    "KNOWLEDGE_CONTRADICTION": 56,
+    "ABILITY_SLOT_MISMATCH": 33,
+    "ABILITY_CHAMPION_MISMATCH": 21,
+    "TEMPORAL_INCONSISTENCY": 1,
+    "ABILITY_NAME_MISMATCH": 1
+  },
+  "rejectionCategories": {
+    "IMPOSSIBLE_INTERACTION": 17,
+    "INVALID_ABILITY_EFFECT": 110,
+    "KNOWLEDGE_CONTRADICTION": 56,
+    "INVALID_TIMING": 1
+  },
+  "knowledgeCoverage": {
+    "full": 2,
+    "partial": 70,
+    "none": 28,
+    "averageCoveredChampions": 1.16,
+    "averageRelevantKnowledgeCount": 3.26
+  },
+  "quality": {
+    "reviewed": 0,
+    "factualErrors": 0,
+    "strategicIssues": {
+      "questionable": 0,
+      "poor": 0,
+      "dangerous": 0
+    }
+  },
+  "sentinels": {
+    "total": 25,
+    "completed": 25,
+    "gameplayEvaluable": 25,
+    "success": 5,
+    "invalidAnalysis": 20,
+    "rateLimited": 0,
+    "providerErrors": 0,
+    "executionErrors": 0,
+    "retryCount": 0
+  }
+}

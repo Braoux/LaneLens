@@ -67,7 +67,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - portraits et données champions via Riot Data Dragon ;
 - gestion des matchups miroir ;
 - moteur d'analyse backend provider-agnostic ;
-- providers OpenAI, Google Gemini et Groq ;
+- providers OpenAI, Google Gemini, Groq et DeepSeek ;
 - contexte de patch versionné ;
 - API `POST /api/matchup` ;
 - endpoint `GET /api/analysis-context` ;
@@ -86,7 +86,8 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - Dependabot pour npm et GitHub Actions ;
 - déploiement Render depuis la branche `production` ;
 - healthcheck Render sur `GET /api/health` ;
-- smoke test de production GitHub Actions.
+- smoke test de production GitHub Actions ;
+- runner d'évaluation gameplay reproductible avec corpus de référence versionné dans `evaluation/corpus/`, reprise, gestion des rate limits et [launcher Windows interactif](docs/interactive-evaluation-runner.md).
 
 ## En cours / avant ouverture plus large
 
@@ -94,8 +95,8 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - consolidation des retours alpha ;
 - protection renforcée contre l'abus des endpoints publics ;
 - amélioration progressive des garde-fous gameplay ;
-- préparation d'une Knowledge Base gameplay structurée à partir des besoins réellement observés.
-- runner CLI d'évaluation gameplay reproductible sur corpus externe.
+- résolution ciblée d'une Knowledge Base gameplay structurée, traçable et versionnée ([documentation](docs/knowledge-base.md)) ;
+- finalisation de la baseline gameplay pré-KB, actuellement contrainte par les quotas du provider.
 
 > Les garde-fous gameplay réduisent certaines erreurs déterministes, mais ne constituent pas une preuve formelle de justesse de toute recommandation tactique.
 
@@ -109,7 +110,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 Frontend     TypeScript · Vite · HTML · CSS
 Backend      Node.js · Hono
 Data         Riot Data Dragon
-AI           MatchupAnalysisProvider · OpenAI · Gemini · Groq
+AI           MatchupAnalysisProvider · OpenAI · Gemini · Groq · DeepSeek
 Storage      localStorage / sessionStorage côté navigateur
 Feedback     GitHub Issues configurable côté serveur
 Logs         JSONL en local · stdout/stderr en production
@@ -123,7 +124,7 @@ CI/CD        GitHub Actions
 LaneLens utilise Node.js :
 
 ```text
->= 22.13.1 < 23
+>= 22.13.1 < 25
 ```
 
 ## Démarrage local
@@ -211,6 +212,28 @@ GEMINI_API_KEY=
 GEMINI_MODEL=gemini-3.8-flash
 GEMINI_TIMEOUT_MS=30000
 ```
+
+### DeepSeek
+
+```env
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_TIMEOUT_MS=90000
+DEEPSEEK_TRANSPORT_TIMEOUT_MS=100000
+DEEPSEEK_EVALUATION_TIMEOUT_MS=120000
+DEEPSEEK_EVALUATION_TRANSPORT_TIMEOUT_MS=130000
+```
+
+`deepseek-v4-pro` peut être sélectionné via `DEEPSEEK_MODEL`. L’intégration utilise
+Chat Completions en JSON Output, sans outil, avec le mode thinking explicitement
+activé et `reasoning_effort=high` pour rendre les campagnes comparables.
+
+La deadline applicative DeepSeek est de 90 s. Le timeout SDK reste supérieur afin
+que LaneLens contrôle explicitement l’annulation. Les lignes vides de keep-alive
+DeepSeek restent au niveau transport jusqu’au JSON final. Le runner utilise sa
+propre deadline de 120 s, configurable séparément.
 
 Une valeur `AI_PROVIDER` absente conserve OpenAI pour compatibilité avec les configurations existantes.
 
@@ -376,14 +399,21 @@ npm audit --audit-level=high
 
 ## Évaluation gameplay
 
-Le pipeline réel peut être exécuté hors HTTP sur un corpus externe :
+Le pipeline réel peut être exécuté hors HTTP sur le corpus de référence versionné (`evaluation/corpus/lan-032-corpus-v1.json`) ou sur un corpus alternatif :
 
 ```sh
-npm run eval:gameplay -- --corpus <path>
+npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json
 ```
 
-Voir [Runner d’évaluation gameplay](docs/evaluation-runner.md) pour les modes
-sentinelles, cas individuel, reprise, output privé et gestion des rate limits.
+Depuis LAN-039, l’usage recommandé pour l’équipe sous Windows est le launcher interactif :
+
+```text
+run-gameplay-evaluation.cmd
+```
+
+Un double-clic ouvre un menu permettant de démarrer un run complet, reprendre le dernier run incomplet, choisir un run existant, lancer uniquement les sentinelles, exécuter un matchup précis ou consulter l’état du dernier run sans appel provider. Le même menu peut être lancé depuis un terminal avec `npm run eval:interactive`.
+
+Voir [Runner d’évaluation gameplay](docs/evaluation-runner.md) pour la CLI avancée et [Launcher interactif du runner](docs/interactive-evaluation-runner.md) pour l’usage quotidien par l’équipe. Pour chaque nouveau run, le launcher impose un choix explicite entre baseline pré-KB et Knowledge Base `lan-032-kb-v1`, affiche la configuration complète et vérifie localement la couverture avant confirmation.
 
 Le build produit :
 
@@ -444,6 +474,7 @@ LaneLens reste volontairement léger :
 - [Architecture technique](docs/architecture.md)
 - [Maintenance des contextes de patch](docs/patch-context.md)
 - [Runner d’évaluation gameplay](docs/evaluation-runner.md)
+- [Launcher interactif du runner](docs/interactive-evaluation-runner.md)
 
 ## Références techniques
 
