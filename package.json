@@ -41,5 +41,8 @@
     "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",
     "wait-on": "^9.1.0"
+  },
+  "overrides": {
+    "shell-quote": "1.12.0"
   }
 }
