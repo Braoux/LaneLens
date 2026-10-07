@@ -351,6 +351,10 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
           status: providerFailure?.status,
           errorName: providerFailure?.errorName,
           errorMessage: providerFailure?.errorMessage,
+          providerRequestId: providerFailure?.providerRequestId,
+          executionContext: providerFailure?.executionContext,
+          deadlineMs: providerFailure?.deadlineMs,
+          durationMs: providerFailure?.durationMs,
           errorCode: code,
         };
         logger.error('analysis_provider_failed', {
@@ -397,6 +401,14 @@ export function createApp(dependencies: AppDependencies = {}): Hono<AppBindings>
 
     try {
       const result = await analysisService.analyze(input, {
+        onMetadata(metadata) {
+          logger.info('matchup_analysis_provider_metadata', {
+            requestId,
+            provider: dependencies.analysisProviderName,
+            model: dependencies.analysisProviderModel,
+            ...metadata,
+          });
+        },
         onKnowledgeCoverage(coverage, version) {
           logger.info('matchup_analysis_knowledge_resolved', {
             requestId,

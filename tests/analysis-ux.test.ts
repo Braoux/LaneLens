@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { AnalysisRequestError, InvalidAnalysisResponseError, analysisRequestSignal } from '../src/api';
+import {
+  ANALYSIS_REQUEST_TIMEOUT_MS,
+  AnalysisRequestError,
+  InvalidAnalysisResponseError,
+  analysisRequestSignal,
+} from '../src/api';
 import { toAnalysisErrorViewModel } from '../src/analysis-ux';
 
 test('LaneLens request errors map to deterministic provider-agnostic UX states', () => {
@@ -41,6 +46,7 @@ test('unknown, network, and timeout errors remain recoverable and sanitized', ()
 });
 
 test('the analysis signal combines user cancellation with a frontend timeout', async () => {
+  assert.equal(ANALYSIS_REQUEST_TIMEOUT_MS, 90_000);
   const controller = new AbortController();
   const cancelled = analysisRequestSignal(controller.signal, 1000);
   controller.abort();
