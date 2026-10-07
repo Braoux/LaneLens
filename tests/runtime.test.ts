@@ -4,6 +4,8 @@ import type { MatchupAnalysisProvider } from '../server/analysis/MatchupAnalysis
 import type { MatchupAnalysisProviderRequest } from '../server/analysis/types.js';
 import { AIProviderConfigurationError } from '../server/analysis/providers/ai-provider-config.js';
 import { GroqProviderError } from '../server/analysis/providers/GroqProvider.js';
+import { DeepSeekProvider } from '../server/analysis/providers/DeepSeekProvider.js';
+import { createAnalysisRuntime } from '../server/analysis/createAnalysisRuntime.js';
 import type { LogFields, Logger } from '../server/logging/Logger.js';
 import { createRuntimeApp } from '../server/runtime.js';
 
@@ -242,6 +244,107 @@ test('AI_PROVIDER=groq selects Groq without falling back to OpenAI or Gemini', a
   assert.equal(configuredModel, 'custom-groq-model');
   assert.equal(openAICalls, 0);
   assert.equal(geminiCalls, 0);
+});
+
+test('AI_PROVIDER=deepseek selects DeepSeek with exact reproducible runner metadata', () => {
+  let deepSeekCalls = 0;
+  let openAICalls = 0;
+  const provider: MatchupAnalysisProvider = {
+    async analyze() { throw new Error('not called'); },
+  };
+  const runtime = createAnalysisRuntime({
+    environment: {
+      AI_PROVIDER: ' deepseek ',
+      DEEPSEEK_API_KEY: 'deepseek-key',
+      DEEPSEEK_MODEL: ' deepseek-v4-pro ',
+      DEEPSEEK_BASE_URL: ' https://api.deepseek.com/ ',
+      DEEPSEEK_TIMEOUT_MS: '4321',
+      DEEPSEEK_TRANSPORT_TIMEOUT_MS: '5432',
+      OPENAI_API_KEY: 'unused-openai-key',
+    },
+    openAIProviderFactory() {
+      openAICalls += 1;
+      return provider;
+    },
+    deepSeekProviderFactory(config) {
+      deepSeekCalls += 1;
+      assert.deepEqual(config, {
+        apiKey: 'deepseek-key',
+        model: 'deepseek-v4-pro',
+        baseURL: 'https://api.deepseek.com',
+        deadlineMs: 4321,
+        transportTimeoutMs: 5432,
+      });
+      return provider;
+    },
+  });
+
+  assert.equal(deepSeekCalls, 1);
+  assert.equal(openAICalls, 0);
+  assert.equal(runtime?.provider, 'deepseek');
+  assert.equal(runtime?.model, 'deepseek-v4-pro');
+  assert.deepEqual(runtime?.generationParameters, {
+    responseFormat: 'json_object',
+    thinking: 'enabled',
+    reasoningEffort: 'high',
+    deadlineMs: 4321,
+    transportTimeoutMs: 5432,
+  });
+});
+
+test('DeepSeek-selected runtime without its key stays unconfigured and never falls back', async () => {
+  const app = createRuntimeApp({
+    environment: {
+      AI_PROVIDER: 'deepseek',
+      DEEPSEEK_API_KEY: '   ',
+      OPENAI_API_KEY: 'available-but-not-selected',
+    },
+  });
+  assert.equal((await postMatchup(app)).status, 503);
+});
+
+test('DeepSeek application timeouts expose safe deadline observability and a normalized API error', async () => {
+  const entries: Array<{ event: string; fields: LogFields }> = [];
+  const logger: Logger = {
+    debug() {},
+    info() {},
+    warn() {},
+    error(event, fields = {}) { entries.push({ event, fields }); },
+  };
+  const app = createRuntimeApp({
+    environment: {
+      AI_PROVIDER: 'deepseek',
+      DEEPSEEK_API_KEY: 'must-not-appear',
+      DEEPSEEK_MODEL: 'deepseek-flash',
+      DEEPSEEK_TIMEOUT_MS: '5',
+      DEEPSEEK_TRANSPORT_TIMEOUT_MS: '50',
+    },
+    logger,
+    deepSeekProviderFactory(config) {
+      return new DeepSeekProvider({
+        async generate(request) {
+          return new Promise((_, reject) => {
+            request.signal.addEventListener('abort', () => reject(request.signal.reason), { once: true });
+          });
+        },
+      }, config.model, config.deadlineMs, config.transportTimeoutMs, 'application');
+    },
+  });
+
+  const response = await postMatchup(app);
+  assert.equal(response.status, 503);
+  assert.equal(
+    (await response.json() as { error: { code: string } }).error.code,
+    'ANALYSIS_PROVIDER_UNAVAILABLE',
+  );
+  const failure = entries.find(({ event }) => event === 'analysis_provider_failed');
+  assert.equal(failure?.fields.provider, 'deepseek');
+  assert.equal(failure?.fields.model, 'deepseek-flash');
+  assert.equal(failure?.fields.category, 'timeout');
+  assert.equal(failure?.fields.executionContext, 'application');
+  assert.equal(failure?.fields.deadlineMs, 5);
+  assert.ok(Number(failure?.fields.durationMs) >= 0);
+  assert.doesNotMatch(JSON.stringify(entries), /must-not-appear/u);
 });
 
 test('configured runtime logs only safe provider, model, and KB version metadata', () => {
