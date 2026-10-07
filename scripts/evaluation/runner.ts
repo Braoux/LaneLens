@@ -236,12 +236,24 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
             attempts: [...result.attempts, attempt],
           };
         } else if (providerFailure?.category === 'rate_limit') {
+          const failureMetadata = {
+            ...providerFailure.retryMetadata,
+            ...(providerFailure.providerRequestId === undefined
+              ? {}
+              : { providerRequestId: providerFailure.providerRequestId }),
+            ...(providerFailure.executionContext === undefined
+              ? {}
+              : { executionContext: providerFailure.executionContext }),
+            ...(providerFailure.deadlineMs === undefined
+              ? {}
+              : { deadlineMs: providerFailure.deadlineMs }),
+          };
           const attempt = attemptFrom(
             attemptNumber,
             attemptStarted.toISOString(),
             durationMs,
             'rate_limited',
-            providerFailure.retryMetadata,
+            failureMetadata,
             providerFailure.status,
           );
           result = {
@@ -258,12 +270,24 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
             } : {}),
           };
         } else if (providerFailure !== undefined) {
+          const failureMetadata = {
+            ...providerFailure.retryMetadata,
+            ...(providerFailure.providerRequestId === undefined
+              ? {}
+              : { providerRequestId: providerFailure.providerRequestId }),
+            ...(providerFailure.executionContext === undefined
+              ? {}
+              : { executionContext: providerFailure.executionContext }),
+            ...(providerFailure.deadlineMs === undefined
+              ? {}
+              : { deadlineMs: providerFailure.deadlineMs }),
+          };
           const attempt = attemptFrom(
             attemptNumber,
             attemptStarted.toISOString(),
             durationMs,
             'provider_error',
-            providerFailure.retryMetadata,
+            failureMetadata,
             providerFailure.status,
           );
           result = {
