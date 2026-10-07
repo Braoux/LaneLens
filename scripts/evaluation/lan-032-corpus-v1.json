@@ -1,0 +1,1049 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "1.0.0",
+  "name": "LAN-032 reference corpus",
+  "patch": "26.19",
+  "frozen": true,
+  "description": "Corpus fixe de 100 matchups pour baseline et comparaison avant/après Knowledge Base. Les 25 premiers sont des sentinelles à revue humaine approfondie.",
+  "rules": {
+    "expectedMatchups": 100,
+    "expectedSentinels": 25,
+    "doNotEditInPlace": "Toute modification après baseline doit créer une nouvelle corpusVersion.",
+    "evaluation": "Le corpus ne contient pas de verdict attendu généré à l'avance. Les factual_error et strategic_issue sont produits lors de la revue/évaluation."
+  },
+  "stats": {
+    "matchups": 100,
+    "sentinels": 25,
+    "uniqueChampions": 44,
+    "champions": [
+      "Alistar",
+      "Annie",
+      "Aphelios",
+      "Ashe",
+      "Braum",
+      "Caitlyn",
+      "Cassiopeia",
+      "Cho'Gath",
+      "Darius",
+      "Diana",
+      "Draven",
+      "Ezreal",
+      "Galio",
+      "Jhin",
+      "Jinx",
+      "Kai'Sa",
+      "Karma",
+      "Kog'Maw",
+      "Leona",
+      "Lucian",
+      "Lulu",
+      "Lux",
+      "Maokai",
+      "Miss Fortune",
+      "Morgana",
+      "Nami",
+      "Nautilus",
+      "Pantheon",
+      "Pyke",
+      "Rakan",
+      "Renata Glasc",
+      "Samira",
+      "Senna",
+      "Seraphine",
+      "Sivir",
+      "Swain",
+      "Thresh",
+      "Tristana",
+      "Varus",
+      "Xayah",
+      "Xerath",
+      "Yuumi",
+      "Ziggs",
+      "Zyra"
+    ]
+  },
+  "matchups": [
+    {
+      "id": "LLC-001",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ziggs",
+        "support": "Galio"
+      },
+      "enemy": {
+        "carry": "Jinx",
+        "support": "Swain"
+      },
+      "tags": [
+        "poke",
+        "waveclear",
+        "engage",
+        "disengage"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Alpha: niveau/effets Galio, waveclear Ziggs, interactions Swain."
+    },
+    {
+      "id": "LLC-002",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ziggs",
+        "support": "Galio"
+      },
+      "enemy": {
+        "carry": "Kai'Sa",
+        "support": "Rakan"
+      },
+      "tags": [
+        "poke",
+        "engage",
+        "disengage",
+        "mobility"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Alpha: Galio W niveau 1, conseil de wave et engage."
+    },
+    {
+      "id": "LLC-003",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Caitlyn",
+        "support": "Leona"
+      },
+      "enemy": {
+        "carry": "Ashe",
+        "support": "Seraphine"
+      },
+      "tags": [
+        "range",
+        "engage",
+        "poke",
+        "sustain"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Alpha: analyse signalée invalide; contrôle et portée."
+    },
+    {
+      "id": "LLC-004",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Draven",
+        "support": "Annie"
+      },
+      "enemy": {
+        "carry": "Samira",
+        "support": "Nautilus"
+      },
+      "tags": [
+        "burst",
+        "engage",
+        "target-priority"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Alpha: erreur d'acteur/équipe; all-in contre engage."
+    },
+    {
+      "id": "LLC-005",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Diana",
+        "support": "Darius"
+      },
+      "enemy": {
+        "carry": "Cassiopeia",
+        "support": "Cho'Gath"
+      },
+      "tags": [
+        "atypical",
+        "mobility",
+        "cc",
+        "sustained-fight"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Alpha: mécanique/CC Cassiopeia incorrecte."
+    },
+    {
+      "id": "LLC-006",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Caitlyn",
+        "support": "Morgana"
+      },
+      "enemy": {
+        "carry": "Jinx",
+        "support": "Nautilus"
+      },
+      "tags": [
+        "range",
+        "anti-engage",
+        "trap",
+        "shield"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "LAN-029: éviter d'inventer une interaction Q/Headshot; tester Black Shield."
+    },
+    {
+      "id": "LLC-007",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Caitlyn",
+        "support": "Morgana"
+      },
+      "enemy": {
+        "carry": "Jhin",
+        "support": "Leona"
+      },
+      "tags": [
+        "range",
+        "anti-engage",
+        "cc",
+        "trap"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "LAN-029: Morgana W et vision; contrôle Leona contre Black Shield."
+    },
+    {
+      "id": "LLC-008",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ziggs",
+        "support": "Nautilus"
+      },
+      "enemy": {
+        "carry": "Ezreal",
+        "support": "Karma"
+      },
+      "tags": [
+        "poke",
+        "engage",
+        "mobility",
+        "waveclear"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Artillerie + engage contre poke/mobile."
+    },
+    {
+      "id": "LLC-009",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jinx",
+        "support": "Thresh"
+      },
+      "enemy": {
+        "carry": "Draven",
+        "support": "Leona"
+      },
+      "tags": [
+        "scaling",
+        "engage",
+        "peel",
+        "burst"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Scaling contre forte pression early; nombreuses fenêtres de CC."
+    },
+    {
+      "id": "LLC-010",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Kai'Sa",
+        "support": "Rakan"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Lux"
+      },
+      "tags": [
+        "engage",
+        "poke",
+        "range",
+        "mobility"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Engage coordonné contre lane de portée/poke."
+    },
+    {
+      "id": "LLC-011",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ashe",
+        "support": "Braum"
+      },
+      "enemy": {
+        "carry": "Samira",
+        "support": "Nautilus"
+      },
+      "tags": [
+        "cc",
+        "peel",
+        "engage",
+        "anti-projectile"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Chaînes de contrôle et interaction défensive/offensive."
+    },
+    {
+      "id": "LLC-012",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ezreal",
+        "support": "Karma"
+      },
+      "enemy": {
+        "carry": "Jhin",
+        "support": "Xerath"
+      },
+      "tags": [
+        "poke",
+        "mobility",
+        "range",
+        "wave"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Poke contre poke; importance des fenêtres de cooldown."
+    },
+    {
+      "id": "LLC-013",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Lucian",
+        "support": "Nami"
+      },
+      "enemy": {
+        "carry": "Jinx",
+        "support": "Lulu"
+      },
+      "tags": [
+        "burst",
+        "sustain",
+        "enchanter",
+        "scaling"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Pression early contre scaling protégé."
+    },
+    {
+      "id": "LLC-014",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Varus",
+        "support": "Renata Glasc"
+      },
+      "enemy": {
+        "carry": "Kai'Sa",
+        "support": "Alistar"
+      },
+      "tags": [
+        "poke",
+        "engage",
+        "disengage",
+        "peel"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Poke/contrôle contre engage dur; interactions de peel."
+    },
+    {
+      "id": "LLC-015",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Xayah",
+        "support": "Rakan"
+      },
+      "enemy": {
+        "carry": "Samira",
+        "support": "Leona"
+      },
+      "tags": [
+        "engage",
+        "self-peel",
+        "cc",
+        "burst"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "All-in des deux côtés; fenêtres défensives Xayah."
+    },
+    {
+      "id": "LLC-016",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jhin",
+        "support": "Zyra"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Morgana"
+      },
+      "tags": [
+        "poke",
+        "zone-control",
+        "range",
+        "cc"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Zone control et skillshots; éviter les causalités inventées."
+    },
+    {
+      "id": "LLC-017",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Aphelios",
+        "support": "Lulu"
+      },
+      "enemy": {
+        "carry": "Draven",
+        "support": "Nautilus"
+      },
+      "tags": [
+        "scaling",
+        "peel",
+        "burst",
+        "engage"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Hypercarry protégé contre kill lane."
+    },
+    {
+      "id": "LLC-018",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Miss Fortune",
+        "support": "Leona"
+      },
+      "enemy": {
+        "carry": "Ezreal",
+        "support": "Braum"
+      },
+      "tags": [
+        "burst",
+        "engage",
+        "mobility",
+        "peel"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Engage + burst contre mobilité/peel."
+    },
+    {
+      "id": "LLC-019",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Sivir",
+        "support": "Yuumi"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Lux"
+      },
+      "tags": [
+        "waveclear",
+        "sustain",
+        "range",
+        "poke"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Waveclear/sustain contre pression de portée."
+    },
+    {
+      "id": "LLC-020",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Tristana",
+        "support": "Alistar"
+      },
+      "enemy": {
+        "carry": "Jinx",
+        "support": "Thresh"
+      },
+      "tags": [
+        "all-in",
+        "engage",
+        "disengage",
+        "scaling"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "All-in explosif contre peel/hook."
+    },
+    {
+      "id": "LLC-021",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Kog'Maw",
+        "support": "Lulu"
+      },
+      "enemy": {
+        "carry": "Varus",
+        "support": "Karma"
+      },
+      "tags": [
+        "scaling",
+        "peel",
+        "poke",
+        "range"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Hypercarry contre double poke."
+    },
+    {
+      "id": "LLC-022",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Seraphine",
+        "support": "Senna"
+      },
+      "enemy": {
+        "carry": "Draven",
+        "support": "Pyke"
+      },
+      "tags": [
+        "atypical",
+        "sustain",
+        "poke",
+        "execute"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Double scaling utilitaire contre kill lane."
+    },
+    {
+      "id": "LLC-023",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Swain",
+        "support": "Pantheon"
+      },
+      "enemy": {
+        "carry": "Jhin",
+        "support": "Xerath"
+      },
+      "tags": [
+        "atypical",
+        "burst",
+        "cc",
+        "poke"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Mage carry atypique + point-and-click pressure contre range."
+    },
+    {
+      "id": "LLC-024",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Cassiopeia",
+        "support": "Nautilus"
+      },
+      "enemy": {
+        "carry": "Ezreal",
+        "support": "Karma"
+      },
+      "tags": [
+        "atypical",
+        "sustained-fight",
+        "engage",
+        "mobility"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Carry mage atypique; interactions mobilité/CC."
+    },
+    {
+      "id": "LLC-025",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ziggs",
+        "support": "Maokai"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Nami"
+      },
+      "tags": [
+        "poke",
+        "zone-control",
+        "sustain",
+        "engage"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Poke/zone control contre portée et sustain."
+    },
+    {
+      "id": "LLC-026",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jinx",
+        "support": "Lulu"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Lux"
+      },
+      "tags": [
+        "scaling",
+        "peel",
+        "range",
+        "poke"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-027",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jinx",
+        "support": "Nautilus"
+      },
+      "enemy": {
+        "carry": "Ezreal",
+        "support": "Karma"
+      },
+      "tags": [
+        "engage",
+        "scaling",
+        "poke",
+        "mobility"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-028",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jinx",
+        "support": "Braum"
+      },
+      "enemy": {
+        "carry": "Samira",
+        "support": "Leona"
+      },
+      "tags": [
+        "peel",
+        "engage",
+        "burst"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-029",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jinx",
+        "support": "Nami"
+      },
+      "enemy": {
+        "carry": "Jhin",
+        "support": "Xerath"
+      },
+      "tags": [
+        "sustain",
+        "poke",
+        "range"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-030",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Caitlyn",
+        "support": "Lux"
+      },
+      "enemy": {
+        "carry": "Kai'Sa",
+        "support": "Nautilus"
+      },
+      "tags": [
+        "range",
+        "poke",
+        "engage"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-031",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Caitlyn",
+        "support": "Nami"
+      },
+      "enemy": {
+        "carry": "Draven",
+        "support": "Pyke"
+      },
+      "tags": [
+        "range",
+        "sustain",
+        "burst",
+        "execute"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-032",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Caitlyn",
+        "support": "Braum"
+      },
+      "enemy": {
+        "carry": "Tristana",
+        "support": "Alistar"
+      },
+      "tags": [
+        "range",
+        "peel",
+        "all-in"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-033",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Kai'Sa",
+        "support": "Nautilus"
+      },
+      "enemy": {
+        "carry": "Jhin",
+        "support": "Karma"
+      },
+      "tags": [
+        "engage",
+        "burst",
+        "poke"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-034",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Kai'Sa",
+        "support": "Lulu"
+      },
+      "enemy": {
+        "carry": "Varus",
+        "support": "Xerath"
+      },
+      "tags": [
+        "scaling",
+        "peel",
+        "poke"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-035",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Kai'Sa",
+        "support": "Alistar"
+      },
+      "enemy": {
+        "carry": "Xayah",
+        "support": "Rakan"
+      },
+      "tags": [
+        "engage",
+        "all-in",
+        "self-peel"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-036",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jhin",
+        "support": "Leona"
+      },
+      "enemy": {
+        "carry": "Ezreal",
+        "support": "Karma"
+      },
+      "tags": [
+        "engage",
+        "poke",
+        "mobility"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-037",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jhin",
+        "support": "Nami"
+      },
+      "enemy": {
+        "carry": "Samira",
+        "support": "Nautilus"
+      },
+      "tags": [
+        "sustain",
+        "burst",
+        "engage"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-038",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jhin",
+        "support": "Braum"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Lux"
+      },
+      "tags": [
+        "peel",
+        "range",
+        "poke"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-039",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ezreal",
+        "support": "Yuumi"
+      },
+      "enemy": {
+        "carry": "Draven",
+        "support": "Leona"
+      },
+      "tags": [
+        "mobility",
+        "sustain",
+        "burst",
+        "engage"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-040",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ezreal",
+        "support": "Braum"
+      },
+      "enemy": {
+        "carry": "Varus",
+        "support": "Zyra"
+      },
+      "tags": [
+        "mobility",
+        "peel",
+        "poke",
+        "zone-control"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-041",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ezreal",
+        "support": "Nami"
+      },
+      "enemy": {
+        "carry": "Tristana",
+        "support": "Alistar"
+      },
+      "tags": [
+        "sustain",
+        "mobility",
+        "all-in"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-042",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Draven",
+        "support": "Thresh"
+      },
+      "enemy": {
+        "carry": "Jinx",
+        "support": "Lulu"
+      },
+      "tags": [
+        "burst",
+        "engage",
+        "scaling",
+        "peel"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-043",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Draven",
+        "support": "Nautilus"
+      },
+      "enemy": {
+        "carry": "Sivir",
+        "support": "Yuumi"
+      },
+      "tags": [
+        "burst",
+        "engage",
+        "waveclear",
+        "sustain"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-044",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Draven",
+        "support": "Karma"
+      },
+      "enemy": {
+        "carry": "Aphelios",
+        "support": "Braum"
+      },
+      "tags": [
+        "pressure",
+        "poke",
+        "scaling",
+        "peel"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-045",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Samira",
+        "support": "Leona"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Morgana"
+      },
+      "tags": [
+        "all-in",
+        "engage",
+        "range",
+        "anti-engage"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-046",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Samira",
+        "support": "Alistar"
+      },
+      "enemy": {
+        "carry": "Jhin",
+        "support": "Zyra"
+      },
+      "tags": [
+        "all-in",
+        "engage",
+        "poke",
+        "zone-control"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-047",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Samira",
+        "support": "Nautilus"
+      },
+      "enemy": {
+        "carry": "Xayah",
+        "support": "Rakan"
+      },
+      "tags": [
+        "all-in",
+        "engage",
+        "self-peel"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-048",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Xayah",
+        "support": "Thresh"
+      },
+      "enemy": {
+        "carry": "Kai'Sa",
+        "support": "Nautilus"
+      },
+      "tags": [
+        "self-peel",
+        "engage",
+        "burst"
+      ],
+      "sentinel": false
+    },
+    {
+      "id": "LLC-049",
+      "patch": "26.19",
+      "ally": {"carry": "Xayah", "support": "Nami"},
+      "enemy": {"carry": "Varus", "support": "Karma"},
+      "tags": ["self-peel", "sustain", "poke"],
+      "sentinel": false
+    },
+    {"id":"LLC-050","patch":"26.19","ally":{"carry":"Xayah","support":"Braum"},"enemy":{"carry":"Tristana","support":"Leona"},"tags":["self-peel","peel","all-in"],"sentinel":false},
+    {"id":"LLC-051","patch":"26.19","ally":{"carry":"Varus","support":"Xerath"},"enemy":{"carry":"Sivir","support":"Yuumi"},"tags":["poke","range","waveclear","sustain"],"sentinel":false},
+    {"id":"LLC-052","patch":"26.19","ally":{"carry":"Varus","support":"Leona"},"enemy":{"carry":"Ezreal","support":"Braum"},"tags":["poke","engage","mobility","peel"],"sentinel":false},
+    {"id":"LLC-053","patch":"26.19","ally":{"carry":"Varus","support":"Karma"},"enemy":{"carry":"Aphelios","support":"Lulu"},"tags":["poke","pressure","scaling","peel"],"sentinel":false},
+    {"id":"LLC-054","patch":"26.19","ally":{"carry":"Sivir","support":"Nautilus"},"enemy":{"carry":"Caitlyn","support":"Lux"},"tags":["waveclear","engage","range","poke"],"sentinel":false},
+    {"id":"LLC-055","patch":"26.19","ally":{"carry":"Sivir","support":"Karma"},"enemy":{"carry":"Jinx","support":"Thresh"},"tags":["waveclear","poke","scaling","engage"],"sentinel":false},
+    {"id":"LLC-056","patch":"26.19","ally":{"carry":"Sivir","support":"Lulu"},"enemy":{"carry":"Draven","support":"Pyke"},"tags":["waveclear","peel","burst","execute"],"sentinel":false},
+    {"id":"LLC-057","patch":"26.19","ally":{"carry":"Tristana","support":"Leona"},"enemy":{"carry":"Aphelios","support":"Lulu"},"tags":["all-in","engage","scaling","peel"],"sentinel":false},
+    {"id":"LLC-058","patch":"26.19","ally":{"carry":"Tristana","support":"Nami"},"enemy":{"carry":"Jhin","support":"Xerath"},"tags":["all-in","sustain","poke"],"sentinel":false},
+    {"id":"LLC-059","patch":"26.19","ally":{"carry":"Tristana","support":"Braum"},"enemy":{"carry":"Kai'Sa","support":"Rakan"},"tags":["all-in","peel","engage"],"sentinel":false},
+    {"id":"LLC-060","patch":"26.19","ally":{"carry":"Aphelios","support":"Thresh"},"enemy":{"carry":"Caitlyn","support":"Lux"},"tags":["scaling","engage","range","poke"],"sentinel":false},
+    {"id":"LLC-061","patch":"26.19","ally":{"carry":"Aphelios","support":"Nami"},"enemy":{"carry":"Ezreal","support":"Karma"},"tags":["scaling","sustain","poke","mobility"],"sentinel":false},
+    {"id":"LLC-062","patch":"26.19","ally":{"carry":"Aphelios","support":"Braum"},"enemy":{"carry":"Samira","support":"Leona"},"tags":["scaling","peel","all-in","engage"],"sentinel":false},
+    {"id":"LLC-063","patch":"26.19","ally":{"carry":"Miss Fortune","support":"Nautilus"},"enemy":{"carry":"Jinx","support":"Lulu"},"tags":["burst","engage","scaling","peel"],"sentinel":false},
+    {"id":"LLC-064","patch":"26.19","ally":{"carry":"Miss Fortune","support":"Karma"},"enemy":{"carry":"Caitlyn","support":"Nami"},"tags":["poke","pressure","range","sustain"],"sentinel":false},
+    {"id":"LLC-065","patch":"26.19","ally":{"carry":"Miss Fortune","support":"Braum"},"enemy":{"carry":"Ezreal","support":"Yuumi"},"tags":["burst","peel","mobility","sustain"],"sentinel":false},
+    {"id":"LLC-066","patch":"26.19","ally":{"carry":"Kog'Maw","support":"Thresh"},"enemy":{"carry":"Draven","support":"Leona"},"tags":["scaling","peel","burst","engage"],"sentinel":false},
+    {"id":"LLC-067","patch":"26.19","ally":{"carry":"Kog'Maw","support":"Nami"},"enemy":{"carry":"Varus","support":"Xerath"},"tags":["scaling","sustain","poke","range"],"sentinel":false},
+    {"id":"LLC-068","patch":"26.19","ally":{"carry":"Kog'Maw","support":"Braum"},"enemy":{"carry":"Kai'Sa","support":"Nautilus"},"tags":["scaling","peel","engage"],"sentinel":false},
+    {"id":"LLC-069","patch":"26.19","ally":{"carry":"Lucian","support":"Leona"},"enemy":{"carry":"Jinx","support":"Lulu"},"tags":["burst","engage","scaling","peel"],"sentinel":false},
+    {"id":"LLC-070","patch":"26.19","ally":{"carry":"Lucian","support":"Braum"},"enemy":{"carry":"Caitlyn","support":"Lux"},"tags":["burst","peel","range","poke"],"sentinel":false},
+    {"id":"LLC-071","patch":"26.19","ally":{"carry":"Lucian","support":"Karma"},"enemy":{"carry":"Ezreal","support":"Nami"},"tags":["pressure","poke","mobility","sustain"],"sentinel":false},
+    {"id":"LLC-072","patch":"26.19","ally":{"carry":"Ziggs","support":"Lux"},"enemy":{"carry":"Jinx","support":"Lulu"},"tags":["atypical","poke","waveclear","scaling"],"sentinel":false},
+    {"id":"LLC-073","patch":"26.19","ally":{"carry":"Ziggs","support":"Braum"},"enemy":{"carry":"Draven","support":"Pyke"},"tags":["atypical","waveclear","peel","burst"],"sentinel":false},
+    {"id":"LLC-074","patch":"26.19","ally":{"carry":"Ziggs","support":"Karma"},"enemy":{"carry":"Sivir","support":"Yuumi"},"tags":["atypical","poke","waveclear","sustain"],"sentinel":false},
+    {"id":"LLC-075","patch":"26.19","ally":{"carry":"Seraphine","support":"Nautilus"},"enemy":{"carry":"Kai'Sa","support":"Rakan"},"tags":["atypical","engage","sustain"],"sentinel":false},
+    {"id":"LLC-076","patch":"26.19","ally":{"carry":"Seraphine","support":"Braum"},"enemy":{"carry":"Caitlyn","support":"Lux"},"tags":["atypical","sustain","peel","range","poke"],"sentinel":false},
+    {"id":"LLC-077","patch":"26.19","ally":{"carry":"Seraphine","support":"Karma"},"enemy":{"carry":"Jhin","support":"Xerath"},"tags":["atypical","poke","sustain","range"],"sentinel":false},
+    {"id":"LLC-078","patch":"26.19","ally":{"carry":"Swain","support":"Leona"},"enemy":{"carry":"Ezreal","support":"Karma"},"tags":["atypical","engage","sustained-fight","mobility"],"sentinel":false},
+    {"id":"LLC-079","patch":"26.19","ally":{"carry":"Swain","support":"Nami"},"enemy":{"carry":"Samira","support":"Nautilus"},"tags":["atypical","sustain","sustained-fight","all-in"],"sentinel":false},
+    {"id":"LLC-080","patch":"26.19","ally":{"carry":"Swain","support":"Braum"},"enemy":{"carry":"Varus","support":"Zyra"},"tags":["atypical","peel","sustained-fight","poke"],"sentinel":false},
+    {"id":"LLC-081","patch":"26.19","ally":{"carry":"Cassiopeia","support":"Leona"},"enemy":{"carry":"Jinx","support":"Lulu"},"tags":["atypical","sustained-fight","engage","scaling"],"sentinel":false},
+    {"id":"LLC-082","patch":"26.19","ally":{"carry":"Cassiopeia","support":"Nami"},"enemy":{"carry":"Caitlyn","support":"Morgana"},"tags":["atypical","sustained-fight","sustain","range"],"sentinel":false},
+    {"id":"LLC-083","patch":"26.19","ally":{"carry":"Cassiopeia","support":"Braum"},"enemy":{"carry":"Tristana","support":"Alistar"},"tags":["atypical","sustained-fight","peel","all-in"],"sentinel":false},
+    {"id":"LLC-084","patch":"26.19","ally":{"carry":"Caitlyn","support":"Thresh"},"enemy":{"carry":"Xayah","support":"Rakan"},"tags":["range","engage","self-peel"],"sentinel":false},
+    {"id":"LLC-085","patch":"26.19","ally":{"carry":"Jinx","support":"Zyra"},"enemy":{"carry":"Sivir","support":"Karma"},"tags":["scaling","zone-control","waveclear","poke"],"sentinel":false},
+    {"id":"LLC-086","patch":"26.19","ally":{"carry":"Kai'Sa","support":"Morgana"},"enemy":{"carry":"Draven","support":"Nautilus"},"tags":["burst","anti-engage","engage"],"sentinel":false},
+    {"id":"LLC-087","patch":"26.19","ally":{"carry":"Jhin","support":"Pyke"},"enemy":{"carry":"Aphelios","support":"Lulu"},"tags":["burst","execute","scaling","peel"],"sentinel":false},
+    {"id":"LLC-088","patch":"26.19","ally":{"carry":"Ezreal","support":"Lux"},"enemy":{"carry":"Kog'Maw","support":"Braum"},"tags":["poke","mobility","scaling","peel"],"sentinel":false},
+    {"id":"LLC-089","patch":"26.19","ally":{"carry":"Draven","support":"Alistar"},"enemy":{"carry":"Miss Fortune","support":"Leona"},"tags":["burst","all-in","engage"],"sentinel":false},
+    {"id":"LLC-090","patch":"26.19","ally":{"carry":"Samira","support":"Thresh"},"enemy":{"carry":"Varus","support":"Karma"},"tags":["all-in","engage","poke"],"sentinel":false},
+    {"id":"LLC-091","patch":"26.19","ally":{"carry":"Xayah","support":"Morgana"},"enemy":{"carry":"Caitlyn","support":"Nami"},"tags":["self-peel","anti-engage","range","sustain"],"sentinel":false},
+    {"id":"LLC-092","patch":"26.19","ally":{"carry":"Varus","support":"Nami"},"enemy":{"carry":"Jhin","support":"Braum"},"tags":["poke","sustain","peel"],"sentinel":false},
+    {"id":"LLC-093","patch":"26.19","ally":{"carry":"Sivir","support":"Thresh"},"enemy":{"carry":"Kai'Sa","support":"Rakan"},"tags":["waveclear","engage","mobility"],"sentinel":false},
+    {"id":"LLC-094","patch":"26.19","ally":{"carry":"Tristana","support":"Karma"},"enemy":{"carry":"Ezreal","support":"Lux"},"tags":["all-in","poke","mobility","range"],"sentinel":false},
+    {"id":"LLC-095","patch":"26.19","ally":{"carry":"Aphelios","support":"Renata Glasc"},"enemy":{"carry":"Draven","support":"Nautilus"},"tags":["scaling","peel","burst","engage"],"sentinel":false},
+    {"id":"LLC-096","patch":"26.19","ally":{"carry":"Miss Fortune","support":"Morgana"},"enemy":{"carry":"Samira","support":"Leona"},"tags":["burst","anti-engage","all-in"],"sentinel":false},
+    {"id":"LLC-097","patch":"26.19","ally":{"carry":"Kog'Maw","support":"Renata Glasc"},"enemy":{"carry":"Caitlyn","support":"Xerath"},"tags":["scaling","peel","range","poke"],"sentinel":false},
+    {"id":"LLC-098","patch":"26.19","ally":{"carry":"Lucian","support":"Thresh"},"enemy":{"carry":"Xayah","support":"Rakan"},"tags":["burst","engage","self-peel"],"sentinel":false},
+    {"id":"LLC-099","patch":"26.19","ally":{"carry":"Ziggs","support":"Renata Glasc"},"enemy":{"carry":"Varus","support":"Xerath"},"tags":["atypical","poke","waveclear","range"],"sentinel":false},
+    {"id":"LLC-100","patch":"26.19","ally":{"carry":"Seraphine","support":"Alistar"},"enemy":{"carry":"Draven","support":"Pyke"},"tags":["atypical","sustain","engage","burst","execute"],"sentinel":false}
+  ]
+}

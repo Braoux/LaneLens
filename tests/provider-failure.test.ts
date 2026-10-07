@@ -15,9 +15,12 @@ function failure(status: number | undefined, message: string, name = 'ProviderEr
 test('provider failures are classified without depending on a concrete SDK', () => {
   const cases = [
     [failure(401, 'invalid API key'), 'authentication', 401],
+    [failure(402, 'Insufficient Balance (request_id: ds-balance-request)'), 'insufficient_balance', 402],
     [failure(429, 'quota exceeded'), 'rate_limit', 429],
     [failure(404, 'model was not found'), 'model_not_found', 404],
+    [failure(400, 'configured model is unavailable'), 'model_not_found', 400],
     [failure(400, 'invalid response format'), 'invalid_request', 400],
+    [failure(422, 'invalid parameters'), 'invalid_request', 422],
     [failure(undefined, 'request timed out', 'TimeoutError'), 'timeout', undefined],
     [failure(undefined, 'fetch failed: ECONNRESET'), 'network', undefined],
     [failure(503, 'service unavailable'), 'provider_server_error', 503],
@@ -30,6 +33,22 @@ test('provider failures are classified without depending on a concrete SDK', () 
       ...(status === undefined ? {} : { status }),
     });
   }
+});
+
+test('safe provider request IDs remain available for correlated diagnostics', () => {
+  const details = providerFailureDetails('deepseek', 'deepseek-flash', Object.assign(
+    failure(503, 'service unavailable'),
+    { requestID: 'ds-request-123' },
+  ));
+  assert.equal(details.providerRequestId, 'ds-request-123');
+  assert.equal(
+    providerFailureDetails(
+      'deepseek',
+      'deepseek-flash',
+      failure(402, 'Insufficient Balance (request_id: ds-message-request)'),
+    ).providerRequestId,
+    'ds-message-request',
+  );
 });
 
 test('HTTP status takes precedence over misleading text in provider errors', () => {
