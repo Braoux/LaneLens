@@ -2,6 +2,7 @@ import type { MatchupAnalysisProvider } from './analysis/MatchupAnalysisProvider
 import type { GeminiConfig } from './analysis/providers/gemini-config.js';
 import type { OpenAIConfig } from './analysis/providers/openai-config.js';
 import type { GroqConfig } from './analysis/providers/groq-config.js';
+import type { DeepSeekConfig } from './analysis/providers/deepseek-config.js';
 import type { AIEnvironment } from './analysis/providers/ai-provider-config.js';
 import { createAnalysisRuntime } from './analysis/createAnalysisRuntime.js';
 import type { AnalysisContextResponse } from '../shared/analysis-contract.js';
@@ -25,6 +26,7 @@ export interface RuntimeCompositionOptions {
   readonly openAIProviderFactory?: (config: OpenAIConfig) => MatchupAnalysisProvider;
   readonly geminiProviderFactory?: (config: GeminiConfig) => MatchupAnalysisProvider;
   readonly groqProviderFactory?: (config: GroqConfig) => MatchupAnalysisProvider;
+  readonly deepSeekProviderFactory?: (config: DeepSeekConfig) => MatchupAnalysisProvider;
   readonly patchContextResolver?: PatchContextResolver;
   readonly analysisContext?: AnalysisContextResponse;
   readonly logger?: Logger;
@@ -59,6 +61,7 @@ export function createRuntimeApp(options: RuntimeCompositionOptions = {}) {
     openAIProviderFactory: options.openAIProviderFactory,
     geminiProviderFactory: options.geminiProviderFactory,
     groqProviderFactory: options.groqProviderFactory,
+    deepSeekProviderFactory: options.deepSeekProviderFactory,
   });
   if (analysisRuntime === undefined) {
     const app = createApp({ patchContextResolver, analysisContext, logger, feedbackService });
