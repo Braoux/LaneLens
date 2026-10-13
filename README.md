@@ -89,6 +89,22 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - smoke test de production GitHub Actions ;
 - runner d'évaluation gameplay reproductible avec corpus de référence versionné dans `evaluation/corpus/`, reprise, gestion des rate limits et [launcher Windows interactif](docs/interactive-evaluation-runner.md).
 
+## LAN-061 — Fiabilité des analyses (13/10/2026)
+
+Le pipeline **fact-grounded v2** fait l'objet d'un chantier expérimental : [LAN-061](https://github.com/Braoux/LaneLens/issues/121).
+
+| Phase | État | Référence |
+|---|---|---|
+| A — Golden benchmark | Corpus figé : 10 matchups, 8 champions, patch 26.19 | [Golden corpus](evaluation/corpus/lan-061-golden-v1.json) |
+| B1 — Fact Pack | Constructeur déterministe et inspection disponibles | [Documentation](docs/matchup-fact-pack.md) |
+| B2 — Strategy Plan | Livré et fusionné | [PR #132](https://github.com/Braoux/LaneLens/pull/132) |
+| C — Validation, repair et rendering | Implémentation proposée, **PR ouverte non fusionnée** | [PR #133](https://github.com/Braoux/LaneLens/pull/133) |
+| D/E — Benchmark et décision | À venir | [LAN-061](https://github.com/Braoux/LaneLens/issues/121) |
+
+**Attention aux statistiques :** le taux de **74 % après repair** provient de la **revalidation hors ligne** de 50 observations historiques avec le validator corrigé (37/50). Ce n'est **pas** un taux de réussite mesuré sur le pipeline V2. La cible finale reste **≥ 75 % stable sur runs répétés**, sans affaiblissement du validator.
+
+Le parcours utilisateur actuellement déployé reste distinct de ce pipeline expérimental.
+
 ## En cours / avant ouverture plus large
 
 - conformité Riot et mentions produit tiers ;
@@ -96,7 +112,7 @@ Les travaux en cours portent principalement sur la conformité Riot, l'exploitat
 - protection renforcée contre l'abus des endpoints publics ;
 - amélioration progressive des garde-fous gameplay ;
 - résolution ciblée d'une Knowledge Base gameplay structurée, traçable et versionnée ([documentation](docs/knowledge-base.md)) ;
-- finalisation de la baseline gameplay pré-KB, actuellement contrainte par les quotas du provider.
+- préparation de la comparaison expérimentale de la V2, après validation de la phase C.
 
 > Les garde-fous gameplay réduisent certaines erreurs déterministes, mais ne constituent pas une preuve formelle de justesse de toute recommandation tactique.
 
