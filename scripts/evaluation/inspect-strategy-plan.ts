@@ -148,7 +148,9 @@ export async function inspectStrategyPlan(
     } catch (error) {
       if (error instanceof StrategyPlanGenerationError) {
         throw new Error(`Strategy Plan rejeté (${error.phase}) : ${error.issues
-          .map(({ code, path }) => `${code}@${path}`).join(', ') || 'réponse non JSON'}`);
+          .map(({ code, path }) => `${code}@${path}`).join(', ') || 'réponse non JSON'}`, {
+          cause: error,
+        });
       }
       throw error;
     }

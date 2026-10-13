@@ -97,19 +97,14 @@ npm run eval:fact-pack -- --corpus evaluation/corpus/lan-061-golden-v1.json --id
 La commande écrit un document JSON unique sur la sortie standard. Elle ne
 configure et n'appelle aucun provider.
 
-## Contrat préparatoire du Strategy Plan
+## Consommation par le Strategy Plan
 
-Le futur `MatchupStrategyPlan` n'est pas implémenté dans ce lot. Son contrat
-d'assertion devra au minimum conserver :
+Le `MatchupStrategyPlan` expérimental consomme désormais ce pack sans en créer
+une représentation concurrente. Chaque assertion conserve son texte, son état
+de grounding, les participants impliqués, ses `factIds` et les connaissances
+manquantes.
 
-```ts
-interface StrategyAssertionFactReference {
-  readonly assertion: string;
-  readonly factIds: readonly string[];
-}
-```
-
-Règles attendues pour le lot suivant :
+Règles appliquées :
 
 1. chaque `factId` doit être résolu dans le Fact Pack exact utilisé pour le
    plan ;
@@ -118,7 +113,8 @@ Règles attendues pour le lot suivant :
 4. un fact absent ne peut pas être reconstruit depuis une ancienne analyse ;
 5. une information `partial`, `none-known` ou absente reste explicitement
    inconnue ;
-6. le Strategy Plan ne doit pas modifier le Fact Pack reçu.
+6. le Strategy Plan ne doit pas modifier le Fact Pack reçu ;
+7. une référence valide ne prouve pas encore que le texte est soutenu par ce fait.
 
-La sélection stratégique, la génération, le repair et le renderer du Strategy
-Plan restent hors périmètre de ce contrat livré.
+Voir [Matchup Strategy Plan](matchup-strategy-plan.md). Le repair, la validation
+sémantique complète et le renderer restent hors périmètre B2.

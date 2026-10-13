@@ -473,6 +473,7 @@ LaneLens reste volontairement léger :
 
 - [Architecture technique](docs/architecture.md)
 - [Matchup Fact Pack déterministe](docs/matchup-fact-pack.md)
+- [Matchup Strategy Plan expérimental](docs/matchup-strategy-plan.md)
 - [Maintenance des contextes de patch](docs/patch-context.md)
 - [Runner d’évaluation gameplay](docs/evaluation-runner.md)
 - [Launcher interactif du runner](docs/interactive-evaluation-runner.md)

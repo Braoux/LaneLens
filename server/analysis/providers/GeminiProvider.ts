@@ -2,7 +2,6 @@ import { GoogleGenAI } from '@google/genai';
 import type { MatchupAnalysisProvider } from '../MatchupAnalysisProvider.js';
 import type {
   StructuredOutputProvider,
-  StructuredOutputProviderOptions,
   StructuredOutputRequest,
 } from '../StructuredOutputProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
@@ -154,7 +153,6 @@ export class GeminiProvider implements MatchupAnalysisProvider, StructuredOutput
 
   async generateStructured(
     request: StructuredOutputRequest,
-    _options?: StructuredOutputProviderOptions,
   ): Promise<unknown> {
     let response: GeminiResult;
     try {

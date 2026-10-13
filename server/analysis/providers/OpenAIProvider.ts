@@ -2,7 +2,6 @@ import OpenAI from 'openai';
 import type { MatchupAnalysisProvider } from '../MatchupAnalysisProvider.js';
 import type {
   StructuredOutputProvider,
-  StructuredOutputProviderOptions,
   StructuredOutputRequest,
 } from '../StructuredOutputProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
@@ -94,7 +93,6 @@ export class OpenAIProvider implements MatchupAnalysisProvider, StructuredOutput
 
   async generateStructured(
     request: StructuredOutputRequest,
-    _options?: StructuredOutputProviderOptions,
   ): Promise<unknown> {
     let response: OpenAIResponseResult;
     try {

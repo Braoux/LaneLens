@@ -119,9 +119,12 @@ Une CLI d'inspection réutilise le corpus d'évaluation :
 npm run eval:fact-pack -- --id L61-G01
 ```
 
-Le futur Strategy Plan pourra référencer les faits par `factIds`, mais sa
-construction, sa génération et son exposition HTTP ne sont pas implémentées.
-Voir [Matchup Fact Pack](matchup-fact-pack.md).
+Le `MatchupStrategyPlan` expérimental référence ces faits par `factIds`, construit
+un contexte déterministe et utilise la primitive `StructuredOutputProvider`
+commune aux adapters existants. Sa validation référentielle reste distincte de
+la future validation sémantique. Il n'est exposé par aucune route HTTP et ne
+modifie pas le parcours utilisateur. Voir [Matchup Fact Pack](matchup-fact-pack.md)
+et [Matchup Strategy Plan](matchup-strategy-plan.md).
 
 Le contrat sépare les faits champions des futurs faits globaux. Le tableau
 `globalFacts` reste vide dans le code livré ; il ne contient encore aucun
@@ -208,12 +211,18 @@ Interface :
 ```ts
 export interface MatchupAnalysisProvider {
   analyze(request: MatchupAnalysisProviderRequest): Promise<unknown>;
+  generateStructured?(request: StructuredOutputRequest): Promise<unknown>;
 }
 ```
 
 Le type de sortie est volontairement `unknown`.
 
 Le provider ne décide donc jamais seul qu’une réponse est valide. LaneLens conserve la responsabilité de la validation finale.
+
+La primitive structurée optionnelle permet aux mêmes adapters de produire un
+autre contrat JSON strict, actuellement le Strategy Plan expérimental. Elle ne
+constitue ni une deuxième infrastructure LLM ni une activation du nouveau
+pipeline en production.
 
 Providers actuellement livrés :
 
