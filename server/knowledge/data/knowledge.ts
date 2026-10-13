@@ -356,8 +356,8 @@ const ENRICHED_KNOWLEDGE: readonly KnowledgeEntry[] = [
     phases: ['lane'],
     scope: 'structural',
     confidence: 'medium',
-    status: 'candidate',
-    verification: 'pending',
+    status: 'verified',
+    verification: 'human',
     sources: [CURATED_SOURCE],
   },
   {
@@ -388,8 +388,8 @@ const ENRICHED_KNOWLEDGE: readonly KnowledgeEntry[] = [
     phases: ['lane'],
     scope: 'structural',
     confidence: 'high',
-    status: 'candidate',
-    verification: 'pending',
+    status: 'verified',
+    verification: 'human',
     sources: [CURATED_SOURCE],
   },
   {
@@ -441,8 +441,8 @@ const ENRICHED_KNOWLEDGE: readonly KnowledgeEntry[] = [
     phases: ['lane'],
     scope: 'structural',
     confidence: 'high',
-    status: 'candidate',
-    verification: 'pending',
+    status: 'verified',
+    verification: 'human',
     sources: [CURATED_SOURCE],
   },
   {
@@ -489,8 +489,8 @@ const ENRICHED_KNOWLEDGE: readonly KnowledgeEntry[] = [
     phases: ['lane'],
     scope: 'structural',
     confidence: 'high',
-    status: 'candidate',
-    verification: 'pending',
+    status: 'verified',
+    verification: 'human',
     sources: [CURATED_SOURCE],
   },
 
