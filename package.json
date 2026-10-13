@@ -19,6 +19,8 @@
     "lint:fix": "eslint . --fix",
     "eval:gameplay": "tsx scripts/evaluation/evaluate-gameplay.ts",
     "eval:golden-coverage": "tsx scripts/evaluation/mechanical-coverage.ts",
+    "eval:fact-pack": "tsx scripts/evaluation/inspect-fact-pack.ts",
+    "eval:strategy-plan": "tsx scripts/evaluation/inspect-strategy-plan.ts",
     "eval:repair": "tsx scripts/evaluation/repair-gameplay.ts",
     "eval:compare": "tsx scripts/evaluation/compare-gameplay.ts",
     "eval:revalidate": "tsx scripts/evaluation/revalidate-gameplay.ts",

@@ -1,5 +1,9 @@
 import OpenAI from 'openai';
 import type { MatchupAnalysisProvider } from '../MatchupAnalysisProvider.js';
+import type {
+  StructuredOutputProvider,
+  StructuredOutputRequest,
+} from '../StructuredOutputProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
 import { parseProviderJson } from '../UnparsedProviderOutput.js';
 import { loadOpenAIConfig } from './openai-config.js';
@@ -25,7 +29,7 @@ export interface OpenAIResponseRequest {
   readonly text: {
     readonly format: {
       readonly type: 'json_schema';
-      readonly name: 'matchup_analysis';
+      readonly name: string;
       readonly strict: true;
       readonly schema: JsonSchema;
     };
@@ -72,13 +76,24 @@ const defaultClientFactory: OpenAIClientFactory = (options) => {
   };
 };
 
-export class OpenAIProvider implements MatchupAnalysisProvider {
+export class OpenAIProvider implements MatchupAnalysisProvider, StructuredOutputProvider {
   constructor(
     private readonly client: OpenAIResponsesClient,
     private readonly model: string,
   ) {}
 
   async analyze(request: MatchupAnalysisProviderRequest): Promise<unknown> {
+    return this.generateStructured({
+      instructions: request.instructions,
+      input: request.input,
+      schemaName: 'matchup_analysis',
+      schema: MATCHUP_ANALYSIS_JSON_SCHEMA,
+    });
+  }
+
+  async generateStructured(
+    request: StructuredOutputRequest,
+  ): Promise<unknown> {
     let response: OpenAIResponseResult;
     try {
       response = await this.client.create({
@@ -89,9 +104,9 @@ export class OpenAIProvider implements MatchupAnalysisProvider {
         text: {
           format: {
             type: 'json_schema',
-            name: 'matchup_analysis',
+            name: request.schemaName,
             strict: true,
-            schema: MATCHUP_ANALYSIS_JSON_SCHEMA,
+            schema: request.schema,
           },
         },
         tools: [],

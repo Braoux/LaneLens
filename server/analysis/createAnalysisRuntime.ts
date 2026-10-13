@@ -25,6 +25,7 @@ import {
 } from './providers/ai-provider-config.js';
 import { GameplayOnlyKnowledgeResolver, KnowledgeResolver } from '../knowledge/KnowledgeResolver.js';
 import { StaticKnowledgeRepository } from '../knowledge/StaticKnowledgeRepository.js';
+import { StrategyPlanGenerationService } from '../strategy/StrategyPlanGenerationService.js';
 
 export interface AnalysisRuntimeOptions {
   readonly environment?: AIEnvironment;
@@ -39,6 +40,7 @@ export interface AnalysisRuntimeOptions {
 export interface AnalysisRuntime {
   readonly service: MatchupAnalysisService;
   readonly repairService: TargetedAnalysisRepairService;
+  readonly strategyPlanService?: StrategyPlanGenerationService;
   readonly provider: AIProviderName;
   readonly model: string;
   readonly knowledgeBaseVersion: string | null;
@@ -102,9 +104,13 @@ export function createAnalysisRuntime(
   const knowledgeResolver = repository === undefined
     ? new GameplayOnlyKnowledgeResolver()
     : new KnowledgeResolver(repository);
+  const generateStructured = provider.generateStructured?.bind(provider);
   return Object.freeze({
     service: new MatchupAnalysisService(provider, undefined, knowledgeResolver),
     repairService: new TargetedAnalysisRepairService(provider, undefined, knowledgeResolver),
+    ...(generateStructured === undefined ? {} : {
+      strategyPlanService: new StrategyPlanGenerationService({ generateStructured }),
+    }),
     provider: providerName,
     model,
     knowledgeBaseVersion: repository?.version ?? null,

@@ -1,4 +1,6 @@
-export type JsonSchema = Readonly<Record<string, unknown>>;
+import type { JsonSchema } from '../StructuredOutputProvider.js';
+
+export type { JsonSchema } from '../StructuredOutputProvider.js';
 
 const stringSchema = Object.freeze({ type: 'string' });
 

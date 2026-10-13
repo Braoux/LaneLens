@@ -105,6 +105,18 @@ snapshot Data Dragon `16.19.1`. Toute évolution de ces versions demande une
 nouvelle revue explicite de la golden truth; elle ne doit pas être masquée par
 une modification silencieuse du corpus gelé.
 
+## Matchup Fact Pack déterministe
+
+`MatchupFactPackBuilder` projette les sources existantes dans un contrat unique
+et inspectable pour les quatre participants d'un matchup. Il conserve les
+versions, IDs stables, provenances et manques sans dupliquer les datasets ni
+faire appel à un provider. Sa couverture réutilise le mechanical coverage gate
+et reste distincte de `KnowledgeCoverage`.
+
+Voir [Matchup Fact Pack](matchup-fact-pack.md) pour le schéma, la commande
+d'inspection et le contrat de références `factIds` destiné au futur Strategy
+Plan.
+
 ## Conformité et observabilité
 
 Le validateur continue d’utiliser le contexte gameplay Data Dragon et peut également rattacher une contradiction à un fait structuré via `knowledgeId` et `subject`. Les heuristiques ne créent pas de règle bloquante.

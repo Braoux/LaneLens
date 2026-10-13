@@ -106,6 +106,30 @@ Les modes proposés couvrent : nouveau run complet, reprise du dernier run incom
 
 Les artefacts d'évaluation et corpus privés ne font pas partie du runtime public. Voir [Runner d’évaluation gameplay](evaluation-runner.md) et [Launcher interactif](interactive-evaluation-runner.md).
 
+### Fact Pack mécanique livré
+
+Le backend contient également `MatchupFactPackBuilder`, un composant métier
+synchrone et déterministe qui projette Data Dragon, les mécaniques relues, la KB
+et le mechanical coverage gate dans un contrat versionné. Il ne dépend d'aucun
+provider et n'est pas encore branché à la route utilisateur.
+
+Une CLI d'inspection réutilise le corpus d'évaluation :
+
+```sh
+npm run eval:fact-pack -- --id L61-G01
+```
+
+Le `MatchupStrategyPlan` expérimental référence ces faits par `factIds`, construit
+un contexte déterministe et utilise la primitive `StructuredOutputProvider`
+commune aux adapters existants. Sa validation référentielle reste distincte de
+la future validation sémantique. Il n'est exposé par aucune route HTTP et ne
+modifie pas le parcours utilisateur. Voir [Matchup Fact Pack](matchup-fact-pack.md)
+et [Matchup Strategy Plan](matchup-strategy-plan.md).
+
+Le contrat sépare les faits champions des futurs faits globaux. Le tableau
+`globalFacts` reste vide dans le code livré ; il ne contient encore aucun
+objectif neutre, règle macro ou mécanique saisonnière.
+
 ---
 
 ## Contrats partagés
@@ -187,12 +211,18 @@ Interface :
 ```ts
 export interface MatchupAnalysisProvider {
   analyze(request: MatchupAnalysisProviderRequest): Promise<unknown>;
+  generateStructured?(request: StructuredOutputRequest): Promise<unknown>;
 }
 ```
 
 Le type de sortie est volontairement `unknown`.
 
 Le provider ne décide donc jamais seul qu’une réponse est valide. LaneLens conserve la responsabilité de la validation finale.
+
+La primitive structurée optionnelle permet aux mêmes adapters de produire un
+autre contrat JSON strict, actuellement le Strategy Plan expérimental. Elle ne
+constitue ni une deuxième infrastructure LLM ni une activation du nouveau
+pipeline en production.
 
 Providers actuellement livrés :
 

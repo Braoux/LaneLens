@@ -5,6 +5,11 @@ import type {
   MatchupAnalysisProviderOptions,
 } from '../MatchupAnalysisProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
+import type {
+  StructuredOutputProvider,
+  StructuredOutputProviderOptions,
+  StructuredOutputRequest,
+} from '../StructuredOutputProvider.js';
 import { parseProviderJson } from '../UnparsedProviderOutput.js';
 import {
   ProviderFailureError,
@@ -24,9 +29,14 @@ const JSON_OUTPUT_INSTRUCTION = [
   `Schéma JSON LaneLens attendu : ${JSON.stringify(MATCHUP_ANALYSIS_JSON_SCHEMA)}`,
 ].join(' ');
 
+function schemaInstruction(schema: Readonly<Record<string, unknown>>): string {
+  return `Expected LaneLens JSON schema: ${JSON.stringify(schema)}`;
+}
+
 export interface DeepSeekRequest {
   readonly model: string;
   readonly instructions: string;
+  readonly schema?: Readonly<Record<string, unknown>>;
   readonly input: string;
   readonly responseFormat: { readonly type: typeof DEEPSEEK_RESPONSE_FORMAT };
   readonly thinking: { readonly type: typeof DEEPSEEK_THINKING_MODE };
@@ -101,7 +111,12 @@ export function createDeepSeekSDKClient(
       const body = {
         model: request.model,
         messages: [
-          { role: 'system' as const, content: `${request.instructions}\n\n${JSON_OUTPUT_INSTRUCTION}` },
+          {
+            role: 'system' as const,
+            content: `${request.instructions}\n\n${request.schema === undefined
+              ? JSON_OUTPUT_INSTRUCTION
+              : schemaInstruction(request.schema)}`,
+          },
           { role: 'user' as const, content: request.input },
         ],
         response_format: request.responseFormat,
@@ -136,7 +151,7 @@ export function createDeepSeekSDKClient(
 
 const defaultClientFactory: DeepSeekClientFactory = createDeepSeekSDKClient;
 
-export class DeepSeekProvider implements MatchupAnalysisProvider {
+export class DeepSeekProvider implements MatchupAnalysisProvider, StructuredOutputProvider {
   constructor(
     private readonly client: DeepSeekClient,
     private readonly model: string,
@@ -148,6 +163,26 @@ export class DeepSeekProvider implements MatchupAnalysisProvider {
   async analyze(
     request: MatchupAnalysisProviderRequest,
     options?: MatchupAnalysisProviderOptions,
+  ): Promise<unknown> {
+    return this.executeStructured({
+      instructions: request.instructions,
+      input: request.input,
+      schemaName: 'matchup_analysis',
+      schema: MATCHUP_ANALYSIS_JSON_SCHEMA,
+    }, options, false);
+  }
+
+  async generateStructured(
+    request: StructuredOutputRequest,
+    options?: StructuredOutputProviderOptions,
+  ): Promise<unknown> {
+    return this.executeStructured(request, options, true);
+  }
+
+  private async executeStructured(
+    request: StructuredOutputRequest,
+    options: StructuredOutputProviderOptions | undefined,
+    includeSchema: boolean,
   ): Promise<unknown> {
     let response: DeepSeekResult;
     const startedAt = Date.now();
@@ -164,6 +199,7 @@ export class DeepSeekProvider implements MatchupAnalysisProvider {
       const generation = this.client.generate({
         model: this.model,
         instructions: request.instructions,
+        ...(includeSchema ? { schema: request.schema } : {}),
         input: JSON.stringify(request.input),
         responseFormat: { type: DEEPSEEK_RESPONSE_FORMAT },
         thinking: { type: DEEPSEEK_THINKING_MODE },

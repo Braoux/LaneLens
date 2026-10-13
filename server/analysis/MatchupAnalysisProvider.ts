@@ -1,6 +1,7 @@
 import type { MatchupAnalysisProviderRequest } from './types.js';
 import type { ProviderRetryMetadata } from './ProviderFailure.js';
 import type { KnowledgeCoverage } from '../knowledge/types.js';
+import type { StructuredOutputProvider } from './StructuredOutputProvider.js';
 
 export interface MatchupAnalysisProviderOptions {
   readonly onMetadata?: (metadata: ProviderRetryMetadata) => void;
@@ -12,4 +13,5 @@ export interface MatchupAnalysisProvider {
     request: MatchupAnalysisProviderRequest,
     options?: MatchupAnalysisProviderOptions,
   ): Promise<unknown>;
+  readonly generateStructured?: StructuredOutputProvider['generateStructured'];
 }
