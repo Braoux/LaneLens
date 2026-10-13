@@ -16,6 +16,7 @@ import type {
   EvaluationRun,
   EvaluationStatus,
 } from './types.js';
+import { findRejectedAnalysisFailure } from '../../server/analysis/RejectedAnalysisFailure.js';
 
 const DEFAULT_BACKOFF_MS = 2_000;
 const MAX_BACKOFF_MS = 30_000;
@@ -37,6 +38,7 @@ export interface EvaluationExecutionOptions {
 export type EvaluationProgressPhase =
   | 'preparing'
   | 'analyzing'
+  | 'repairing'
   | 'waiting_rate_limit'
   | 'waiting_delay'
   | 'case_completed'
@@ -49,6 +51,8 @@ export interface EvaluationProgress {
   readonly currentId?: string;
   readonly attempt?: number;
   readonly maxAttempts?: number;
+  readonly repair?: number;
+  readonly maxRepairs?: number;
   readonly waitMs?: number;
   readonly status?: EvaluationStatus;
 }
@@ -148,6 +152,7 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
     if (resultIndex < 0) {
       const matchupMechanicalCoverage = mechanicalCoverage.get(matchup.id);
       results.push({
+        runId: run.runId,
         id: observation.observationId,
         matchupId: matchup.id,
         repetition: observation.repetition,
@@ -241,6 +246,7 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
         const durationMs = Math.max(0, now().getTime() - attemptStarted.getTime());
         const providerFailure = findProviderFailure(error);
         const conformanceFailure = findAnalysisConformanceFailure(error);
+        const rejectedAnalysis = findRejectedAnalysisFailure(error);
         if (error instanceof MatchupAnalysisError && error.code === 'INVALID_ANALYSIS_RESPONSE') {
           const attempt = attemptFrom(attemptNumber, attemptStarted.toISOString(), durationMs, 'invalid_analysis', undefined);
           result = {
@@ -250,6 +256,16 @@ export async function executeEvaluation(options: EvaluationExecutionOptions): Pr
             durationMs: [...result.attempts, attempt].reduce((sum, item) => sum + item.durationMs, 0),
             error: { code: error.code },
             ...(conformanceFailure === undefined ? {} : { violations: conformanceFailure.violations }),
+            ...(rejectedAnalysis === undefined ? {} : {
+              rejectedResponse: rejectedAnalysis.response,
+              rejectionPhase: rejectedAnalysis.phase,
+              ...(rejectedAnalysis.candidate === undefined
+                ? {}
+                : { candidateAnalysis: rejectedAnalysis.candidate }),
+              ...(rejectedAnalysis.languageViolations === undefined
+                ? {}
+                : { languageViolations: rejectedAnalysis.languageViolations }),
+            }),
             attempts: [...result.attempts, attempt],
           };
         } else if (providerFailure?.category === 'rate_limit') {

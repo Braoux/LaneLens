@@ -218,7 +218,9 @@ Responsabilités actuelles :
 2. construire les instructions avec `buildMatchupAnalysisInstructions()` ;
 3. appeler le provider ;
 4. transformer un échec provider en `ANALYSIS_PROVIDER_UNAVAILABLE` tout en conservant sa cause ;
-5. valider la réponse avec `validateMatchupAnalysis()`.
+5. transmettre la sortie non fiable à `AnalysisCandidateProcessor` ;
+6. valider successivement la structure, la conformité gameplay déterministe et
+   la cohérence linguistique.
 
 Le service ne connaît ni Hono ni le transport HTTP.
 
@@ -249,6 +251,13 @@ INVALID_ANALYSIS_RESPONSE
 ```
 
 Important : la validation structurelle reste distincte de la validation gameplay. Le validateur de conformité détecte plusieurs impossibilités déterministes et incohérences textuelles, mais ne constitue pas une preuve formelle de justesse tactique.
+
+`AnalysisConformanceValidator` associe les mécaniques à la proposition qui les
+porte, distingue propriétaire, cible et bénéficiaire, respecte les négations et
+contrôle les disponibilités explicitement revendiquées aux premiers niveaux.
+Une association ambiguë ne reçoit ni `subject` ni `knowledgeId` inventé. La
+revalidation hors ligne peut alors la conserver comme `UNDETERMINED` pour revue
+humaine, sans la convertir en validation positive.
 
 ---
 

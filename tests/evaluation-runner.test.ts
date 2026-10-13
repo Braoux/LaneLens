@@ -11,6 +11,8 @@ import type {
 } from '../server/analysis/MatchupAnalysisProvider.js';
 import { MatchupAnalysisService } from '../server/analysis/MatchupAnalysisService.js';
 import { ProviderFailureError } from '../server/analysis/ProviderFailure.js';
+import { RejectedAnalysisFailure } from '../server/analysis/RejectedAnalysisFailure.js';
+import { UnparsedProviderOutput } from '../server/analysis/UnparsedProviderOutput.js';
 import type { MatchupAnalysis, MatchupAnalysisProviderRequest } from '../server/analysis/types.js';
 import { VersionedPatchContextResolver } from '../server/patch-context/VersionedPatchContextResolver.js';
 import {
@@ -604,16 +606,43 @@ test('runner executes sequentially, continues after failures, and writes a summa
 test('provider errors stay non-gameplay and structured conformance violations are preserved', async (t) => {
   const { files } = await temporaryRun(t);
   let calls = 0;
+  const rejectedCandidate = validAnalysis({
+    input: {
+      allyCarry: 'Jinx',
+      allySupport: 'Thresh',
+      enemyCarry: 'Caitlyn',
+      enemySupport: 'Lux',
+      patch: '26.19',
+      locale: 'fr-FR',
+      patchContext: {
+        patch: '26.19',
+        contextVersion: 'test',
+        facts: [{ subject: 'test', text: 'fact' }],
+      },
+    },
+    instructions: '',
+  });
+  const violation = {
+    code: 'ABILITY_EFFECT_MISMATCH' as const,
+    category: 'INVALID_ABILITY_EFFECT' as const,
+    severity: 'error' as const,
+    path: 'lanePlan',
+    subject: 'Jinx E',
+    knowledgeId: 'jinx-e-root',
+  };
   const service = {
     async analyze() {
       calls += 1;
       if (calls === 1) {
         throw new MatchupAnalysisError('INVALID_ANALYSIS_RESPONSE', {
-          cause: new AnalysisConformanceFailure([{
-            code: 'ABILITY_CHAMPION_MISMATCH',
-            severity: 'error',
-            path: 'earlyLevels.level2',
-          }]),
+          cause: new AnalysisConformanceFailure([violation], {
+            cause: new RejectedAnalysisFailure({
+              response: rejectedCandidate,
+              phase: 'conformance',
+              candidate: rejectedCandidate,
+              conformanceViolations: [violation],
+            }),
+          }),
         });
       }
       throw new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE', {
@@ -640,16 +669,46 @@ test('provider errors stay non-gameplay and structured conformance violations ar
     'provider_error',
   ]);
   assert.deepEqual(persisted.results[0]?.violations, [{
-    code: 'ABILITY_CHAMPION_MISMATCH',
+    code: 'ABILITY_EFFECT_MISMATCH',
+    category: 'INVALID_ABILITY_EFFECT',
     severity: 'error',
-    path: 'earlyLevels.level2',
+    path: 'lanePlan',
+    subject: 'Jinx E',
+    knowledgeId: 'jinx-e-root',
   }]);
+  assert.equal(persisted.results[0]?.runId, 'test-run');
+  assert.deepEqual(persisted.results[0]?.candidateAnalysis, rejectedCandidate);
+  assert.deepEqual(persisted.results[0]?.rejectedResponse, rejectedCandidate);
+  assert.equal(persisted.results[0]?.rejectionPhase, 'conformance');
   const text = await readFile(files.results, 'utf8');
   assert.doesNotMatch(text, /must-not-be-written|secret=/u);
   const summary = JSON.parse(await readFile(files.summary, 'utf8')) as Record<string, unknown>;
   assert.equal(summary.gameplayEvaluable, 1);
   assert.equal(summary.invalidAnalysis, 1);
   assert.equal(summary.providerErrors, 1);
+});
+
+test('a non-parsable provider response is persisted verbatim with an explicit parsing phase', async (t) => {
+  const { files } = await temporaryRun(t);
+  const rawText = '{"lanePlan":"truncated"';
+  const provider: MatchupAnalysisProvider = {
+    async analyze() { return new UnparsedProviderOutput(rawText); },
+  };
+  await executeEvaluation({
+    service: new MatchupAnalysisService(provider),
+    patchContextResolver: new VersionedPatchContextResolver(),
+    matchups: [matchups[0]!],
+    files,
+    run: run([matchups[0]!.id]),
+    sleep: async () => {},
+  });
+  const persisted = await loadEvaluationRun(files.directory);
+  assert.equal(persisted.results[0]?.status, 'invalid_analysis');
+  assert.equal(persisted.results[0]?.runId, 'test-run');
+  assert.equal(persisted.results[0]?.rejectionPhase, 'parsing');
+  assert.equal(persisted.results[0]?.rejectedResponse, rawText);
+  assert.equal(persisted.results[0]?.candidateAnalysis, undefined);
+  assert.equal(persisted.results[0]?.violations, undefined);
 });
 
 test('a provider timeout is persisted once with runner deadline context and never retried', async (t) => {
@@ -1030,12 +1089,23 @@ test('console progress rewrites one TTY line with percentage, current case, and 
     maxAttempts: 3,
     waitMs: 10_000,
   });
+  progress.update({
+    phase: 'repairing',
+    completed: 46,
+    total: 100,
+    currentId: 'LLC-047',
+    repair: 1,
+    maxRepairs: 2,
+    attempt: 2,
+    maxAttempts: 3,
+  });
   progress.finish();
 
   const rendered = chunks.join('');
   assert.match(rendered, /46% · 46\/100 · LLC-047/u);
   assert.match(rendered, /analyse · tentative 2\/3/u);
   assert.match(rendered, /attente rate limit/u);
+  assert.match(rendered, /repair · passe 1\/2 · tentative 2\/3/u);
   assert.ok(chunks.filter((chunk) => chunk.includes('\n')).length === 1);
   assert.ok(chunks.filter((chunk) => chunk.includes('LLC-047')).every(
     (chunk) => chunk.startsWith('\u001B[2K\r'),

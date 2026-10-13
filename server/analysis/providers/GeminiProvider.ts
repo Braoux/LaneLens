@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import type { MatchupAnalysisProvider } from '../MatchupAnalysisProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
+import { parseProviderJson } from '../UnparsedProviderOutput.js';
 import { loadGeminiConfig } from './gemini-config.js';
 import type { GeminiConfig } from './gemini-config.js';
 import {
@@ -161,11 +162,7 @@ export class GeminiProvider implements MatchupAnalysisProvider {
       return null;
     }
 
-    try {
-      return JSON.parse(response.outputText) as unknown;
-    } catch {
-      return null;
-    }
+    return parseProviderJson(response.outputText);
   }
 }
 

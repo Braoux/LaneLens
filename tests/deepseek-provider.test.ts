@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import OpenAI from 'openai';
 import { MatchupAnalysisError } from '../server/analysis/errors.js';
+import { UnparsedProviderOutput } from '../server/analysis/UnparsedProviderOutput.js';
 import { MatchupAnalysisService } from '../server/analysis/MatchupAnalysisService.js';
 import type { MatchupAnalysis, MatchupAnalysisInput } from '../server/analysis/types.js';
 import {
@@ -265,7 +266,13 @@ test('empty, malformed, and truncated DeepSeek responses become invalid analyses
       90_000,
       100_000,
     );
-    assert.equal(await provider.analyze(providerRequest), null);
+    const output = await provider.analyze(providerRequest);
+    if (result.outputText === '{' && result.finishReason === 'stop') {
+      assert.ok(output instanceof UnparsedProviderOutput);
+      assert.equal(output.rawText, '{');
+    } else {
+      assert.equal(output, null);
+    }
   }
 });
 

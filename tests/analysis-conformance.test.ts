@@ -10,12 +10,15 @@ import { MatchupAnalysisService } from '../server/analysis/MatchupAnalysisServic
 import type { MatchupAnalysis, MatchupAnalysisInput } from '../server/analysis/types.js';
 import { StaticGameplayContextResolver } from '../server/gameplay-context/StaticGameplayContextResolver.js';
 import type { ChampionGameplayContext, GameplayContext } from '../server/gameplay-context/types.js';
+import { KnowledgeResolver } from '../server/knowledge/KnowledgeResolver.js';
+import { StaticKnowledgeRepository } from '../server/knowledge/StaticKnowledgeRepository.js';
 import { createApp } from '../server/app.js';
 import type { Logger, LogFields } from '../server/logging/Logger.js';
 
 const resolver = new StaticGameplayContextResolver();
 const validator = new AnalysisConformanceValidator();
 const matchupContext = resolver.resolve(['Ziggs', 'Galio', 'Jinx', 'Swain']);
+const knowledgeResolver = new KnowledgeResolver(new StaticKnowledgeRepository());
 
 function validAnalysis(): MatchupAnalysis {
   return {
@@ -80,6 +83,18 @@ for (const [path, mutate] of [
   });
 }
 
+test('a level-one champion cannot be described as already knowing two basic abilities', () => {
+  const invalid = withField((analysis) => {
+    analysis.earlyLevels.level1 = 'Au niveau 1, Leona a déjà Q pour stun et E pour root puis dash.';
+  }, resolver.resolve(['Leona']));
+  assert.ok(codes(invalid).includes('ABILITY_UNAVAILABLE_AT_LEVEL'));
+
+  const alternative = withField((analysis) => {
+    analysis.earlyLevels.level1 = 'Au niveau 1, Jinx choisit Q en roquettes ou W pour ralentir.';
+  }, resolver.resolve(['Jinx']));
+  assert.equal(codes(alternative).includes('ABILITY_UNAVAILABLE_AT_LEVEL'), false);
+});
+
 test('atypical champion availability is represented explicitly', () => {
   const karma = resolver.resolve(['Karma']).champions[0]!;
   const mantra = karma.abilities.find(({ slot }) => slot === 'R');
@@ -109,6 +124,38 @@ test('ability ownership, slot, and explicit name associations are verified', () 
     analysis.threatResponseWindow.response = 'Galio répond à Swain Nevermove avec Shield of Durand.';
   });
   assert.equal(noFalseAssociation.valid, true);
+});
+
+test('ability beneficiaries and nearby champions are not mistaken for ability owners', () => {
+  const cases = [
+    {
+      champions: ['Caitlyn', 'Galio'],
+      text: 'W de Caitlyn posé au sol sur la cible taunted ou knock-up par Galio = Headshot renforcé.',
+    },
+    {
+      champions: ['Caitlyn', 'Morgana', 'Leona'],
+      text: 'Caitlyn maintient la pression et Morgana peut absorber l’engage de Leona avec E Black Shield.',
+    },
+    {
+      champions: ['Morgana', 'Ziggs'],
+      text: 'Le root de Morgana Q ouvre le poke de Ziggs, avec Black Shield qui protège leur cible.',
+    },
+    {
+      champions: ['Morgana', 'Swain', 'Ziggs'],
+      text: 'Ne forcez jamais tant que Swain garde son E ; punissez son échec et couvrez Ziggs avec Black Shield.',
+    },
+  ] as const;
+
+  for (const fixture of cases) {
+    const analysis = validAnalysis();
+    analysis.goldenRule = fixture.text;
+    const result = validator.validate(analysis, resolver.resolve(fixture.champions));
+    assert.equal(
+      result.violations.some(({ code }) => code === 'ABILITY_CHAMPION_MISMATCH'),
+      false,
+      fixture.text,
+    );
+  }
 });
 
 test('a damage shield cannot be presented as blocking crowd control', () => {
@@ -158,6 +205,14 @@ test('a self-centered ability cannot be described as a freely placed zone', () =
     analysis.threatResponseWindow.response = 'Galio place son W en retrait pour protéger Ziggs.';
   });
   assert.ok(codes(result).includes('ABILITY_TARGETING_MISMATCH'));
+});
+
+test('targeting claims are scoped to their proposition', () => {
+  const context = resolver.resolve(['Morgana', 'Swain', 'Ziggs']);
+  const result = withField((analysis) => {
+    analysis.postLevel6 = 'Morgana R reste centrée sur elle, tandis que Ziggs R se place dans une zone au sol.';
+  }, context);
+  assert.equal(codes(result).includes('ABILITY_TARGETING_MISMATCH'), false);
 });
 
 test('an unsupported mechanical interaction between two valid abilities is rejected', () => {
@@ -217,6 +272,76 @@ test('cooldown reset claims require an explicit trusted fact', () => {
   const analysis = validAnalysis();
   analysis.cheatSheet = ['Documented Reset resets its cooldown on takedown.'];
   assert.equal(validator.validate(analysis, { champions: [champion] }).valid, true);
+});
+
+test('recall and wave-management resets are not cooldown-reset claims', () => {
+  const resetGuidance = [
+    'Après une fenêtre favorable, poussez, prenez le reset, puis revenez à une vague sûre.',
+    'Crasher puis reset avec un avantage d’item.',
+    'Punir le reset adverse puis choisir un roam ou un reset.',
+    'Pousser et reset après le crash.',
+    'Créer un crash et reset.',
+    'Préparer un reset ou un roam.',
+    'Après le push, reset ou roam.',
+    'Ouvrir un reset ou prendre une plaque.',
+  ];
+  for (const text of resetGuidance) {
+    const result = withField((analysis) => {
+      analysis.wavePlan = `Ziggs Q contrôle la vague. ${text}`;
+    });
+    assert.equal(codes(result).includes('UNSUPPORTED_COOLDOWN_RESET'), false, text);
+  }
+});
+
+test('unambiguous mechanical diagnostics include canonical knowledge evidence', () => {
+  const resolved = knowledgeResolver.resolve({ champions: ['Lux', 'Morgana'], patch: '26.19' });
+  const analysis = validAnalysis();
+  analysis.goldenRule = 'Lux W ralentit la cible ; Morgana Q fournit un bouclier.';
+  const result = validator.validate(analysis, resolved);
+  const effectViolations = result.violations.filter(
+    ({ code, path }) => code === 'ABILITY_EFFECT_MISMATCH' && path === 'goldenRule',
+  );
+  assert.deepEqual(
+    new Set(effectViolations.map(({ subject }) => subject)),
+    new Set(['lux:W', 'morgana:Q']),
+  );
+  assert.ok(effectViolations.every(({ knowledgeId }) => knowledgeId?.startsWith('ability-')));
+});
+
+test('effects from separate propositions are not associated with the wrong ability', () => {
+  const resolved = knowledgeResolver.resolve({
+    champions: ['Jinx', 'Morgana', 'Swain', 'Ziggs'],
+    patch: '26.19',
+  });
+  const analysis = validAnalysis();
+  analysis.earlyLevels.level3 = 'Morgana Q immobilise la cible, tandis que Ziggs E ralentit la zone.';
+  analysis.postLevel6 = 'Swain R reste centré sur lui, tandis que Ziggs R vise une zone au sol.';
+  const result = validator.validate(analysis, resolved);
+  assert.equal(codes(result).includes('ABILITY_EFFECT_MISMATCH'), false);
+  assert.equal(codes(result).includes('KNOWLEDGE_CONTRADICTION'), false);
+  assert.equal(codes(result).includes('ABILITY_TARGETING_MISMATCH'), false);
+});
+
+test('mechanical explanations preserve antecedents and protection semantics', () => {
+  const resolved = knowledgeResolver.resolve({
+    champions: ['Caitlyn', 'Lux', 'Morgana', 'Ziggs'],
+    patch: '26.19',
+  });
+  for (const text of [
+    'La Q de Lux conditionne la lane : son root ouvre le poke de Lux E et Ziggs Q/E, et Ziggs E ralentit la botlane.',
+    'Morgana doit dépenser Black Shield avant l’engage, sinon le root est neutralisé.',
+    'Refuser tout root sur une cible protégée par Black Shield.',
+    'Jinx garde E sous elle, sans compter sur le shield de Lux W pour empêcher un root.',
+  ]) {
+    const analysis = validAnalysis();
+    analysis.goldenRule = text;
+    const result = validator.validate(analysis, resolved);
+    assert.equal(codes(result).includes('ABILITY_EFFECT_MISMATCH'), false, text);
+    assert.equal(codes(result).includes('KNOWLEDGE_CONTRADICTION'), false, text);
+    if (text.includes('sans compter')) {
+      assert.equal(codes(result).includes('UNSUPPORTED_CC_INTERACTION'), false, text);
+    }
+  }
 });
 
 test('exact mechanical values must exist in the resolved ability context', () => {

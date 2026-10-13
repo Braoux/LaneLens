@@ -139,7 +139,7 @@ export async function replaceFileSafely(
   await bestEffortUnlink(backupPath, unlinkFile, sleep);
 }
 
-async function writeJsonAtomically(path: string, value: unknown): Promise<void> {
+export async function writeJsonAtomically(path: string, value: unknown): Promise<void> {
   const temporaryPath = `${path}.${randomUUID()}.tmp`;
   try {
     const handle = await open(temporaryPath, 'wx');

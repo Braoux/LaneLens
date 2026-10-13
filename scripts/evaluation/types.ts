@@ -7,6 +7,7 @@ import type { AnalysisConformanceViolation } from '../../server/analysis/Analysi
 import type { ProviderRetryMetadata } from '../../server/analysis/ProviderFailure.js';
 import type { KnowledgeCoverage } from '../../server/knowledge/types.js';
 import type { MechanicalCoverageGateResult } from '../../server/knowledge/MechanicalCoverageGate.js';
+import type { AnalysisLanguageViolation } from '../../server/analysis/AnalysisLanguageValidator.js';
 
 export type EvaluationMode = 'full' | 'sentinels' | 'single';
 export type EvaluationStatus =
@@ -64,6 +65,7 @@ export interface EvaluationQualityReview {
 }
 
 export interface EvaluationResult {
+  readonly runId?: string;
   readonly id: string;
   readonly matchupId?: string;
   readonly repetition?: number;
@@ -74,8 +76,12 @@ export interface EvaluationResult {
   readonly completedAt?: string;
   readonly durationMs?: number;
   readonly analysis?: MatchupAnalysis;
+  readonly candidateAnalysis?: MatchupAnalysis;
+  readonly rejectedResponse?: unknown;
+  readonly rejectionPhase?: 'parsing' | 'shape' | 'conformance' | 'language';
   readonly error?: EvaluationError;
   readonly violations?: readonly AnalysisConformanceViolation[];
+  readonly languageViolations?: readonly AnalysisLanguageViolation[];
   readonly knowledgeCoverage?: KnowledgeCoverage;
   readonly mechanicalCoverage?: {
     readonly goldenTruthVersion: string;

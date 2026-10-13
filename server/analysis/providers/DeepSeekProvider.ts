@@ -5,6 +5,7 @@ import type {
   MatchupAnalysisProviderOptions,
 } from '../MatchupAnalysisProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
+import { parseProviderJson } from '../UnparsedProviderOutput.js';
 import {
   ProviderFailureError,
   providerFailureDetails,
@@ -205,11 +206,7 @@ export class DeepSeekProvider implements MatchupAnalysisProvider {
     if (typeof response.outputText !== 'string' || response.outputText.trim().length === 0) {
       return null;
     }
-    try {
-      return JSON.parse(response.outputText) as unknown;
-    } catch {
-      return null;
-    }
+    return parseProviderJson(response.outputText);
   }
 }
 

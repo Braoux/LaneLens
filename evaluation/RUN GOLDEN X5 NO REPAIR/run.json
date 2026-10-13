@@ -1,0 +1,363 @@
+{
+  "schemaVersion": 1,
+  "runId": "bc877915-3819-4821-b56b-c8b04033e8d4",
+  "corpusSchemaVersion": 1,
+  "corpusVersion": "1.0.0",
+  "corpusSha256": "e008e2732b410c746d43b922e38fcbf8d3a9836b721fa5052bb128b270e1cc2a",
+  "corpusFile": "lan-061-golden-v1.json",
+  "patch": "26.19",
+  "gitCommit": "4588e250d84852e3f0ec7c58f8b09316ce4e5f1c",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "generationParameters": {
+    "responseFormat": "json_object",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "deadlineMs": 120000,
+    "transportTimeoutMs": 130000
+  },
+  "startedAt": "2026-10-13T12:17:12.301Z",
+  "completedAt": "2026-10-13T12:43:14.497Z",
+  "mode": "full",
+  "selectedIds": [
+    "L61-G01",
+    "L61-G02",
+    "L61-G03",
+    "L61-G04",
+    "L61-G05",
+    "L61-G06",
+    "L61-G07",
+    "L61-G08",
+    "L61-G09",
+    "L61-G10"
+  ],
+  "repeat": 5,
+  "expectedObservations": 50,
+  "delayMs": 2000,
+  "maxAttempts": 3,
+  "knowledgeBaseVersion": "lan-032-kb-v1",
+  "goldenTruthVersion": "mechanical-golden-v1",
+  "mechanicalCoverage": {
+    "goldenTruthVersion": "mechanical-golden-v1",
+    "patch": "26.19",
+    "fullyCovered": true,
+    "coveredChampions": 8,
+    "totalChampions": 8,
+    "coveredMatchups": 10,
+    "totalMatchups": 10,
+    "champions": [
+      {
+        "champion": "Caitlyn",
+        "fullyCovered": true,
+        "issues": []
+      },
+      {
+        "champion": "Jinx",
+        "fullyCovered": true,
+        "issues": []
+      },
+      {
+        "champion": "Ziggs",
+        "fullyCovered": true,
+        "issues": []
+      },
+      {
+        "champion": "Galio",
+        "fullyCovered": true,
+        "issues": []
+      },
+      {
+        "champion": "Leona",
+        "fullyCovered": true,
+        "issues": []
+      },
+      {
+        "champion": "Lux",
+        "fullyCovered": true,
+        "issues": []
+      },
+      {
+        "champion": "Morgana",
+        "fullyCovered": true,
+        "issues": []
+      },
+      {
+        "champion": "Swain",
+        "fullyCovered": true,
+        "issues": []
+      }
+    ],
+    "matchups": [
+      {
+        "id": "L61-G01",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Jinx",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Galio",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Caitlyn",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Leona",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "L61-G02",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Caitlyn",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Galio",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Ziggs",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Lux",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "L61-G03",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Jinx",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Morgana",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Ziggs",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Galio",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "L61-G04",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Caitlyn",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Swain",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Jinx",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Galio",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "L61-G05",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Ziggs",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Leona",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Caitlyn",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Lux",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "L61-G06",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Jinx",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Leona",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Caitlyn",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Morgana",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "L61-G07",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Ziggs",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Swain",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Jinx",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Leona",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "L61-G08",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Caitlyn",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Lux",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Ziggs",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Morgana",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "L61-G09",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Jinx",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Lux",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Ziggs",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Swain",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      },
+      {
+        "id": "L61-G10",
+        "fullyCovered": true,
+        "champions": [
+          {
+            "champion": "Ziggs",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Morgana",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Jinx",
+            "fullyCovered": true,
+            "issues": []
+          },
+          {
+            "champion": "Swain",
+            "fullyCovered": true,
+            "issues": []
+          }
+        ],
+        "missing": []
+      }
+    ]
+  }
+}

@@ -109,6 +109,26 @@ une modification silencieuse du corpus gelé.
 
 Le validateur continue d’utiliser le contexte gameplay Data Dragon et peut également rattacher une contradiction à un fait structuré via `knowledgeId` et `subject`. Les heuristiques ne créent pas de règle bloquante.
 
+Les associations mécaniques sont analysées à la portée de la proposition : la
+simple présence de plusieurs champions, capacités et effets dans un même champ
+ne permet pas de transférer un effet d'une capacité à une autre. Le validator
+distingue également le propriétaire d'une capacité de sa cible ou de son
+bénéficiaire, et une négation d'une affirmation mécanique. Lorsqu'une capacité
+est identifiée sans ambiguïté, le diagnostic utilise son sujet canonique et le
+fait KB correspondant ; sinon, il n'invente pas de référence.
+
+Dans les sections de niveaux 1 à 3, une affirmation explicite selon laquelle un
+champion possède déjà plus de compétences de base que son niveau le permet est
+rejetée avec `ABILITY_UNAVAILABLE_AT_LEVEL`. Une alternative telle que « Q ou
+W » reste un choix possible et n'est pas interprétée comme la possession
+simultanée des deux compétences.
+
+Les formulations sémantiquement ambiguës ne deviennent pas vraies par absence
+de contradiction détectée. Par exemple, un verbe comme « bloquer » peut décrire
+un ralentissement ou du contrôle de zone, mais aussi suggérer une immobilisation.
+Lorsque le texte et les facts structurés ne permettent pas de départager ces
+sens, la revalidation classe le cas `UNDETERMINED` et demande une revue humaine.
+
 Les violations exposent une catégorie stable : `ABILITY_NOT_AVAILABLE`, `INVALID_ABILITY_EFFECT`, `IMPOSSIBLE_INTERACTION`, `INVALID_TIMING`, `KNOWLEDGE_CONTRADICTION` ou `OTHER`. Les logs corrèlent couverture et rejets avec le `requestId`, sans écrire le prompt.
 
 ## Évaluation avant/après

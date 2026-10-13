@@ -1,0 +1,71 @@
+{
+  "sourceObservations": 50,
+  "initiallyInvalid": 42,
+  "eligibleForRepair": 39,
+  "ineligibleForRepair": 3,
+  "completed": 39,
+  "recoveredAfterFirst": 15,
+  "recoveredAfterSecond": 5,
+  "llmCalls": 63,
+  "totalInputTokens": 320765,
+  "totalOutputTokens": 134479,
+  "totalTokens": 455244,
+  "additionalLatencyMs": 743253,
+  "averageRepairLatencyMs": 11797.666666666666,
+  "estimatedCost": null,
+  "technicalFailures": {
+    "rateLimited": 0,
+    "providerErrors": 0,
+    "executionErrors": 0
+  },
+  "violationsFixed": {
+    "ABILITY_EFFECT_MISMATCH": 39,
+    "KNOWLEDGE_CONTRADICTION": 41,
+    "UNSUPPORTED_COOLDOWN_RESET": 10,
+    "ABILITY_CHAMPION_MISMATCH": 4,
+    "ABILITY_NAME_MISMATCH": 4,
+    "ABILITY_TARGETING_MISMATCH": 2,
+    "ABILITY_SLOT_MISMATCH": 5
+  },
+  "violationsRemaining": {
+    "ABILITY_EFFECT_MISMATCH": 17,
+    "KNOWLEDGE_CONTRADICTION": 19,
+    "ABILITY_TARGETING_MISMATCH": 3
+  },
+  "regressionsIntroduced": {
+    "ABILITY_TARGETING_MISMATCH": 2
+  },
+  "violationCategoriesFixed": {
+    "INVALID_ABILITY_EFFECT": 52,
+    "KNOWLEDGE_CONTRADICTION": 41,
+    "IMPOSSIBLE_INTERACTION": 10
+  },
+  "violationCategoriesRemaining": {
+    "INVALID_ABILITY_EFFECT": 20,
+    "KNOWLEDGE_CONTRADICTION": 19
+  },
+  "violationCategoryRegressions": {},
+  "configurations": [
+    {
+      "repairs": 0,
+      "success": 8,
+      "invalidAnalysis": 42,
+      "technicalFailures": 0,
+      "successRate": 0.16
+    },
+    {
+      "repairs": 1,
+      "success": 23,
+      "invalidAnalysis": 27,
+      "technicalFailures": 0,
+      "successRate": 0.46
+    },
+    {
+      "repairs": 2,
+      "success": 28,
+      "invalidAnalysis": 22,
+      "technicalFailures": 0,
+      "successRate": 0.56
+    }
+  ]
+}

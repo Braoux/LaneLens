@@ -8,7 +8,9 @@ import {
   interactiveMain,
   knowledgeBaseVersionForChoice,
   launchNewEvaluation,
+  repairPassesForChoice,
   repeatForInput,
+  runDirectoryForInput,
   type MenuIO,
 } from '../scripts/evaluation/interactive-runner.js';
 import {
@@ -18,11 +20,15 @@ import {
   assertMatchupExists,
   assertNewOutputPath,
   buildEvaluationArguments,
+  buildRepairArguments,
+  createRepairOutputPath,
   createRunOutputPath,
   discoverCorpusPath,
   discoverEvaluationRuns,
+  discoverRepairRuns,
   formatEvaluationConfiguration,
   latestIncompleteRun,
+  latestIncompleteRepairRun,
   preflightEvaluation,
   preflightKnowledgeCoverage,
   preflightProvider,
@@ -68,6 +74,7 @@ async function writeRun(options: {
   completedAt?: string | null;
   updatedAt: Date;
   knowledgeBaseVersion?: string | null;
+  repairableInvalid?: boolean;
 }): Promise<void> {
   await mkdir(options.directory, { recursive: true });
   const selectedIds = ['LLC-001', 'LLC-002'];
@@ -79,6 +86,21 @@ async function writeRun(options: {
     startedAt: '2026-09-30T10:00:00.000Z',
     completedAt: '2026-09-30T10:00:01.000Z',
     attempts: [],
+    ...(index === 1 && options.repairableInvalid ? {
+      candidateAnalysis: {
+        matchup: { allyCarry: 'Jinx', allySupport: 'Thresh', enemyCarry: 'Caitlyn', enemySupport: 'Lux', patch: '26.19' },
+        lanePlan: 'Plan invalide.',
+        threatResponseWindow: { threat: 'Menace.', response: 'Réponse.', window: 'Fenêtre.', winCondition: 'Condition.' },
+        earlyLevels: { level1: 'Prudent.', level2: 'Ensemble.', level3: 'Contrôle.' },
+        wavePlan: 'Plan de vague.',
+        targetPriority: { primaryTarget: 'Caitlyn', explanation: 'Cible exposée.' },
+        postLevel6: 'Respecter les ultimes.',
+        roamPlan: 'Roam après la vague.',
+        cheatSheet: ['Attendre une fenêtre.'],
+        goldenRule: 'Ne pas forcer.',
+      },
+      violations: [{ code: 'ABILITY_EFFECT_MISMATCH', category: 'INVALID_ABILITY_EFFECT', severity: 'error', path: 'lanePlan' }],
+    } : {}),
   }));
   const run = {
     schemaVersion: 1,
@@ -105,6 +127,59 @@ async function writeRun(options: {
     ['summary.json', { total: 2, completed: options.completed }],
   ] as const;
   for (const [name, value] of files) {
+    const path = join(options.directory, name);
+    await writeFile(path, JSON.stringify(value), 'utf8');
+    await utimes(path, options.updatedAt, options.updatedAt);
+  }
+}
+
+async function writeRepairRun(options: {
+  directory: string;
+  sourceRunId: string;
+  complete: boolean;
+  updatedAt: Date;
+}): Promise<void> {
+  await mkdir(options.directory, { recursive: true });
+  const run = {
+    schemaVersion: 1,
+    runId: `repair-${options.sourceRunId}`,
+    sourceRunId: options.sourceRunId,
+    sourceRunSha256: 'source-run-hash',
+    sourceResultsSha256: 'source-results-hash',
+    sourceCorpusFile: 'corpus.json',
+    sourceCorpusVersion: '1.0.0',
+    sourceCorpusSha256: 'corpus-hash',
+    sourceGitCommit: 'source-commit',
+    repairGitCommit: 'repair-commit',
+    sourceObservations: 2,
+    sourceSuccess: 1,
+    sourceInvalid: 1,
+    selectedIds: ['LLC-002'],
+    provider: 'groq',
+    model: 'test-model',
+    knowledgeBaseVersion: null,
+    maxRepairs: 2,
+    maxAttempts: 3,
+    delayMs: 0,
+    startedAt: '2026-09-30T12:00:00.000Z',
+    completedAt: options.complete ? '2026-09-30T12:00:01.000Z' : null,
+  };
+  const results = options.complete ? [{
+    id: 'LLC-002', matchupId: 'LLC-002', repetition: 1,
+    input: { allyCarry: 'Jinx', allySupport: 'Thresh', enemyCarry: 'Caitlyn', enemySupport: 'Lux', patch: '26.19' },
+    sentinel: false, status: 'success', startedAt: run.startedAt, completedAt: run.completedAt,
+    originalAnalysis: {}, initialViolations: [], finalAnalysis: {}, attempts: [],
+  }] : [{
+    id: 'LLC-002', matchupId: 'LLC-002', repetition: 1,
+    input: { allyCarry: 'Jinx', allySupport: 'Thresh', enemyCarry: 'Caitlyn', enemySupport: 'Lux', patch: '26.19' },
+    sentinel: false, status: 'in_progress', startedAt: run.startedAt,
+    originalAnalysis: {}, initialViolations: [], attempts: [],
+  }];
+  for (const [name, value] of [
+    ['repair-run.json', run],
+    ['repair-results.json', { schemaVersion: 1, results }],
+    ['repair-summary.json', { completed: options.complete ? 1 : 0 }],
+  ] as const) {
     const path = join(options.directory, name);
     await writeFile(path, JSON.stringify(value), 'utf8');
     await utimes(path, options.updatedAt, options.updatedAt);
@@ -175,6 +250,31 @@ test('launcher builds exact existing runner arguments for every execution mode',
     '--corpus', corpus, '--resume', resume,
     '--knowledge-base-version', CURRENT_KNOWLEDGE_BASE_VERSION,
   ]);
+  assert.deepEqual(buildRepairArguments({
+    sourceDirectory: output, outputDirectory: resume, maxRepairs: 2,
+  }), ['--source', output, '--output', resume, '--max-repairs', '2']);
+  assert.deepEqual(buildRepairArguments({
+    sourceDirectory: output, resumeDirectory: resume,
+  }), ['--source', output, '--resume', resume]);
+});
+
+test('launcher discovers repair runs and identifies the latest incomplete repair', async (t) => {
+  const root = await tempDirectory(t);
+  const complete = join(root, 'repair-complete');
+  const incomplete = join(root, 'repair-incomplete');
+  await writeRepairRun({
+    directory: complete, sourceRunId: 'source-complete', complete: true,
+    updatedAt: new Date('2026-09-30T11:00:00Z'),
+  });
+  await writeRepairRun({
+    directory: incomplete, sourceRunId: 'source-incomplete', complete: false,
+    updatedAt: new Date('2026-09-30T12:00:00Z'),
+  });
+  const repairs = await discoverRepairRuns([root]);
+  assert.equal(repairs.length, 2);
+  assert.equal(repairs[0]?.directory, resolve(incomplete));
+  assert.equal(latestIncompleteRepairRun(repairs)?.sourceRunId, 'source-incomplete');
+  assert.equal(repairs.find(({ directory }) => directory === resolve(complete))?.isComplete, true);
 });
 
 test('knowledge mode is explicit and preflight summaries make baseline and KB impossible to confuse', () => {
@@ -187,6 +287,10 @@ test('knowledge mode is explicit and preflight summaries make baseline and KB im
   assert.throws(() => repeatForInput('0'), /entier positif/u);
   assert.throws(() => repeatForInput('-1'), /entier positif/u);
   assert.throws(() => repeatForInput('1.5'), /entier positif/u);
+  assert.equal(repairPassesForChoice('0'), 0);
+  assert.equal(repairPassesForChoice('1'), 1);
+  assert.equal(repairPassesForChoice('2'), 2);
+  assert.throws(() => repairPassesForChoice('oui'), /repair invalide/u);
 
   const base = {
     corpusFile: 'lan-032-corpus-v1.json',
@@ -248,7 +352,7 @@ test('KB coverage preflight is local and blocks a selection with 100% none cover
 test('mandatory configuration confirmation happens before the runner can consume tokens', async (t) => {
   const directory = await tempDirectory(t);
   const corpus = await writeCorpus(directory);
-  const answers = ['1', '5', 'n'];
+  const answers = ['1', '5', '0', 'n'];
   let output = '';
   let runnerCalls = 0;
   const io: MenuIO = {
@@ -271,6 +375,139 @@ test('mandatory configuration confirmation happens before the runner can consume
   assert.equal(runnerCalls, 0);
 });
 
+test('a new run can invoke a separately persisted targeted repair after completion', async (t) => {
+  const directory = await tempDirectory(t);
+  const corpus = await writeCorpus(directory);
+  const resultsRoot = join(directory, 'runs');
+  const answers = ['1', '1', '2', 'o'];
+  let output = '';
+  let repairArguments: readonly string[] | undefined;
+  const io: MenuIO = {
+    async question() { return answers.shift() ?? ''; },
+    write(message) { output += message; },
+    close() {},
+  };
+  await launchNewEvaluation({
+    io,
+    workingDirectory: process.cwd(),
+    config: { corpusPath: corpus, resultsRoot },
+    mode: 'full',
+    environment: { AI_PROVIDER: 'groq', GROQ_API_KEY: 'fake-test-key' },
+    async executeEvaluation(args = []) {
+      const outputIndex = args.indexOf('--output');
+      assert.notEqual(outputIndex, -1);
+      await writeRun({
+        directory: args[outputIndex + 1]!, completed: 2,
+        completedAt: '2026-09-30T12:00:00Z', updatedAt: new Date('2026-09-30T12:00:00Z'),
+        repairableInvalid: true,
+      });
+    },
+    async executeRepair(args = []) {
+      repairArguments = args;
+      const sourceIndex = args.indexOf('--source');
+      const outputIndex = args.indexOf('--output');
+      const sourceRun = JSON.parse(await readFile(join(args[sourceIndex + 1]!, 'run.json'), 'utf8')) as { runId: string };
+      await writeRepairRun({
+        directory: args[outputIndex + 1]!, sourceRunId: sourceRun.runId, complete: true,
+        updatedAt: new Date('2026-09-30T12:01:00Z'),
+      });
+    },
+  });
+  assert.deepEqual(repairArguments?.slice(-2), ['--max-repairs', '2']);
+  assert.match(output, /Repair ciblé {3}: 2 passe\(s\) après le run/u);
+  assert.match(output, /Démarrage du repair ciblé : 1 analyse/u);
+  assert.match(output, /Repair : repair-/u);
+});
+
+test('a new run keeps repair disabled when the operator selects zero passes', async (t) => {
+  const directory = await tempDirectory(t);
+  const corpus = await writeCorpus(directory);
+  const answers = ['1', '1', '0', 'o'];
+  let repairCalls = 0;
+  const io: MenuIO = {
+    async question() { return answers.shift() ?? ''; },
+    write() {},
+    close() {},
+  };
+  await launchNewEvaluation({
+    io,
+    workingDirectory: process.cwd(),
+    config: { corpusPath: corpus, resultsRoot: join(directory, 'runs') },
+    mode: 'full',
+    environment: { AI_PROVIDER: 'groq', GROQ_API_KEY: 'fake-test-key' },
+    async executeEvaluation(args = []) {
+      const outputIndex = args.indexOf('--output');
+      await writeRun({
+        directory: args[outputIndex + 1]!, completed: 2,
+        completedAt: '2026-09-30T12:00:00Z', updatedAt: new Date('2026-09-30T12:00:00Z'),
+        repairableInvalid: true,
+      });
+    },
+    async executeRepair() { repairCalls += 1; },
+  });
+  assert.equal(repairCalls, 0);
+});
+
+test('interactive menu exposes repair of an existing run and blocks incomplete historical artifacts locally', async (t) => {
+  const directory = await tempDirectory(t);
+  const corpus = await writeCorpus(directory);
+  const resultsRoot = join(directory, 'runs');
+  await writeRun({
+    directory: join(resultsRoot, 'historical'), completed: 2,
+    completedAt: '2026-09-30T12:00:00Z', updatedAt: new Date('2026-09-30T12:00:00Z'),
+  });
+  await saveLauncherConfig(directory, { corpusPath: corpus, resultsRoot });
+  const answers = ['7', '1', '1', '', '0'];
+  let output = '';
+  const io: MenuIO = {
+    async question() { return answers.shift() ?? '0'; },
+    write(message) { output += message; },
+    close() {},
+  };
+  await interactiveMain(io, directory);
+  assert.match(output, /7\. Réparer un run terminé/u);
+  assert.match(output, /candidateAnalysis, violations/u);
+  assert.match(output, /Aucun appel provider/u);
+});
+
+test('repair source accepts a manual run path when discovery finds no completed run', async (t) => {
+  const directory = await tempDirectory(t);
+  const corpus = await writeCorpus(directory);
+  const manualRun = join(directory, 'manual-source');
+  await writeRun({
+    directory: manualRun, completed: 2,
+    completedAt: '2026-09-30T12:00:00Z', updatedAt: new Date('2026-09-30T12:00:00Z'),
+    repairableInvalid: true,
+  });
+  await saveLauncherConfig(directory, {
+    corpusPath: corpus,
+    resultsRoot: join(directory, 'empty-discovery-root'),
+  });
+  const answers = ['7', `"${join(manualRun, 'results.json')}"`, '0', '', '0'];
+  let output = '';
+  const io: MenuIO = {
+    async question() { return answers.shift() ?? '0'; },
+    write(message) { output += message; },
+    close() {},
+  };
+
+  await interactiveMain(io, directory);
+
+  assert.match(output, /Aucun run découvert automatiquement/u);
+  assert.match(output, /Run : manual-source/u);
+  assert.match(output, /Repair ciblé après génération/u);
+});
+
+test('manual repair paths accept a run directory or one of its standard artifacts', () => {
+  const base = resolve('manual-path-base');
+  const run = resolve(base, 'my-run');
+  assert.equal(runDirectoryForInput('', base), undefined);
+  assert.equal(runDirectoryForInput('my-run', base), run);
+  assert.equal(runDirectoryForInput(`"${join(run, 'run.json')}"`, base), run);
+  assert.equal(runDirectoryForInput(join(run, 'results.json'), base), run);
+  assert.equal(runDirectoryForInput(join(run, 'summary.json'), base), run);
+});
+
 test('mechanical coverage failure blocks the launcher before runner execution', async (t) => {
   const directory = await tempDirectory(t);
   const corpus = join(directory, 'gated-corpus.json');
@@ -282,7 +519,7 @@ test('mechanical coverage failure blocks the launcher before runner execution', 
       ally: { carry: 'Ahri', support: 'Thresh' },
     }],
   }), 'utf8');
-  const answers = ['1', '5'];
+  const answers = ['1', '5', '0'];
   let runnerCalls = 0;
   const io: MenuIO = {
     async question() { return answers.shift() ?? ''; },
@@ -378,6 +615,13 @@ test('preflight rejects unsupported Node, missing provider config, missing corpu
     id: 'kb-fixed',
   });
   assert.equal(kbGenerated, resolve(directory, `kb-${CURRENT_KNOWLEDGE_BASE_VERSION}-2026-09-30T12-00-00-000Z-kb-fixed`));
+  const repairGenerated = await createRepairOutputPath({
+    resultsRoot: directory,
+    maxRepairs: 2,
+    now: new Date('2026-09-30T12:00:00Z'),
+    id: 'repair-fixed',
+  });
+  assert.equal(repairGenerated, resolve(directory, 'repair-2-pass-2026-09-30T12-00-00-000Z-repair-fixed'));
   assert.doesNotMatch(JSON.stringify({ error: 'GROQ_API_KEY n’est pas configurée.' }), /must-not-appear/u);
 });
 
