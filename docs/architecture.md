@@ -1,7 +1,7 @@
 # Architecture — LaneLens
 
 Voir aussi [Knowledge Base gameplay](knowledge-base.md) pour le resolver LAN-032, la politique de validation, le fallback et l’évaluation avant/après.
-État documenté : architecture livrée au 30 septembre 2026, après mise en production alpha, CI/CD, instrumentation alpha, runner d’évaluation gameplay et launcher interactif LAN-039.
+État documenté : parcours alpha existant et évolutions expérimentales LAN-061 au 13 octobre 2026. La PR de phase C reste ouverte et ne fait pas partie de `main`.
 
 Ce document décrit le code actuellement présent dans le dépôt. [ADR-001](decisions/ADR-001-remplacer-openclaw-runtime.md) formalise la décision de rendre le moteur d’analyse indépendant d’OpenClaw.
 
@@ -129,6 +129,26 @@ et [Matchup Strategy Plan](matchup-strategy-plan.md).
 Le contrat sépare les faits champions des futurs faits globaux. Le tableau
 `globalFacts` reste vide dans le code livré ; il ne contient encore aucun
 objectif neutre, règle macro ou mécanique saisonnière.
+
+---
+
+## LAN-061 — État des composants expérimentaux (13/10/2026)
+
+Le **pipeline de production** reste le parcours `MatchupAnalysisService` actuel. Il ne faut pas confondre celui-ci avec l'architecture expérimentale suivante :
+
+```text
+Matchup → MatchupFactPack → MatchupStrategyPlan
+        → pré-validation → repair ciblé (maximum 2 passes)
+        → renderer contraint → validator final → MatchupAnalysis
+```
+
+- **Phase A :** golden corpus gelé de 10 matchups sur 8 champions ; révalidation hors ligne d'artefacts historiques : **20/50 sans repair, 37/50 après repair** avec le validator corrigé. Aucun gain end-to-end V2 n'est établi par ces données.
+- **Phase B1 :** Fact Pack déterministe, `factIds` et provenance.
+- **Phase B2 :** [PR #132](https://github.com/Braoux/LaneLens/pull/132) **fusionnée** ; plan structuré et références aux facts. Une référence existante ne constitue pas, à elle seule, une preuve sémantique.
+- **Phase C :** [PR #133](https://github.com/Braoux/LaneLens/pull/133) **ouverte** : validateur pré-render, repair ciblé, renderer déterministe et inspection offline proposés. Ces composants **ne sont pas encore fusionnés dans `main`**.
+- **Phases D/E :** comparaison contrôlée du pipeline V2 et décision de généralisation encore à réaliser. Objectif **≥ 75 % de succès stable**, non démontré à ce stade.
+
+Voir le [ticket LAN-061](https://github.com/Braoux/LaneLens/issues/121) pour l'historique des cinq phases.
 
 ---
 
