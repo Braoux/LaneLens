@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "planVersion": "matchup-strategy-plan-v1",
+  "matchupId": "L61-G06",
+  "patch": "26.19",
+  "laneApproach": { "text": "Contrôler la vague avant l'échange.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
+  "threatResponseWindow": {
+    "threat": { "text": "Black Shield peut protéger Caitlyn des contrôles de Leona.", "grounding": "fact-grounded", "participantIds": ["enemy:support", "enemy:carry", "ally:support"], "factIds": ["ability:morgana:e", "morgana-e-vs-leona-engage"], "missingKnowledge": [] },
+    "response": { "text": "Attendre que le bouclier soit indisponible.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
+    "tradeWindow": { "text": "Prendre un échange court après la fenêtre adverse.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
+    "winCondition": { "text": "Préserver la priorité de vague.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] }
+  },
+  "earlyLevels": {
+    "level1": { "text": "Jouer derrière la vague.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
+    "level2": { "text": "Respecter le pic de niveau 2.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
+    "level3": { "text": "Échanger avec les kits de base disponibles.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] }
+  },
+  "wavePlan": { "text": "Maintenir une vague contrôlée.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
+  "targetPriority": { "text": "Frapper la cible exposée.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
+  "postLevel6": { "text": "Éviter les combats prolongés.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
+  "roamPlan": { "text": "Roam uniquement après un crash.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] }
+}
+

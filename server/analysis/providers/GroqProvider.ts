@@ -5,6 +5,11 @@ import type {
   MatchupAnalysisProviderOptions,
 } from '../MatchupAnalysisProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
+import type {
+  StructuredOutputProvider,
+  StructuredOutputProviderOptions,
+  StructuredOutputRequest,
+} from '../StructuredOutputProvider.js';
 import { parseProviderJson } from '../UnparsedProviderOutput.js';
 import {
   ProviderFailureError,
@@ -24,7 +29,7 @@ export interface GroqRequest {
   readonly responseFormat: {
     readonly type: 'json_schema';
     readonly jsonSchema: {
-      readonly name: 'matchup_analysis';
+      readonly name: string;
       readonly strict: true;
       readonly schema: JsonSchema;
     };
@@ -217,7 +222,7 @@ export function createGroqSDKClient(
 
 const defaultClientFactory: GroqClientFactory = createGroqSDKClient;
 
-export class GroqProvider implements MatchupAnalysisProvider {
+export class GroqProvider implements MatchupAnalysisProvider, StructuredOutputProvider {
   constructor(
     private readonly client: GroqClient,
     private readonly model: string,
@@ -227,6 +232,18 @@ export class GroqProvider implements MatchupAnalysisProvider {
   async analyze(
     request: MatchupAnalysisProviderRequest,
     options?: MatchupAnalysisProviderOptions,
+  ): Promise<unknown> {
+    return this.generateStructured({
+      instructions: request.instructions,
+      input: request.input,
+      schemaName: 'matchup_analysis',
+      schema: MATCHUP_ANALYSIS_JSON_SCHEMA,
+    }, options);
+  }
+
+  async generateStructured(
+    request: StructuredOutputRequest,
+    options?: StructuredOutputProviderOptions,
   ): Promise<unknown> {
     let response: GroqResult;
     try {
@@ -238,9 +255,9 @@ export class GroqProvider implements MatchupAnalysisProvider {
         responseFormat: {
           type: 'json_schema',
           jsonSchema: {
-            name: 'matchup_analysis',
+            name: request.schemaName,
             strict: true,
-            schema: MATCHUP_ANALYSIS_JSON_SCHEMA,
+            schema: request.schema,
           },
         },
         tools: [],

@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import type {
+  StructuredOutputProvider,
+  StructuredOutputRequest,
+} from '../server/analysis/StructuredOutputProvider.js';
+import { UnparsedProviderOutput } from '../server/analysis/UnparsedProviderOutput.js';
+import { DeepSeekProvider } from '../server/analysis/providers/DeepSeekProvider.js';
+import { GeminiProvider } from '../server/analysis/providers/GeminiProvider.js';
+import { GroqProvider } from '../server/analysis/providers/GroqProvider.js';
+import { OpenAIProvider } from '../server/analysis/providers/OpenAIProvider.js';
 import { MatchupFactPackBuilder } from '../server/knowledge/MatchupFactPackBuilder.js';
 import type { MatchupFactPack } from '../server/knowledge/MatchupFactPack.js';
 import {
@@ -9,10 +18,27 @@ import {
   type StrategyAssertion,
 } from '../server/strategy/MatchupStrategyPlan.js';
 import { StrategyPlanValidator } from '../server/strategy/StrategyPlanValidator.js';
+import {
+  buildStrategyPlanContext,
+  STRATEGY_PLAN_CONTEXT_VERSION,
+} from '../server/strategy/StrategyPlanContext.js';
+import {
+  StrategyPlanGenerationError,
+  StrategyPlanGenerationService,
+} from '../server/strategy/StrategyPlanGenerationService.js';
+import { MATCHUP_STRATEGY_PLAN_JSON_SCHEMA } from '../server/strategy/strategy-plan-schema.js';
 import { loadEvaluationCorpus } from '../scripts/evaluation/corpus.js';
+import {
+  inspectStrategyPlan,
+  parseInspectStrategyPlanArguments,
+} from '../scripts/evaluation/inspect-strategy-plan.js';
 
 const corpusPath = fileURLToPath(new URL(
   '../evaluation/corpus/lan-061-golden-v1.json',
+  import.meta.url,
+));
+const fixturePath = fileURLToPath(new URL(
+  './fixtures/strategy-plan-l61-g06.json',
   import.meta.url,
 ));
 
@@ -181,4 +207,161 @@ test('strategy plan rejects references whose canonical provenance is missing', a
   assert.ok(validation.issues.some(({ code, factId }) => (
     code === 'MISSING_PROVENANCE' && factId === 'ability:morgana:e'
   )));
+});
+
+test('strategy generation context is deterministic, complete and provider-independent', async () => {
+  const pack = await factPack();
+  const first = buildStrategyPlanContext(pack);
+  const second = buildStrategyPlanContext(pack);
+  assert.deepEqual(first, second);
+  assert.equal(first.contextVersion, STRATEGY_PLAN_CONTEXT_VERSION);
+  assert.equal(first.participants.length, 4);
+  assert.equal(first.championFacts.abilities.length, 20);
+  assert.equal(first.championFacts.knowledge.length, pack.championFacts.knowledge.length);
+  assert.deepEqual(first.globalFacts, []);
+  assert.deepEqual(
+    first.championFacts.abilities.map(({ factId }) => factId),
+    pack.championFacts.abilities.map(({ factId }) => factId),
+  );
+  assert.equal(JSON.stringify(first).includes('DeepSeek'), false);
+});
+
+test('strategy generation context preserves partial coverage and missing facts', async () => {
+  const pack = await factPack();
+  const modified: MatchupFactPack = {
+    ...pack,
+    championFacts: {
+      ...pack.championFacts,
+      abilities: pack.championFacts.abilities.map((fact) => fact.factId === 'ability:jinx:e'
+        ? { ...fact, coverage: { status: 'partial', missing: ['cast model missing'] } }
+        : fact),
+    },
+    coverage: { ...pack.coverage, status: 'partial', missing: ['Jinx E cast model missing'] },
+  };
+  const context = buildStrategyPlanContext(modified);
+  assert.equal(context.coverage.status, 'partial');
+  assert.deepEqual(context.coverage.missing, ['Jinx E cast model missing']);
+  assert.deepEqual(
+    context.championFacts.abilities.find(({ factId }) => factId === 'ability:jinx:e')?.missing,
+    ['cast model missing'],
+  );
+});
+
+test('strategy generator reuses structured output and validates without mutating the Fact Pack', async () => {
+  const pack = await factPack();
+  const serializedBefore = JSON.stringify(pack);
+  let request: StructuredOutputRequest | undefined;
+  const provider: StructuredOutputProvider = {
+    async generateStructured(candidate) {
+      request = candidate;
+      return plan();
+    },
+  };
+  const result = await new StrategyPlanGenerationService(provider).generate(pack);
+  assert.equal(result.plan.matchupId, pack.matchupId);
+  assert.equal(result.validation.valid, true);
+  assert.equal(request?.schemaName, 'matchup_strategy_plan');
+  assert.equal(request?.schema, MATCHUP_STRATEGY_PLAN_JSON_SCHEMA);
+  assert.equal(JSON.stringify(pack), serializedBefore);
+});
+
+test('strategy generator reports parsing and validation failures without fallback', async () => {
+  const pack = await factPack();
+  const parsingProvider: StructuredOutputProvider = {
+    async generateStructured() { return new UnparsedProviderOutput('not-json'); },
+  };
+  await assert.rejects(
+    () => new StrategyPlanGenerationService(parsingProvider).generate(pack),
+    (error: unknown) => error instanceof StrategyPlanGenerationError && error.phase === 'parsing',
+  );
+
+  const invalidProvider: StructuredOutputProvider = {
+    async generateStructured() { return { ...plan(), patch: '99.99' }; },
+  };
+  await assert.rejects(
+    () => new StrategyPlanGenerationService(invalidProvider).generate(pack),
+    (error: unknown) => error instanceof StrategyPlanGenerationError
+      && error.phase === 'validation'
+      && error.issues.some(({ code }) => code === 'PATCH_MISMATCH'),
+  );
+});
+
+test('all concrete providers accept the shared structured-output contract', async () => {
+  const requests: unknown[] = [];
+  const outputText = JSON.stringify(plan());
+  const providers: StructuredOutputProvider[] = [
+    new OpenAIProvider({
+      async create(request) { requests.push(request); return { outputText }; },
+    }, 'test-model'),
+    new GeminiProvider({
+      async generate(request) { requests.push(request); return { outputText }; },
+    }, 'test-model', 1_000),
+    new GroqProvider({
+      async generate(request) { requests.push(request); return { outputText }; },
+    }, 'test-model', 1_000),
+    new DeepSeekProvider({
+      async generate(request) {
+        requests.push(request);
+        return { outputText, finishReason: 'stop' };
+      },
+    }, 'test-model', 1_000, 2_000, 'evaluation'),
+  ];
+  const request: StructuredOutputRequest = {
+    instructions: 'Generate a test Strategy Plan.',
+    input: { matchupId: 'L61-G06' },
+    schemaName: 'matchup_strategy_plan',
+    schema: MATCHUP_STRATEGY_PLAN_JSON_SCHEMA,
+  };
+  for (const provider of providers) {
+    assert.deepEqual(await provider.generateStructured(request), plan());
+  }
+  assert.equal(requests.length, 4);
+  assert.match(JSON.stringify(requests), /matchup_strategy_plan/u);
+  assert.equal(requests.every((entry) => JSON.stringify(entry).includes('matchup-strategy-plan-v1')), true);
+});
+
+test('strategy plan inspection requires an explicit fixture or provider mode', () => {
+  assert.deepEqual(parseInspectStrategyPlanArguments([
+    '--id', 'L61-G06', '--fixture', fixturePath,
+  ]), {
+    id: 'L61-G06',
+    fixture: fixturePath,
+    generate: false,
+  });
+  assert.throws(
+    () => parseInspectStrategyPlanArguments(['--id', 'L61-G06']),
+    /exactement un mode/u,
+  );
+  assert.throws(
+    () => parseInspectStrategyPlanArguments([
+      '--id', 'L61-G06', '--fixture', fixturePath, '--generate',
+    ]),
+    /exactement un mode/u,
+  );
+});
+
+test('fixture inspection emits resolved facts and never requires a provider', async () => {
+  let output = '';
+  await inspectStrategyPlan([
+    '--corpus', corpusPath,
+    '--id', 'L61-G06',
+    '--fixture', fixturePath,
+  ], (value) => { output += value; });
+  const artifact = JSON.parse(output) as {
+    mode: string;
+    validation: { valid: boolean };
+    assertions: readonly {
+      path: string;
+      resolvedFacts: readonly { factId: string }[];
+      invalidFactIds: readonly string[];
+    }[];
+  };
+  assert.equal(artifact.mode, 'fixture');
+  assert.equal(artifact.validation.valid, true);
+  const threat = artifact.assertions.find(({ path }) => path === 'threatResponseWindow.threat');
+  assert.deepEqual(threat?.resolvedFacts.map(({ factId }) => factId), [
+    'ability:morgana:e',
+    'morgana-e-vs-leona-engage',
+  ]);
+  assert.deepEqual(threat?.invalidFactIds, []);
 });

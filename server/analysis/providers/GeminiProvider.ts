@@ -1,5 +1,10 @@
 import { GoogleGenAI } from '@google/genai';
 import type { MatchupAnalysisProvider } from '../MatchupAnalysisProvider.js';
+import type {
+  StructuredOutputProvider,
+  StructuredOutputProviderOptions,
+  StructuredOutputRequest,
+} from '../StructuredOutputProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
 import { parseProviderJson } from '../UnparsedProviderOutput.js';
 import { loadGeminiConfig } from './gemini-config.js';
@@ -131,7 +136,7 @@ export function createGoogleGenAIClient(
 
 const defaultClientFactory: GeminiClientFactory = createGoogleGenAIClient;
 
-export class GeminiProvider implements MatchupAnalysisProvider {
+export class GeminiProvider implements MatchupAnalysisProvider, StructuredOutputProvider {
   constructor(
     private readonly client: GeminiClient,
     private readonly model: string,
@@ -139,6 +144,18 @@ export class GeminiProvider implements MatchupAnalysisProvider {
   ) {}
 
   async analyze(request: MatchupAnalysisProviderRequest): Promise<unknown> {
+    return this.generateStructured({
+      instructions: request.instructions,
+      input: request.input,
+      schemaName: 'matchup_analysis',
+      schema: MATCHUP_ANALYSIS_JSON_SCHEMA,
+    });
+  }
+
+  async generateStructured(
+    request: StructuredOutputRequest,
+    _options?: StructuredOutputProviderOptions,
+  ): Promise<unknown> {
     let response: GeminiResult;
     try {
       response = await this.client.generate({
@@ -148,7 +165,7 @@ export class GeminiProvider implements MatchupAnalysisProvider {
         responseFormat: {
           type: 'text',
           mimeType: 'application/json',
-          schema: MATCHUP_ANALYSIS_JSON_SCHEMA,
+          schema: request.schema,
         },
         tools: [],
         store: false,
