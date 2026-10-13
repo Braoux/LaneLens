@@ -106,6 +106,27 @@ Les modes proposés couvrent : nouveau run complet, reprise du dernier run incom
 
 Les artefacts d'évaluation et corpus privés ne font pas partie du runtime public. Voir [Runner d’évaluation gameplay](evaluation-runner.md) et [Launcher interactif](interactive-evaluation-runner.md).
 
+### Fact Pack mécanique livré
+
+Le backend contient également `MatchupFactPackBuilder`, un composant métier
+synchrone et déterministe qui projette Data Dragon, les mécaniques relues, la KB
+et le mechanical coverage gate dans un contrat versionné. Il ne dépend d'aucun
+provider et n'est pas encore branché à la route utilisateur.
+
+Une CLI d'inspection réutilise le corpus d'évaluation :
+
+```sh
+npm run eval:fact-pack -- --id L61-G01
+```
+
+Le futur Strategy Plan pourra référencer les faits par `factIds`, mais sa
+construction, sa génération et son exposition HTTP ne sont pas implémentées.
+Voir [Matchup Fact Pack](matchup-fact-pack.md).
+
+Le contrat sépare les faits champions des futurs faits globaux. Le tableau
+`globalFacts` reste vide dans le code livré ; il ne contient encore aucun
+objectif neutre, règle macro ou mécanique saisonnière.
+
 ---
 
 ## Contrats partagés

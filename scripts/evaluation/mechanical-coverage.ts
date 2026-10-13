@@ -38,7 +38,7 @@ export function assertMechanicalCoverageGate(
   return result;
 }
 
-async function findDefaultGoldenCorpus(): Promise<string> {
+export async function findDefaultFullCoverageCorpus(): Promise<string> {
   const directory = resolve('evaluation', 'corpus');
   const candidates = (await readdir(directory, { withFileTypes: true }))
     .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
@@ -62,7 +62,7 @@ async function findDefaultGoldenCorpus(): Promise<string> {
 
 export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<void> {
   if (argv.length > 1) throw new Error('Usage: npm run eval:golden-coverage -- [corpus]');
-  const path = argv[0] ?? await findDefaultGoldenCorpus();
+  const path = argv[0] ?? await findDefaultFullCoverageCorpus();
   const loaded = await loadEvaluationCorpus(resolve(path));
   const result = mechanicalCoverageReport(loaded.corpus);
   if (result === undefined) throw new EvaluationCorpusError('Le corpus ne déclare aucun fullCoverageGate.');
