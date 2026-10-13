@@ -21,6 +21,7 @@
     "eval:golden-coverage": "tsx scripts/evaluation/mechanical-coverage.ts",
     "eval:fact-pack": "tsx scripts/evaluation/inspect-fact-pack.ts",
     "eval:strategy-plan": "tsx scripts/evaluation/inspect-strategy-plan.ts",
+    "eval:fact-grounded": "tsx scripts/evaluation/inspect-fact-grounded-pipeline.ts",
     "eval:repair": "tsx scripts/evaluation/repair-gameplay.ts",
     "eval:compare": "tsx scripts/evaluation/compare-gameplay.ts",
     "eval:revalidate": "tsx scripts/evaluation/revalidate-gameplay.ts",

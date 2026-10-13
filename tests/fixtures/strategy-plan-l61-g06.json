@@ -16,7 +16,7 @@
     "level3": { "text": "Échanger avec les kits de base disponibles.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] }
   },
   "wavePlan": { "text": "Maintenir une vague contrôlée.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
-  "targetPriority": { "text": "Frapper la cible exposée.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
+  "targetPriority": { "text": "Frapper Caitlyn lorsqu'elle est exposée.", "grounding": "strategic-only", "participantIds": ["enemy:carry"], "factIds": [], "missingKnowledge": [] },
   "postLevel6": { "text": "Éviter les combats prolongés.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] },
   "roamPlan": { "text": "Roam uniquement après un crash.", "grounding": "strategic-only", "participantIds": [], "factIds": [], "missingKnowledge": [] }
 }

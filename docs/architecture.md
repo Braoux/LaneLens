@@ -122,9 +122,16 @@ npm run eval:fact-pack -- --id L61-G01
 Le `MatchupStrategyPlan` expérimental référence ces faits par `factIds`, construit
 un contexte déterministe et utilise la primitive `StructuredOutputProvider`
 commune aux adapters existants. Sa validation référentielle reste distincte de
-la future validation sémantique. Il n'est exposé par aucune route HTTP et ne
+la validation mécanique pré-render, qui réutilise les règles du validator final
+et conserve un état insuffisant lorsque le support n'est pas démontrable. Il
+n'est exposé par aucune route HTTP et ne
 modifie pas le parcours utilisateur. Voir [Matchup Fact Pack](matchup-fact-pack.md)
-et [Matchup Strategy Plan](matchup-strategy-plan.md).
+et [Matchup Strategy Plan](matchup-strategy-plan.md), puis
+[Validation pré-render](strategy-plan-pre-render-validation.md) et
+[Repair ciblé](strategy-plan-repair.md). Le
+[pipeline fact-grounded expérimental](fact-grounded-pipeline.md) ajoute un
+renderer déterministe puis réapplique le validator final, sans route HTTP ni
+activation frontend.
 
 Le contrat sépare les faits champions des futurs faits globaux. Le tableau
 `globalFacts` reste vide dans le code livré ; il ne contient encore aucun
@@ -740,6 +747,7 @@ Commandes :
 | `npm run build` | Typecheck, build Vite puis compilation backend. |
 | `npm run start:server` | Lance `dist/server/index.js`. |
 | `npm run eval:gameplay -- --corpus <path>` | Lance directement le runner d’évaluation CLI. |
+| `npm run eval:fact-grounded -- --id <id> --fixture <path>` | Inspecte hors ligne le pipeline fact-grounded expérimental. |
 | `npm run eval:interactive` | Lance le menu interactif LAN-039 depuis un terminal. |
 | `run-gameplay-evaluation.cmd` | Point d’entrée Windows par double-clic pour l’équipe. |
 

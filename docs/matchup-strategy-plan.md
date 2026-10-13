@@ -23,8 +23,8 @@ validation structurelle et référentielle
 artefact d'inspection expérimental
 ```
 
-Le renderer final, la validation sémantique pré-render et le repair du Strategy
-Plan restent hors périmètre.
+Le pipeline expérimental complète désormais B2 avec une validation mécanique
+pré-render, un repair ciblé et un renderer déterministe contraint.
 
 ## Technical Design
 
@@ -99,9 +99,11 @@ Deux statuts restent volontairement distincts :
 2. **Semantic support validation** : le texte est réellement soutenu par les
    facts cités.
 
-B2 implémente uniquement le premier niveau. Chaque assertion expose donc
-`semanticSupportValidation = not-evaluated`. Un plan référentiellement valide ne
-doit jamais être présenté comme une preuve de correction mécanique ou tactique.
+B2 expose toujours séparément la validation de référence. Le validateur
+pré-render complète désormais ce contrôle avec les règles mécaniques
+déterministes existantes et un état explicite `supported`, `invalid`,
+`insufficient` ou `not-applicable` par assertion. La qualité tactique reste hors
+de ce statut. Voir [Validation pré-render](strategy-plan-pre-render-validation.md).
 
 ## Inspection locale
 
@@ -131,17 +133,21 @@ une capacité. Il peut donc consommer ultérieurement les `globalFacts` du Fact 
 pour les objectifs neutres, règles de carte ou mécaniques saisonnières. B2 ne
 crée aucune donnée macro, aucune recommandation macro et aucun resolver associé.
 
-## Limites et phase C
+## Limites et lots suivants
 
-La phase C devra traiter, sans confondre les responsabilités :
+Le lot suivant devra mesurer la qualité et le coût avant toute activation
+utilisateur.
 
-- la validation sémantique du support entre texte et facts ;
-- le repair ciblé d'assertions invalides ou insuffisantes ;
-- le renderer contraint vers `MatchupAnalysis` ;
-- la validation mécanique pré-render du résultat complet ;
-- la mesure de qualité et de coût avant toute activation utilisateur.
+Le repair ciblé est documenté séparément dans
+[Repair ciblé du Strategy Plan](strategy-plan-repair.md). Il conserve le même
+validateur pré-render, limite les modifications aux chemins rejetés et borne le
+nombre de passes à deux.
 
-Risques encore ouverts : une référence valide peut être hors sujet, une stratégie
-peut être médiocre malgré des facts exacts et `insufficient` peut nécessiter une
-politique produit avant rendu. Aucun de ces risques n'est masqué par le statut B2.
+L'orchestration complète est documentée dans
+[Pipeline fact-grounded expérimental](fact-grounded-pipeline.md).
+
+Risques encore ouverts : une formulation mécanique peut dépasser les règles
+déterministes reconnues, une stratégie peut être médiocre malgré des facts exacts
+et `insufficient` nécessite encore une politique de repair avant rendu. Aucun de
+ces risques n'est transformé en validation positive.
 
