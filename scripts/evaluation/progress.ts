@@ -35,6 +35,10 @@ function phaseLabel(progress: EvaluationProgress, elapsedMs: number): string {
     case 'analyzing':
       return `analyse${progress.attempt === undefined ? '' : ` · tentative ${progress.attempt}/${progress.maxAttempts}`}`
         + ` · ${formatDuration(elapsedMs)}`;
+    case 'repairing':
+      return `repair${progress.repair === undefined ? '' : ` · passe ${progress.repair}/${progress.maxRepairs}`}`
+        + `${progress.attempt === undefined ? '' : ` · tentative ${progress.attempt}/${progress.maxAttempts}`}`
+        + ` · ${formatDuration(elapsedMs)}`;
     case 'waiting_rate_limit': {
       const remainingMs = Math.max(0, (progress.waitMs ?? 0) - elapsedMs);
       return `attente rate limit · reprise dans ${formatDuration(remainingMs)}`;

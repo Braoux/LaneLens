@@ -125,16 +125,128 @@ run existant. Sans `--output`, il crée un répertoire ignoré par Git sous :
 Pour conserver des résultats privés hors du dépôt public, toujours fournir un
 `--output` situé dans l’espace privé prévu à cet effet.
 
+## Répétitions expérimentales
+
+`--repeat` rejoue volontairement chaque matchup comme une nouvelle observation
+indépendante. Sa valeur par défaut est `1` et elle doit être un entier positif :
+
+```sh
+npm run eval:gameplay -- --corpus <corpus> --repeat 5
+```
+
+Avec 10 matchups et `--repeat 5`, le run contient 50 observations. L'ordre est
+**matchup-major** : les répétitions 1 à 5 du premier matchup sont exécutées,
+puis celles du deuxième. Une observation reçoit une identité stable telle que
+`EXAMPLE-001#3`, ainsi qu'un `matchupId` et un index `repetition` distincts.
+
+Les deux paramètres suivants ont des responsabilités différentes :
+
+- `repeat` = réplication expérimentale produisant une nouvelle observation ;
+- `maxAttempts` = retry technique, uniquement à l'intérieur de la même
+  observation lorsqu'un rate limit est explicitement reconnu.
+
+Ainsi, une observation peut contenir une tentative rate-limited puis une
+tentative réussie sans consommer une répétition supplémentaire.
+
+## Repair ciblé d’un run existant
+
+Le composant métier backend `TargetedAnalysisRepairService` porte le feedback,
+la reconstruction ciblée et la revalidation. Il n’est pas branché au parcours
+HTTP utilisateur. Le runner de repair ne fait que l’orchestrer pour les
+benchmarks et reprend uniquement les observations `invalid_analysis` d’un run
+existant. Il ne rejoue jamais leur génération initiale. Pour être
+éligible, une observation doit contenir à la fois :
+
+- `candidateAnalysis`, la réponse structurée rejetée ;
+- `violations`, les diagnostics exacts du validator.
+
+Le launcher Windows accessible par `run-gameplay-evaluation.cmd` expose ce
+runner de deux façons : **Réparer un run terminé**, ou repair automatique après
+un nouveau run avec un choix explicite entre désactivé, une passe et deux passes.
+Même dans ce second cas, le repair démarre seulement après la fin du run initial
+et conserve ses propres artefacts ; il ne modifie pas `results.json`.
+
+Le préflight est local et ne configure pas le provider :
+
+```sh
+npm run eval:repair -- --source <run-directory> --preflight-only
+```
+
+S’il manque une candidate ou ses violations, la commande liste chaque
+observation concernée et l’ignore. Les autres analyses invalides restent
+réparables et le benchmark continue normalement. Le repair est bloqué sans
+appel provider uniquement lorsque **aucune** analyse invalide n’est réparable.
+Les observations ignorées et leurs données manquantes sont conservées dans
+`repair-run.json`, et leur nombre apparaît dans `repair-summary.json`.
+
+Les anciens artefacts créés avant la conservation de `candidateAnalysis` ne
+peuvent donc pas être réparés artificiellement, mais ils ne bloquent pas les
+observations complètes du même run.
+
+Nouvelle expérimentation, avec une seule passe de repair :
+
+```sh
+npm run eval:repair -- --source <run-directory> --output <repair-directory> --max-repairs 1
+```
+
+Expérimentation avec au plus deux passes :
+
+```sh
+npm run eval:repair -- --source <run-directory> --output <repair-directory> --max-repairs 2
+```
+
+Une reprise conserve le même run source et les mêmes bornes :
+
+```sh
+npm run eval:repair -- --source <run-directory> --resume <repair-directory>
+```
+
+Pendant une nouvelle expérimentation comme pendant une reprise, le repair
+réutilise le loader du runner principal. Le terminal affiche en direct le
+spinner, le pourcentage, le compteur terminé/total, l'observation courante,
+la passe de repair et la tentative technique. Les observations déjà terminées
+comptent immédiatement dans le pourcentage lors d'une reprise.
+
+Les responsabilités sont distinctes :
+
+- `maxRepairs` = nombre maximal de corrections expérimentales d’une candidate
+  encore invalide ;
+- `maxAttempts` = retries techniques d’une même passe, réservés aux rate
+  limits explicitement reconnus.
+
+Le feedback contient les codes, catégories et chemins exacts des violations,
+ainsi que les facts KB fiables directement associés lorsqu’ils existent. Le
+provider retourne un contrat complet, mais LaneLens ne recopie que les champs
+signalés par le validator. Tous les autres champs proviennent de la candidate
+précédente. La candidate reconstruite repasse ensuite les validateurs de
+structure, de conformité et de langue inchangés.
+
+Le répertoire de repair contient :
+
+- `repair-run.json` : hashes des artefacts source, corpus, commits, provider,
+  modèle, paramètres, version KB, bornes et timestamps ;
+- `repair-results.json` : candidate originale, appels intermédiaires,
+  réponses rejetées, violations successives et résultat final ;
+- `repair-summary.json` : comparaison sans repair / une passe / deux passes,
+  récupérations, échecs techniques, violations corrigées/restantes,
+  régressions, appels, tokens et latence additionnelle.
+
+Le coût reste absent lorsque le projet ne possède pas de tarif provider fiable
+et versionné. Les tokens et le nombre d’appels permettent alors de calculer le
+coût a posteriori sans inventer une estimation.
+
 Reprendre un run interrompu :
 
 ```sh
 npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --resume <run-directory>
 ```
 
-La reprise vérifie le hash et la version du corpus, le patch, le provider et le
-modèle. Elle conserve l’identité et les paramètres initiaux, ignore les cas
-terminés et continue les cas `in_progress`. `--resume` ne se combine pas avec
-`--output`, `--sentinels` ou `--id`.
+La reprise vérifie le hash et la version du corpus, le patch, le provider, le
+modèle, les paramètres de génération, la golden truth et le nombre de
+répétitions. Elle conserve l’identité et les paramètres initiaux, ignore les
+observations terminées et continue les observations `in_progress`. Un
+`--repeat` explicitement différent est refusé. `--resume` ne se combine pas
+avec `--output`, `--sentinels` ou `--id`.
 
 ## Progression en temps réel
 
@@ -158,7 +270,7 @@ logs lisibles.
 ## Rythme et retries
 
 L’exécution est strictement séquentielle (`concurrency = 1`). Le délai préventif
-par défaut est de **2000 ms** entre deux matchups :
+par défaut est de **2000 ms** entre deux observations :
 
 ```sh
 npm run eval:gameplay -- --corpus evaluation/corpus/lan-032-corpus-v1.json --delay-ms 3000
@@ -204,13 +316,79 @@ d’authentification n’est écrit.
 Chaque répertoire de run contient :
 
 - `run.json` : identité du corpus, hash, commit Git, provider, modèle, paramètres
-  de génération utiles, mode, timestamps, délai, tentatives et
-  `knowledgeBaseVersion` ;
-- `results.json` : input de chaque matchup, statut, analyse réussie, erreur
-  métier contrôlée, violations de conformité, couverture KB, éventuelle revue
-  qualité et tentatives provider ;
-- `summary.json` : totaux, cas évaluables gameplay, statuts, retries, latences,
+  de génération utiles, mode, timestamps, délai, retries techniques,
+  `repeat`, observations attendues, `knowledgeBaseVersion`, version de golden
+  truth et snapshot du mechanical coverage gate ;
+- `results.json` : identité de chaque observation (`id`, `matchupId`,
+  `repetition`), input, statut, analyse réussie, erreur
+  métier contrôlée, candidate et réponse rejetées lorsque disponibles,
+  violations de conformité, couverture KB, éventuelle revue
+  qualité, couverture mécanique et tentatives provider ;
+- `summary.json` : agrégats globaux et par matchup, observations attendues et
+  terminées, statuts, taux de succès, stabilité, retries, latences, tokens,
   sentinelles, catégories de rejet, couverture et classification qualité.
+
+`run.json` est l’enveloppe de provenance commune à toutes les observations : il
+porte le `runId`, le provider, le modèle, les paramètres de génération, le
+patch, les versions du corpus, de la KB et de la golden truth ainsi que leurs
+hashes. Chaque nouvelle observation de `results.json` recopie son `runId` pour
+former une référence explicite vers cette enveloppe, sans dupliquer ces
+métadonnées volumineuses cinquante fois.
+
+Une observation rejetée peut contenir :
+
+- `candidateAnalysis` : analyse structurée complète après validation de forme ;
+- `rejectedResponse` : réponse structurée originale, ou texte final brut du
+  provider lorsque le JSON n’est pas parsable ;
+- `rejectionPhase` : `parsing`, `shape`, `conformance` ou `language` ;
+- `violations` : codes, catégories, chemins, sujets et `knowledgeId` disponibles ;
+- `languageViolations` : diagnostics linguistiques séparés.
+
+Exemple minimal d’une observation exploitable par le repair :
+
+```json
+{
+  "runId": "<run-id>",
+  "id": "EXAMPLE-001#2",
+  "matchupId": "EXAMPLE-001",
+  "repetition": 2,
+  "status": "invalid_analysis",
+  "rejectionPhase": "conformance",
+  "candidateAnalysis": { "lanePlan": "...", "matchup": { "patch": "26.19" } },
+  "violations": [
+    {
+      "code": "ABILITY_EFFECT_MISMATCH",
+      "category": "INVALID_ABILITY_EFFECT",
+      "path": "lanePlan",
+      "subject": "Jinx E",
+      "knowledgeId": "<fact-id>",
+      "severity": "error"
+    }
+  ]
+}
+```
+
+Le texte brut conservé est uniquement le contenu final retourné par le modèle :
+les headers, clés API, diagnostics SDK, prompts et éventuelles données internes
+de raisonnement ne sont jamais inclus. Les snapshots sont écrits atomiquement
+après chaque tentative. Un résultat `parsing` reste inspectable, mais il n’est
+pas réparable tant qu’aucune candidate structurée et aucune violation ciblable
+ne sont disponibles ; le préflight le signale sans relancer la génération.
+
+Ces artefacts peuvent contenir du contenu généré volumineux. Ils doivent rester
+dans `.lanelens-evaluation/` ou dans un répertoire privé explicitement choisi,
+tous deux hors du dépôt public. Ne copiez pas un `results.json` réel dans un
+dossier versionné.
+
+La stabilité par matchup utilise trois états simples :
+
+- `stable_success` : toutes les répétitions sont terminées et réussies ;
+- `stable_failure` : toutes les répétitions sont terminées et aucune ne réussit ;
+- `unstable` : mélange de succès/échecs ou matchup encore incomplet.
+
+Les moyennes de tokens ne sont produites que lorsque le provider expose ces
+métadonnées. Aucun coût n'est inventé lorsqu'aucune donnée tarifaire fiable
+n'est disponible.
 
 Statuts terminaux :
 
@@ -234,6 +412,49 @@ l’installation échoue, l’ancien snapshot est restauré avant de remonter l�
 
 Les résultats ne contiennent ni clé API, ni token, ni headers arbitraires, ni
 chemin absolu du corpus.
+
+## Revalidation hors ligne
+
+La revalidation rejoue uniquement le validator local sur les analyses déjà
+persistées. Elle ne contacte aucun provider et n’écrase pas les artefacts
+sources.
+
+```powershell
+npm run eval:revalidate -- `
+  --source-results "<run-source>\results.json" `
+  --repair-results "<run-repair>\repair-results.json" `
+  --output "<nouveau-dossier>"
+```
+
+`--repair-results` est facultatif. Le dossier de sortie reçoit
+`initial-revalidation.json` et, lorsqu’un run de repair est fourni,
+`repair-revalidation.json`. Lorsque la commande embarque une revue explicite
+des suppressions historiques, elle produit également
+`supplemental-removal-review.json`.
+
+Chaque observation de revalidation conserve séparément :
+
+- les violations historiques (`initialViolations`) ;
+- les violations produites par le validator courant (`violationsAfter`) ;
+- les diagnostics supprimés et nouvellement détectés ;
+- les enrichissements de `subject` et `knowledgeId` ;
+- la classification revue d'une suppression, lorsqu'elle existe.
+
+Les classifications possibles sont :
+
+- `CONFIRMED_FALSE_POSITIVE` : le diagnostic historique était incorrect ;
+- `DIAGNOSTIC_REASSOCIATION` : la même erreur reste détectée, mais avec une
+  association canonique plus précise ;
+- `LEGITIMATE_DEDUPLICATION` : seul un doublon strict a disparu ;
+- `VALIDATOR_REGRESSION` : une erreur réelle n'est plus détectée ;
+- `UNDETERMINED` : les éléments persistés ne suffisent pas pour conclure.
+
+Une violation n'est jamais qualifiée de faux positif uniquement parce qu'elle
+disparaît après revalidation. Une entrée `UNDETERMINED` reste soumise à une
+revue humaine et ne constitue ni une validation positive de la formulation, ni
+une autorisation d'assouplir le validator. Le texte original, le diagnostic
+historique et la justification sont conservés dans l'artefact de revue afin que
+la décision reste auditable.
 
 ## Baseline avant Knowledge Base
 

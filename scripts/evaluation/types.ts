@@ -6,6 +6,8 @@ import type { MatchupAnalysisErrorCode } from '../../server/analysis/errors.js';
 import type { AnalysisConformanceViolation } from '../../server/analysis/AnalysisConformanceValidator.js';
 import type { ProviderRetryMetadata } from '../../server/analysis/ProviderFailure.js';
 import type { KnowledgeCoverage } from '../../server/knowledge/types.js';
+import type { MechanicalCoverageGateResult } from '../../server/knowledge/MechanicalCoverageGate.js';
+import type { AnalysisLanguageViolation } from '../../server/analysis/AnalysisLanguageValidator.js';
 
 export type EvaluationMode = 'full' | 'sentinels' | 'single';
 export type EvaluationStatus =
@@ -31,6 +33,7 @@ export interface EvaluationCorpus {
   readonly corpusVersion: string;
   readonly patch: string;
   readonly frozen: boolean;
+  readonly fullCoverageGate?: string;
   readonly matchups: readonly CorpusMatchup[];
 }
 
@@ -62,7 +65,10 @@ export interface EvaluationQualityReview {
 }
 
 export interface EvaluationResult {
+  readonly runId?: string;
   readonly id: string;
+  readonly matchupId?: string;
+  readonly repetition?: number;
   readonly input: Omit<MatchupAnalysisInput, 'locale' | 'patchContext'>;
   readonly sentinel: boolean;
   readonly status: EvaluationStatus;
@@ -70,9 +76,18 @@ export interface EvaluationResult {
   readonly completedAt?: string;
   readonly durationMs?: number;
   readonly analysis?: MatchupAnalysis;
+  readonly candidateAnalysis?: MatchupAnalysis;
+  readonly rejectedResponse?: unknown;
+  readonly rejectionPhase?: 'parsing' | 'shape' | 'conformance' | 'language';
   readonly error?: EvaluationError;
   readonly violations?: readonly AnalysisConformanceViolation[];
+  readonly languageViolations?: readonly AnalysisLanguageViolation[];
   readonly knowledgeCoverage?: KnowledgeCoverage;
+  readonly mechanicalCoverage?: {
+    readonly goldenTruthVersion: string;
+    readonly fullyCovered: boolean;
+    readonly missing: readonly string[];
+  };
   readonly qualityReview?: EvaluationQualityReview;
   readonly attempts: readonly EvaluationAttempt[];
 }
@@ -93,9 +108,13 @@ export interface EvaluationRun {
   readonly completedAt: string | null;
   readonly mode: EvaluationMode;
   readonly selectedIds: readonly string[];
+  readonly repeat?: number;
+  readonly expectedObservations?: number;
   readonly delayMs: number;
   readonly maxAttempts: number;
   readonly knowledgeBaseVersion: string | null;
+  readonly goldenTruthVersion?: string;
+  readonly mechanicalCoverage?: MechanicalCoverageGateResult;
 }
 
 export interface EvaluationResultsFile {
@@ -116,6 +135,11 @@ export interface EvaluationSummaryCounts {
 }
 
 export interface EvaluationSummary extends EvaluationSummaryCounts {
+  readonly matchups: number;
+  readonly repetitions: number;
+  readonly observationsExpected: number;
+  readonly observationsCompleted: number;
+  readonly successRate: number | null;
   readonly durationMs: number;
   readonly averageLatencyMs: number | null;
   readonly medianLatencyMs: number | null;
@@ -133,5 +157,37 @@ export interface EvaluationSummary extends EvaluationSummaryCounts {
     readonly factualErrors: number;
     readonly strategicIssues: Readonly<Record<StrategicIssueSeverity, number>>;
   };
+  readonly stability: {
+    readonly stableSuccess: number;
+    readonly stableFailure: number;
+    readonly unstable: number;
+  };
+  readonly tokens: EvaluationTokenSummary;
+  readonly byMatchup: readonly EvaluationMatchupSummary[];
   readonly sentinels: EvaluationSummaryCounts;
+}
+
+export type EvaluationStability = 'stable_success' | 'stable_failure' | 'unstable';
+
+export interface EvaluationTokenSummary {
+  readonly observationsWithUsage: number;
+  readonly averageInputTokens: number | null;
+  readonly averageOutputTokens: number | null;
+  readonly averageTotalTokens: number | null;
+  readonly totalInputTokens: number;
+  readonly totalOutputTokens: number;
+  readonly totalTokens: number;
+}
+
+export interface EvaluationMatchupSummary extends EvaluationSummaryCounts {
+  readonly matchupId: string;
+  readonly expectedObservations: number;
+  readonly observations: number;
+  readonly successRate: number | null;
+  readonly stability: EvaluationStability;
+  readonly averageLatencyMs: number | null;
+  readonly medianLatencyMs: number | null;
+  readonly violationCodes: Readonly<Record<string, number>>;
+  readonly factualErrors: number;
+  readonly tokens: EvaluationTokenSummary;
 }

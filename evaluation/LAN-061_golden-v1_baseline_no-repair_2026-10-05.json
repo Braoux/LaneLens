@@ -1,0 +1,3191 @@
+{
+  "schemaVersion": 1,
+  "results": [
+    {
+      "id": "L61-G01#1",
+      "matchupId": "L61-G01",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Galio",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:04:09.338Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:04:09.346Z",
+          "durationMs": 27851,
+          "outcome": "success",
+          "inputTokens": 3900,
+          "outputTokens": 5339,
+          "totalTokens": 9239,
+          "reasoningTokens": 4447
+        }
+      ],
+      "completedAt": "2026-10-05T15:04:37.197Z",
+      "durationMs": 27851,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Jinx",
+          "allySupport": "Galio",
+          "enemyCarry": "Caitlyn",
+          "enemySupport": "Leona",
+          "patch": "26.19"
+        },
+        "lanePlan": "Jouez une lane de scaling et d’espacement : Jinx veut farmer et poke avec Q sans offrir une ligne à Leona E. Profitez des fenêtres où Leona E est manquée ou indisponible pour punir Caitlyn avec le contrôle de zone de Galio.",
+        "threatResponseWindow": {
+          "threat": "La menace principale est l’engage de Leona E suivi de Q, combiné aux traps W de Caitlyn qui peuvent root et ouvrir la fenêtre de poke.",
+          "response": "Répondez en gardant l’espacement, en posant Jinx E pour root si Leona ou Caitlyn entre, et en utilisant Galio W pour taunt ou Galio E pour knock-up sur une cible qui s’engage trop loin.",
+          "window": "Fenêtre : après une Leona E manquée ou lorsque Caitlyn recule sans trap W entre elle et vous, avancez pour poke et prendre le contrôle de la vague.",
+          "winCondition": "Survivre à la lane, empêcher Leona de convertir un engage en kill, et atteindre le mid-game avec Jinx assez farmée pour dominer les combats."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, utilisez la portée de Jinx Q et la menace de Galio Q/W selon la compétence apprise pour contester sans donner à Leona E une cible facile.",
+          "level2": "Au niveau 2, Leona peut menacer E puis Q ; reculez dès qu’elle avance et gardez Galio W prêt à taunt pour protéger Jinx.",
+          "level3": "Au niveau 3, Leona a plus d’outils pour tanker et engage, tandis que Caitlyn peut combiner Q/W/E ; jouez sous tour ou près de Galio pour convertir une erreur en trade."
+        },
+        "wavePlan": "Gardez d’abord la vague de votre côté ou proche de la tour pour priver Leona d’un engage long, puis poussez après une fenêtre favorable, par exemple quand Leona E est manquée ou que Caitlyn est forcée de reculer.",
+        "targetPriority": {
+          "primaryTarget": "Caitlyn",
+          "explanation": "Caitlyn est la source de poke et de zoning à distance ; si elle avance ou si Leona E est indisponible, punissez-la en priorité. Ne traversez pas Leona pour l’atteindre si elle conserve ses outils d’engage."
+        },
+        "postLevel6": "Au niveau 6, Leona R et Caitlyn R augmentent la menace à distance ; Galio R peut renforcer un allié et knock-up, et Jinx R peut suivre ou exécuter une cible affaiblie une fois l’engage adverse consommé.",
+        "roamPlan": "Galio peut suivre les mouvements de jungle ou roam après une vague poussée si Jinx est en sécurité, mais évitez de laisser Jinx seule face à Leona R/Caitlyn R ; signalez les absences de Leona et punissez ses roams en poussant ou en prenant de l’espace.",
+        "cheatSheet": [
+          "Ne donnez jamais une ligne directe à Leona E : restez derrière les minions ou hors de sa portée d’engage.",
+          "Punissez après une Leona E manquée, pas avant.",
+          "Utilisez Jinx E pour root en self-peel si Leona ou Caitlyn entre.",
+          "Galio W menace la zone ; Galio E pour knock-up ou sécuriser une punition.",
+          "Gardez la wave de votre côté jusqu’à une fenêtre favorable, puis poussez pour roam ou base."
+        ],
+        "goldenRule": "Tant que Leona E n’est pas manquée ou indisponible, jouez pour survivre et scaler avec Jinx ; ne forcez pas un trade qui offre à Leona une entrée sur votre carry."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 23
+      }
+    },
+    {
+      "id": "L61-G01#2",
+      "matchupId": "L61-G01",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Galio",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:04:39.211Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:04:39.219Z",
+          "durationMs": 29437,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:05:08.656Z",
+      "durationMs": 29437,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 23
+      }
+    },
+    {
+      "id": "L61-G01#3",
+      "matchupId": "L61-G01",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Galio",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:05:10.666Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:05:10.674Z",
+          "durationMs": 13092,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:05:23.766Z",
+      "durationMs": 13092,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "lanePlan"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "lanePlan",
+          "subject": "leona:E",
+          "knowledgeId": "ability-leona-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level3"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level3",
+          "subject": "jinx:E",
+          "knowledgeId": "ability-jinx-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "postLevel6"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "postLevel6",
+          "subject": "jinx:R",
+          "knowledgeId": "ability-jinx-r-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "cheatSheet.0"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "cheatSheet.0",
+          "subject": "leona:E",
+          "knowledgeId": "ability-leona-e-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 23
+      }
+    },
+    {
+      "id": "L61-G01#4",
+      "matchupId": "L61-G01",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Galio",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:05:25.784Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:05:25.795Z",
+          "durationMs": 31261,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:05:57.056Z",
+      "durationMs": 31261,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.response"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.response",
+          "subject": "jinx:E",
+          "knowledgeId": "ability-jinx-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level1"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level1",
+          "subject": "leona:Q",
+          "knowledgeId": "ability-leona-q-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "postLevel6"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "postLevel6",
+          "subject": "jinx:R",
+          "knowledgeId": "ability-jinx-r-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 23
+      }
+    },
+    {
+      "id": "L61-G01#5",
+      "matchupId": "L61-G01",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Galio",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:06:00.624Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:06:00.636Z",
+          "durationMs": 17841,
+          "outcome": "success",
+          "inputTokens": 3900,
+          "outputTokens": 3045,
+          "totalTokens": 6945,
+          "reasoningTokens": 2216
+        }
+      ],
+      "completedAt": "2026-10-05T15:06:18.477Z",
+      "durationMs": 17841,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Jinx",
+          "allySupport": "Galio",
+          "enemyCarry": "Caitlyn",
+          "enemySupport": "Leona",
+          "patch": "26.19"
+        },
+        "lanePlan": "Garder la vague proche de son côté et farmer sous la portée de Caitlyn, en laissant Galio menacer W pour freiner l'entrée de Leona. Dès qu'une engage adverse est manquée ou que Caitlyn n'a plus E, pousser pour convertir en pression et libérer Galio.",
+        "threatResponseWindow": {
+          "threat": "Leona E ouvre l'engage et Caitlyn enchaîne derrière avec son poke de portée supérieure, ce qui rend toute avancée de Jinx dangereuse sans couverture.",
+          "response": "Galio se place en premier rideau et garde W comme menace de zone pour dissuader l'entrée de Leona, puis punit son dash avec E pendant que Jinx conserve E pour se protéger elle-même.",
+          "window": "Fenêtre de pression quand Leona a manqué son engage ou pendant que Caitlyn n'a plus E pour se repositionner.",
+          "winCondition": "Rester sans mort, garder des vagues farmables et convertir chaque engage adverse raté ou dive raté en or et en tempo, pour laisser Jinx outscaler la lane."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, Jinx farme avec Q en roquettes hors de portée de réponse de Caitlyn pendant que Galio poke avec Q sans s'exposer à la ligne d'engage de Leona.",
+          "level2": "Au niveau 2, Leona dispose de Q et E et son engage devient réel : Galio doit garder W chargé comme menace pendant que Jinx reste derrière ses sbires.",
+          "level3": "Au niveau 3, les kits sont complets : un engage de Leona se gère en reculant vers Galio, qui répond par E et W plutôt que de laisser Jinx seule en première ligne."
+        },
+        "wavePlan": "Garder d'abord la vague de son côté tant que l'engage de Leona est disponible, puis pousser après une fenêtre favorable (engage manqué, Caitlyn sans E) pour créer un slow push et libérer Galio.",
+        "targetPriority": {
+          "primaryTarget": "Caitlyn",
+          "explanation": "Caitlyn est la cible à privilégier car elle concentre les dégâts à distance et devient vulnérable une fois son E de repositionnement utilisée. Si Leona s'enfonce seule dans notre ligne, la retourner immédiatement quand la vague et Galio le permettent."
+        },
+        "postLevel6": "Après le niveau 6, le R de Leona et le R de Caitlyn punissent les positions groupées : Jinx garde de l'espace pour esquiver la zone de Leona, tandis que Galio conserve R pour couvrir un engage ou un dive sur Jinx.",
+        "roamPlan": "Galio peut roam avec R vers la midlane ou la jungle après avoir poussé une vague, Jinx restant seule près de sa tourelle avec E posé en protection.",
+        "cheatSheet": [
+          "Ne jamais rester dans la ligne d'E de Leona sans sbires entre vous et elle.",
+          "Jinx garde E pour sa protection personnelle, pas pour du poke.",
+          "Punir seulement avec l'avantage de vague, jamais en marchant vers Caitlyn tant qu'elle a E.",
+          "Galio W se garde visible comme menace de zone pour dissuader l'entrée.",
+          "Pousser après un engage manqué, sinon garder la vague de son côté."
+        ],
+        "goldenRule": "Tradez uniquement quand l'engage de Leona est indisponible et que Galio peut répondre, jamais pour contester du poke avec Caitlyn."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 23
+      }
+    },
+    {
+      "id": "L61-G02#1",
+      "matchupId": "L61-G02",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Galio",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:06:20.502Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:06:20.511Z",
+          "durationMs": 46274,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:07:06.785Z",
+      "durationMs": 46274,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "lanePlan"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "lanePlan",
+          "subject": "ziggs:W",
+          "knowledgeId": "ability-ziggs-w-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "wavePlan"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "wavePlan",
+          "subject": "ziggs:W",
+          "knowledgeId": "ability-ziggs-w-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "postLevel6"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "postLevel6",
+          "subject": "caitlyn:R",
+          "knowledgeId": "ability-caitlyn-r-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G02#2",
+      "matchupId": "L61-G02",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Galio",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:07:08.807Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:07:08.820Z",
+          "durationMs": 18445,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:07:27.265Z",
+      "durationMs": 18445,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.response"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.response",
+          "subject": "caitlyn:E",
+          "knowledgeId": "ability-caitlyn-e-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G02#3",
+      "matchupId": "L61-G02",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Galio",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:07:29.283Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:07:29.294Z",
+          "durationMs": 22241,
+          "outcome": "success",
+          "inputTokens": 3770,
+          "outputTokens": 3899,
+          "totalTokens": 7669,
+          "reasoningTokens": 2946
+        }
+      ],
+      "completedAt": "2026-10-05T15:07:51.535Z",
+      "durationMs": 22241,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Caitlyn",
+          "allySupport": "Galio",
+          "enemyCarry": "Ziggs",
+          "enemySupport": "Lux",
+          "patch": "26.19"
+        },
+        "lanePlan": "Votre lane dispose de la portée de poke de Caitlyn, mais Ziggs et Lux contrôlent mieux la zone avec leurs sorts de zone et leurs contrôles à distance. Galio doit donc garder son E comme réponse à une capacité ennemie dépensée plutôt que comme ouverture, et Caitlyn jouer la vague et l'espacement en attendant cette fenêtre.",
+        "threatResponseWindow": {
+          "threat": "La menace principale est la pression de poke et de zone de Lux E, Lux Q et des sorts de zone de Ziggs, qui punit tout rapprochement de Galio et tout positionnementgroupé de Caitlyn.",
+          "response": "Répondre par le poke à distance de Caitlyn Q et un placement étalé hors des zones, en n'avançant que lorsque Lux Q ou Ziggs W a été utilisé.",
+          "window": "Après l'utilisation de Lux Q ou de Ziggs W, Galio peut chercher un E pour avancer sur Ziggs ou Lux pendant que la dissuasion adverse est en attente.",
+          "winCondition": "Gagner la lane en forçant Lux Q et Ziggs W, puis en convertissant une de ces fenêtres par un E de Galio pour laisser Caitlyn poser ses dégâts à portée."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, Caitlyn exploite sa portée avec Q depuis l'extérieur de la ligne de Lux Q, pendant que Galio reste en retrait et évite les zones de Ziggs.",
+          "level2": "Au niveau 2, garder la vague de votre côté et conserver E de Galio pour punir un Lux Q manqué plutôt que d'initier en premier.",
+          "level3": "Au niveau 3, les kits de base complets rendent chaque pas en avant coûteux : ne pas avancer dans les zones de Ziggs sans que Galio puisse couvrir la sortie."
+        },
+        "wavePlan": "Garder d'abord la vague légèrement de votre côté pour préserver l'espace de poke et éviter d'être coincé sous tour face aux sorts de zone, puis pousser après une fenêtre favorable (Lux Q ou Ziggs W dépensé) pour installer les pièges de Caitlyn et préparer un retour ou un roam.",
+        "targetPriority": {
+          "primaryTarget": "Ziggs",
+          "explanation": "Ziggs est la principale source de dégâts de zone de la lane et devient réellement accessible une fois son W dépensé ou quand Caitlyn le fixe avec W. Lux reste la cible de repli quand son Q est en attente et que son bouclier W a été utilisé, mais l'échange doit d'abord neutraliser la menace de son Q."
+        },
+        "postLevel6": "Au niveau 6, les ultimes à longue portée de Ziggs et Lux punissent les positions alignées ou groupées, et Lux comme Ziggs peuvent intercepter le projectile de Caitlyn R : viser une cible isolée ou déjà fixée, et garder Galio R pour convertir une fenêtre ou couvrir un allié plutôt que pour ouvrir.",
+        "roamPlan": "Galio ne cherche un roam qu'après avoir poussé la vague ou après un retour en base, car laisser Caitlyn seule face au poke et aux zones de Ziggs et Lux coûte cher ; privilégier un roam court et revenir avant que la vague ne se retourne.",
+        "cheatSheet": [
+          "Garder E de Galio comme réponse, pas comme ouverture.",
+          "Poser W de Caitlyn sur les trajectoires d'approche de Ziggs et Lux plutôt qu'en avance.",
+          "La fenêtre la plus nette est après Lux Q utilisé : c'est là qu'avancer.",
+          "Caitlyn R seulement si la seconde menace adverse ne peut pas intercepter le projectile.",
+          "À partir du niveau 6, ne pas s'aligner ni se grouper : les ultimes ennemis à longue portée punissent les lignes."
+        ],
+        "goldenRule": "Tant que Lux Q et Ziggs W ne sont pas dépensés, garder l'espacement et le poke à distance plutôt que d'engager."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G02#4",
+      "matchupId": "L61-G02",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Galio",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:07:53.550Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:07:53.557Z",
+          "durationMs": 21155,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:08:14.712Z",
+      "durationMs": 21155,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "lanePlan",
+          "subject": "galio:Q",
+          "knowledgeId": "ability-galio-q-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G02#5",
+      "matchupId": "L61-G02",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Galio",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:08:16.730Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:08:16.741Z",
+          "durationMs": 27754,
+          "outcome": "success",
+          "inputTokens": 3770,
+          "outputTokens": 5882,
+          "totalTokens": 9652,
+          "reasoningTokens": 5008
+        }
+      ],
+      "completedAt": "2026-10-05T15:08:44.495Z",
+      "durationMs": 27754,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Caitlyn",
+          "allySupport": "Galio",
+          "enemyCarry": "Ziggs",
+          "enemySupport": "Lux",
+          "patch": "26.19"
+        },
+        "lanePlan": "Gardez la vague de votre côté et n'échangez que lorsque Lux ou Ziggs a un sort clé en recharge. Cherchez l'engage via Galio après avoir fait sauter le Q de Lux ou le W de Ziggs, en utilisant les trappes de Caitlyn pour verrouiller la cible.",
+        "threatResponseWindow": {
+          "threat": "Double poke à distance (Ziggs Q/E, Lux Q/E) et poussée constante ; Galio peut être kité et un root de Lux suivi de dégâts peut tuer.",
+          "response": "Respectez la portée de Lux Q et Ziggs Q, utilisez les trappes de Caitlyn pour couper les angles, et gardez le W de Galio comme menace de taunt plutôt que de l'utiliser en premier.",
+          "window": "Fenêtre après que Lux a raté son Q ou que Ziggs a utilisé son W pour disengage : engagez alors avec Galio et enchaînez avec une trappe de Caitlyn.",
+          "winCondition": "Tuer Lux ou Ziggs avant que Lux ne puisse shield ou que Ziggs ne puisse disengage, en convertissant un sort clé manqué en engage complet."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, évitez le Q de Lux et le Q de Ziggs ; Caitlyn poke avec Q et W, Galio reste en retrait pour ne pas être kité.",
+          "level2": "Au niveau 2, si Lux rate son Q, Galio peut chercher E knock-up et Caitlyn place une trappe derrière la cible.",
+          "level3": "Au niveau 3, full kits : engagez seulement si Ziggs a utilisé W ou Lux a utilisé Q, sinon restez en poke et last hit."
+        },
+        "wavePlan": "Laissez la vague venir à vous au début, car Ziggs et Lux poussent plus vite ; après un échange favorable ou un sort clé manqué, poussez pour créer une fenêtre de dive ou de roam. Évitez de rester sous tour trop longtemps face à leur poke.",
+        "targetPriority": {
+          "primaryTarget": "Lux",
+          "explanation": "Lux apporte le root et le shield qui protègent Ziggs ; si elle utilise Q ou W, elle devient la cible la plus vulnérable. Sinon, Ziggs est prioritaire une fois son W utilisé."
+        },
+        "postLevel6": "Au niveau 6, utilisez le R de Galio pour engager ou sauver, et le R de Caitlyn pour finir une cible une fois le shield de Lux ou le W de Ziggs utilisé ; attention à l'interception de Caitlyn R.",
+        "roamPlan": "Après avoir poussé la vague ou après un kill bot, Galio peut roam mid avec R ou E ; Caitlyn reste pour farm et garde ses trappes pour couvrir son retrait.",
+        "cheatSheet": [
+          "Ne forcez jamais l'engage tant que Lux a Q et Ziggs a W.",
+          "Utilisez les trappes de Caitlyn pour zoner le brush et couper les retraites.",
+          "Gardez le W de Galio pour menacer, pas pour engager à vide.",
+          "Pokez avec Caitlyn Q quand les ennemis sont sur cooldown.",
+          "Après un sort clé manqué, engagez immédiatement."
+        ],
+        "goldenRule": "La lane se gagne en punissant le premier sort clé manqué de Lux ou Ziggs, pas en engageant à découvert."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G03#1",
+      "matchupId": "L61-G03",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Morgana",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:08:46.514Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:08:46.524Z",
+          "durationMs": 45504,
+          "outcome": "success",
+          "inputTokens": 3931,
+          "outputTokens": 8969,
+          "totalTokens": 12900,
+          "reasoningTokens": 8001
+        }
+      ],
+      "completedAt": "2026-10-05T15:09:32.028Z",
+      "durationMs": 45504,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Jinx",
+          "allySupport": "Morgana",
+          "enemyCarry": "Ziggs",
+          "enemySupport": "Galio",
+          "patch": "26.19"
+        },
+        "lanePlan": "Jinx et Morgana doivent refuser l’engagement de Galio et farmer à distance contre le harcèlement de Ziggs. Selon le contexte 26.19, World Atlas et Runic Compass favorisent la tenue de lane des supports mêlée, donc éviter les échanges prolongés contre Galio.",
+        "threatResponseWindow": {
+          "threat": "Galio peut engager avec E puis W pendant que Ziggs pose E et Q pour punir, surtout si le Black Shield de Morgana a déjà été cassé par le harcèlement.",
+          "response": "Morgana réserve Black Shield pour l’engagement de Galio, car il peut absorber les effets de désactivation selon Data Dragon, et Jinx farme avec Q en mode roquettes en gardant W et E pour ralentir ou couper la retraite.",
+          "window": "Après un E de Galio manqué ou tant que son W et son E sont indisponibles, Morgana Q sur Ziggs puis Jinx W et E pour convertir la pression sans poursuivre Galio.",
+          "winCondition": "Survivre au harcèlement, garder Black Shield pour l’engagement et gagner les échanges courts quand Galio manque son entrée, afin de laisser Jinx monter en puissance."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, éviter la portée de W de Galio et les rebonds de Q de Ziggs, et chercher seulement un Q de Morgana sur une cible trop avancée.",
+          "level2": "Au niveau 2, respecter l’E de Galio, qui peut projeter en l’air : Morgana garde Black Shield prêt et Jinx utilise W pour ralentir l’ennemi et couvrir la retraite.",
+          "level3": "Au niveau 3, ne pas prendre d’échange prolongé tant que Galio a W et E ; punir avec Q de Morgana et E de Jinx dès que Galio a raté son engagement."
+        },
+        "wavePlan": "Garder d’abord la vague de votre côté, idéalement gelée juste devant la tour, Jinx farme avec Q en mode roquettes ; puis pousser après un E de Galio manqué ou un retour pour placer des visions ou aider la carte.",
+        "targetPriority": {
+          "primaryTarget": "Ziggs",
+          "explanation": "Ziggs est la principale menace de harcèlement et peut utiliser W pour se désengager ; si Morgana Q le root, Jinx peut enchaîner W et E puis roquettes. Ne pas poursuivre Galio dans sa zone tant que son W et son E ne sont pas tombés."
+        },
+        "postLevel6": "Au niveau 6, Morgana R peut punir un engagement et Jinx R finir les cibles basses, mais Galio R peut renverser un engagement total avec bouclier et projection en l’air, et Ziggs R ajoute une menace de zone : garder Black Shield pour l’engagement et ne pas claquer Jinx R trop tôt.",
+        "roamPlan": "Morgana peut placer des visions ou suivre son jungler après avoir poussé une vague sécurisée ; sinon elle reste avec Jinx, qui ne doit pas se déplacer sur la carte et doit farmer sous tour si Morgana part. Galio peut chercher une R vers une autre lane, donc signaler son absence.",
+        "cheatSheet": [
+          "Morgana garde Black Shield pour l’engagement de Galio, pas pour le harcèlement anodin de Ziggs.",
+          "Jinx farme avec Q en mode roquettes et passe en minigun seulement quand Ziggs a W et E indisponibles.",
+          "Après un E de Galio manqué, Morgana Q sur Ziggs puis Jinx W et E pour punir.",
+          "Ne pas rester dans E de Ziggs ; bouger latéralement et respecter sa W de désengagement.",
+          "Au niveau 6, Morgana R et Jinx R peuvent punir un engagement, mais Galio R peut retourner le combat."
+        ],
+        "goldenRule": "Ne pas gaspiller Black Shield pour du harcèlement : il doit répondre à l’engagement de Galio ou sécuriser une fenêtre d’élimination."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G03#2",
+      "matchupId": "L61-G03",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Morgana",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:09:34.051Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:09:34.062Z",
+          "durationMs": 19932,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:09:53.994Z",
+      "durationMs": 19932,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.response"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.response",
+          "subject": "jinx:E",
+          "knowledgeId": "ability-jinx-e-mechanics"
+        },
+        {
+          "code": "ABILITY_TARGETING_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.window"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level3"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level3",
+          "subject": "morgana:Q",
+          "knowledgeId": "ability-morgana-q-mechanics"
+        },
+        {
+          "code": "UNSUPPORTED_COOLDOWN_RESET",
+          "category": "IMPOSSIBLE_INTERACTION",
+          "severity": "error",
+          "path": "wavePlan"
+        },
+        {
+          "code": "UNSUPPORTED_COOLDOWN_RESET",
+          "category": "IMPOSSIBLE_INTERACTION",
+          "severity": "error",
+          "path": "cheatSheet.3"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G03#3",
+      "matchupId": "L61-G03",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Morgana",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:09:56.015Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:09:56.026Z",
+          "durationMs": 24740,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:10:20.766Z",
+      "durationMs": 24740,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_CHAMPION_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "lanePlan"
+        },
+        {
+          "code": "ABILITY_CHAMPION_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.response"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G03#4",
+      "matchupId": "L61-G03",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Morgana",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:10:22.780Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:10:22.787Z",
+          "durationMs": 15331,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:10:38.118Z",
+      "durationMs": 15331,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level2"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level2",
+          "subject": "morgana:E",
+          "knowledgeId": "ability-morgana-e-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G03#5",
+      "matchupId": "L61-G03",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Morgana",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:10:40.130Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:10:40.143Z",
+          "durationMs": 47561,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:11:27.704Z",
+      "durationMs": 47561,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level1"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level1",
+          "subject": "morgana:Q",
+          "knowledgeId": "ability-morgana-q-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G04#1",
+      "matchupId": "L61-G04",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:11:29.726Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:11:29.734Z",
+          "durationMs": 14260,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:11:43.994Z",
+      "durationMs": 14260,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.threat"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.threat",
+          "subject": "jinx:W",
+          "knowledgeId": "ability-jinx-w-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G04#2",
+      "matchupId": "L61-G04",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:11:46.019Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:11:46.033Z",
+          "durationMs": 18056,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:12:04.089Z",
+      "durationMs": 18056,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G04#3",
+      "matchupId": "L61-G04",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:12:06.104Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:12:06.114Z",
+          "durationMs": 10079,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:12:16.193Z",
+      "durationMs": 10079,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G04#4",
+      "matchupId": "L61-G04",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:12:18.206Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:12:18.217Z",
+          "durationMs": 24650,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:12:42.867Z",
+      "durationMs": 24650,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "UNSUPPORTED_COOLDOWN_RESET",
+          "category": "IMPOSSIBLE_INTERACTION",
+          "severity": "error",
+          "path": "wavePlan"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "postLevel6"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "postLevel6",
+          "subject": "caitlyn:Q",
+          "knowledgeId": "ability-caitlyn-q-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "roamPlan"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "roamPlan",
+          "subject": "galio:Q",
+          "knowledgeId": "ability-galio-q-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G04#5",
+      "matchupId": "L61-G04",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Galio",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:12:44.890Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:12:44.899Z",
+          "durationMs": 25048,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:13:09.947Z",
+      "durationMs": 25048,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G05#1",
+      "matchupId": "L61-G05",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:13:11.962Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:13:11.976Z",
+          "durationMs": 19541,
+          "outcome": "success",
+          "inputTokens": 3833,
+          "outputTokens": 3489,
+          "totalTokens": 7322,
+          "reasoningTokens": 2598
+        }
+      ],
+      "completedAt": "2026-10-05T15:13:31.517Z",
+      "durationMs": 19541,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Ziggs",
+          "allySupport": "Leona",
+          "enemyCarry": "Caitlyn",
+          "enemySupport": "Lux",
+          "patch": "26.19"
+        },
+        "lanePlan": "Lane de poke contre poke où Ziggs est puni par la portée de Caitlyn et le root de Lux : gardez la vague de votre côté et laissez Leona chercher l'ouverture. La cible de Leona est Lux, Caitlyn gardant son net pour se repositionner.",
+        "threatResponseWindow": {
+          "threat": "La portée de Caitlyn et le root directionnel de Lux punissent tout Ziggs qui avance pour farmer, et leur poke cumulé peut vous chasser de la lane avant que Leona ne trouve une ouverture.",
+          "response": "Ziggs farme derrière la vague et poke au Q en restant hors de portée, tandis que Leona se place devant pour menacer l'engage sans le déclencher.",
+          "window": "La fenêtre s'ouvre quand Lux a manqué ou dépensé son root, ou quand Caitlyn a utilisé son net pour se repositionner : c'est à ce moment que Leona engage plutôt qu'avant.",
+          "winCondition": "Convertir un engage de Leona sur Lux en kill ou en rappel forcé, puis utiliser le waveclear de zone de Ziggs pour transformer l'avantage en plaques."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, Ziggs poke au Q et avec son passif sans franchir la ligne de Lux, et Leona se contente de zoner sans engager.",
+          "level2": "Au niveau 2, Leona peut combiner deux de ses sorts de contrôle : dès qu'un des deux sorts de contrôle ennemis est parti, la menace passe du poke au all-in et Ziggs enchaîne ses dégâts.",
+          "level3": "Au niveau 3, Ziggs ajoute ses mines de zone pour couper la retraite et Leona enchaîne les contrôles, mais engager Caitlyn reste risqué tant que son net est disponible."
+        },
+        "wavePlan": "Gardez d'abord la vague de votre côté pour que Ziggs farme hors de portée et que Leona ait de l'espace pour engager ; après un kill, un rappel forcé ou une sortie de Lux de la lane, poussez avec le waveclear de zone de Ziggs pour prendre des plaques.",
+        "targetPriority": {
+          "primaryTarget": "Lux",
+          "explanation": "Lux n'a ni dash ni repositionnement et ne dispose que d'un bouclier directionnel, alors que Caitlyn peut utiliser son net pour créer de la distance après l'engage."
+        },
+        "postLevel6": "Au niveau 6, Leona gagne un engage à distance qui ouvre la voie au R de Ziggs, mais Caitlyn peut sortir Ziggs de la lane à longue portée et Lux ajoute un laser directionnel ; gardez Leona devant et envisagez d'intercepter le tir de Caitlyn avec un corps allié.",
+        "roamPlan": "Après avoir poussé la vague ou obtenu une sortie de Lux, Leona peut roaming vers la midlane pendant que Ziggs nettoie la vague à distance et conserve ses mines et son W pour se désengager si Caitlyn et Lux reviennent.",
+        "cheatSheet": [
+          "Leona engage Lux, pas Caitlyn, tant que le net de Caitlyn est disponible.",
+          "Après un root de Lux manqué ou dépensé, c'est la fenêtre de pression de Ziggs et de Leona.",
+          "Ziggs garde W et E pour se désengager et couper la retraite, pas pour poke à découvert.",
+          "Patch 26.19 : les ajustements de World Atlas et Runic Compass favorisent la tenue de lane des supports mêlée comme Leona.",
+          "Après un avantage, Ziggs pousse à l'aide de son waveclear de zone pour prendre des plaques."
+        ],
+        "goldenRule": "Aucun engage de Leona tant que Lux n'a pas dépensé son root ou que Caitlyn n'a pas utilisé son net."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G05#2",
+      "matchupId": "L61-G05",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:13:33.542Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:13:33.551Z",
+          "durationMs": 28515,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:14:02.066Z",
+      "durationMs": 28515,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_CHAMPION_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.winCondition"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level2"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level2",
+          "subject": "caitlyn:W",
+          "knowledgeId": "ability-caitlyn-w-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "targetPriority.explanation"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "targetPriority.explanation",
+          "subject": "caitlyn:Q",
+          "knowledgeId": "ability-caitlyn-q-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G05#3",
+      "matchupId": "L61-G05",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:14:04.083Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:14:04.093Z",
+          "durationMs": 18515,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:14:22.608Z",
+      "durationMs": 18515,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "cheatSheet.1"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G05#4",
+      "matchupId": "L61-G05",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:14:24.632Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:14:24.643Z",
+          "durationMs": 18988,
+          "outcome": "success",
+          "inputTokens": 3833,
+          "outputTokens": 3529,
+          "totalTokens": 7362,
+          "reasoningTokens": 2660
+        }
+      ],
+      "completedAt": "2026-10-05T15:14:43.631Z",
+      "durationMs": 18988,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Ziggs",
+          "allySupport": "Leona",
+          "enemyCarry": "Caitlyn",
+          "enemySupport": "Lux",
+          "patch": "26.19"
+        },
+        "lanePlan": "Poke avec Q de Ziggs et son passif en gardant Leona en menace d'engage, sans jamais entrer dans la ligne de W de Caitlyn ni dans Q de Lux. La vague reste de votre côté jusqu'à ce qu'un sort de sécurité adverse tombe, puis vous poussez et cherchez l'engage.",
+        "threatResponseWindow": {
+          "threat": "W de Caitlyn ou Q de Lux qui touche ouvre le poke de Caitlyn sur une cible immobilisée, et W de Lux rend tout échange prolongé peu rentable pour vous.",
+          "response": "Restez espacés, laissez Leona encaisser le poke derrière son W, et ne cherchez pas l'engage tant que Q de Lux ou E de Caitlyn est disponible.",
+          "window": "Après que Q de Lux a manqué ou que E de Caitlyn a été consommé, E de Leona peut ouvrir et convertir en burst court avant que l'adversaire ne récupère ses outils.",
+          "winCondition": "Survivre au poke en restant hors de portée, forcer les sorts de sécurité adverses, puis convertir un engage de Leona avec le burst de Ziggs, ou tenir jusqu'au niveau 6 pour combiner R de Leona et R de Ziggs."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, poke avec Q de Ziggs et son passif en restant à distance, sans marcher dans W de Caitlyn ni dans Q de Lux.",
+          "level2": "Au niveau 2, dès que Leona a E, elle peut menacer l'engage, mais uniquement si Q de Lux est déjà utilisé ; sinon gardez la vague et continuez le poke.",
+          "level3": "Au niveau 3, les deux kits de base sont complets : cherchez un trade court après un sort adverse manqué, jamais un échange long sous W de Lux."
+        },
+        "wavePlan": "Gardez d'abord la vague légèrement de votre côté pour obliger Caitlyn à s'avancer, puis poussez après une fenêtre favorable (engage converti ou sorts clés adverses consommés) pour prendre la plaque ou libérer Leona.",
+        "targetPriority": {
+          "primaryTarget": "Lux",
+          "explanation": "Forcer Lux à dépenser Q et W ouvre la fenêtre sur Caitlyn, qui reste protégée par E et W. Une fois ces outils tombés, l'engage de Leona se convertit plus facilement qu'en visant Caitlyn en premier."
+        },
+        "postLevel6": "Au niveau 6, R de Leona (stun au centre) précède R de Ziggs pour un burst de zone ; gardez W de Ziggs et E de Ziggs pour couper la retraite ou désengager, et surveillez R de Caitlyn comme R de Lux qui punissent un Ziggs immobile.",
+        "roamPlan": "Après une vague poussée, Leona peut sortir vers la mid ou l'objectif pendant que Ziggs nettoie la vague de loin avec Q, W et E ; si Caitlyn et Lux peuvent encore engager, Ziggs reste en arrière et garde W pour créer de la distance.",
+        "cheatSheet": [
+          "Ne traversez jamais la zone de W de Caitlyn pour venir poke.",
+          "Gardez E de Leona pour après Q de Lux, pas avant.",
+          "Trade court uniquement, jamais un échange prolongé sous W de Lux.",
+          "Ziggs garde W pour le désengage et E pour ralentir la poursuite.",
+          "Après un engage converti, poussez la vague avant de rappeler ou de roam."
+        ],
+        "goldenRule": "Tant que Q de Lux et E de Caitlyn sont disponibles, vous ne faites que poke ; dès que l'un des deux tombe, Leona engage et Ziggs suit avec son burst."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G05#5",
+      "matchupId": "L61-G05",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Lux",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:14:45.647Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:14:45.654Z",
+          "durationMs": 21636,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:15:07.290Z",
+      "durationMs": 21636,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 22
+      }
+    },
+    {
+      "id": "L61-G06#1",
+      "matchupId": "L61-G06",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:15:09.302Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:15:09.311Z",
+          "durationMs": 24278,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:15:33.589Z",
+      "durationMs": 24278,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.threat"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.threat",
+          "subject": "morgana:E",
+          "knowledgeId": "ability-morgana-e-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G06#2",
+      "matchupId": "L61-G06",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:15:35.614Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:15:35.624Z",
+          "durationMs": 18476,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:15:54.100Z",
+      "durationMs": 18476,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.threat"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.threat",
+          "subject": "leona:Q",
+          "knowledgeId": "ability-leona-q-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G06#3",
+      "matchupId": "L61-G06",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:15:56.121Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:15:56.135Z",
+          "durationMs": 18518,
+          "outcome": "success",
+          "inputTokens": 4009,
+          "outputTokens": 3600,
+          "totalTokens": 7609,
+          "reasoningTokens": 2681
+        }
+      ],
+      "completedAt": "2026-10-05T15:16:14.653Z",
+      "durationMs": 18518,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Jinx",
+          "allySupport": "Leona",
+          "enemyCarry": "Caitlyn",
+          "enemySupport": "Morgana",
+          "patch": "26.19"
+        },
+        "lanePlan": "Gardez la vague de votre côté pour priver Caitlyn de la poussée qui l'autorise à poke, et laissez Leona chercher le pick plutôt que d'ouvrir en frontal. Poussez seulement après une fenêtre favorable, puis sécurisez le retour de vague avant de reprendre la pression.",
+        "threatResponseWindow": {
+          "threat": "La portée de Caitlyn et le root du Q de Morgana usent Jinx avant même que Leona ait un angle d'engage propre.",
+          "response": "Rester derrière la vague, laisser Leona menacer avec E et Q, et garder le E de Jinx pour punir une avancée ou casser un suivi.",
+          "window": "Dès qu'un Q de Morgana manque ou qu'un E de Caitlyn a servi à se repositionner, la pression doit se convertir immédiatement sans attendre un second angle.",
+          "winCondition": "Obtenir un engage de Leona sur une cible non couverte par la protection de Morgana et le transformer en kill ou en vague poussée, sans laisser Jinx prendre de poke gratuit."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, Jinx joue la minigun dans sa vague pendant que Leona se contente de menacer avec E et Q sans engager, car entrer dans la portée de Caitlyn et du Q de Morgana coûte cher.",
+          "level2": "Au niveau 2, chercher la fenêtre dès que le Q de Morgana est utilisé ou que l'espacement est cassé, pour convertir un root de Leona en échange court suivi par Jinx.",
+          "level3": "Au niveau 3, les trois sorts de base sont disponibles des deux côtés : l'engage ne se prend que sur une cible sans couverture de Morgana, jamais front contre front sous le poke de Caitlyn."
+        },
+        "wavePlan": "Gardez d'abord la vague de votre côté pour empêcher Caitlyn de poke sous votre tour ; poussez ensuite après un Q de Morgana manqué ou un E de Caitlyn consommé, puis revenez à une vague contrôlée avant de réinstaller la pression.",
+        "targetPriority": {
+          "primaryTarget": "Caitlyn privée de son E ; à défaut Morgana séparée de sa protection",
+          "explanation": "Caitlyn perd son principal outil d'auto-peel une fois E utilisé, ce qui rend l'engage de Leona et le suivi de Jinx convertibles. Morgana devient la cible quand elle s'avance sans avoir conservé son E pour elle-même, car son Q reste le principal outil de punition de la lane."
+        },
+        "postLevel6": "Après le niveau 6, Leona ajoute son R de zone à l'engage et Morgana son R auto-centré : laissez Leona initier, gardez le R de Jinx pour les cibles déjà entamées, et positionnez-vous de façon à gêner le R de Caitlyn sur un allié.",
+        "roamPlan": "Leona peut roamer après une vague poussée ou un retour forcé de Caitlyn et Morgana ; Jinx doit alors tenir la vague sous tour avec la minigun et ne pas traverser la rivière sans vision.",
+        "cheatSheet": [
+          "Leona engage en priorité la cible non couverte par la protection de Morgana.",
+          "Garder le E de Jinx pour punir une avancée ou se dégager, jamais pour poke.",
+          "Ne pas ouvrir tant que le Q de Morgana est disponible sans punition.",
+          "Convertir tout Q de Morgana manqué ou E de Caitlyn utilisé en pression immédiate.",
+          "Rester hors de portée de Caitlyn tant que la vague n'est pas de votre côté."
+        ],
+        "goldenRule": "Ne forcez jamais l'engage tant que la protection de Morgana n'est pas consommée ou sa cible écartée : cette lane se gagne sur les cooldowns manqués, pas sur un engage frontal."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G06#4",
+      "matchupId": "L61-G06",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:16:16.671Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:16:16.682Z",
+          "durationMs": 26514,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:16:43.196Z",
+      "durationMs": 26514,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G06#5",
+      "matchupId": "L61-G06",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Leona",
+        "enemyCarry": "Caitlyn",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:16:45.214Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:16:45.224Z",
+          "durationMs": 40035,
+          "outcome": "success",
+          "inputTokens": 4009,
+          "outputTokens": 8622,
+          "totalTokens": 12631,
+          "reasoningTokens": 7701
+        }
+      ],
+      "completedAt": "2026-10-05T15:17:25.259Z",
+      "durationMs": 40035,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Jinx",
+          "allySupport": "Leona",
+          "enemyCarry": "Caitlyn",
+          "enemySupport": "Morgana",
+          "patch": "26.19"
+        },
+        "lanePlan": "Jinx et Leona doivent d'abord survivre au harcèlement de Caitlyn et aux racines de Morgana en gardant la vague près de leur tour. Dès que Morgana E ou Q est utilisé, Leona cherche un engagement sur Caitlyn ou Morgana, puis Jinx convertit avec pression et roquettes.",
+        "threatResponseWindow": {
+          "threat": "Morgana E peut couvrir la cible de Leona, et Morgana Q avec Caitlyn W/E peut punir toute entrée trop directe de Leona ou toute position avancée de Jinx.",
+          "response": "Leona doit forcer ou attendre l'usage de Morgana E avant de lancer l'engagement, et Jinx doit rester derrière les sbires en gardant E pour couper la suite.",
+          "window": "Après que Morgana E a protégé une autre cible ou après un Q de Morgana manqué, Leona peut engager Caitlyn ou Morgana pendant que leur protection principale est indisponible.",
+          "winCondition": "Obtenir une immobilisation de Leona sur une cible non couverte par Morgana E, puis laisser Jinx appliquer des dégâts à distance sans être immobilisé par Morgana Q."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, Jinx doit farmer avec Q roquettes si Caitlyn avance, et Leona ne cherche E que si Morgana Q est déjà utilisé ou si Caitlyn est isolée.",
+          "level2": "Au niveau 2, Leona peut menacer E puis Q, mais Morgana peut avoir Q et E ; ne pas engager avant d'avoir forcé la protection ou esquivé Q.",
+          "level3": "Au niveau 3, Leona W/E/Q permet un engagement total, mais seulement si Morgana E ne peut pas couvrir la cible et si Caitlyn E a été utilisé ou n'a pas d'angle de fuite."
+        },
+        "wavePlan": "Garder la vague de votre côté tant que Morgana a E et Q disponibles, en laissant Caitlyn pousser ; après avoir fait utiliser E ou Q de Morgana, pousser et chercher un engagement, puis revenir à une vague sûre si l'engagement échoue.",
+        "targetPriority": {
+          "primaryTarget": "Caitlyn si Morgana E est indisponible, sinon Morgana isolée",
+          "explanation": "Caitlyn est la principale source de dégâts et de harcèlement ; sans Morgana E pour la couvrir, elle est la cible qui convertit le mieux un engagement de Leona. Si Morgana reste trop avancée et que sa protection ne couvre pas la cible engagée, la punir est plus réaliste."
+        },
+        "postLevel6": "Au niveau 6, Leona R peut ouvrir sur une cible non protégée, puis Jinx R sert à finir une cible déjà trop basse pour être sauvée ; Morgana R impose de ne pas rester groupés, et Caitlyn R punit les cibles basses sans couverture.",
+        "roamPlan": "Leona cherche une rotation après avoir poussé la vague et posé de la vision, surtout si Morgana E a été utilisé ; Jinx reste alors en sécurité près de sa tour et signale les mouvements de Morgana.",
+        "cheatSheet": [
+          "Ne pas engager tant que Morgana E peut couvrir la cible.",
+          "Convertir un Q de Morgana manqué en pression immédiate.",
+          "Jinx garde E pour couper l'engagement ou contrôler l'espace, W pour ralentir après un Q manqué.",
+          "Cibler Caitlyn si son E est utilisé, sinon punir Morgana isolée.",
+          "Au niveau 6, Leona R ouvre, Jinx R finit sans rester groupé face à Morgana R."
+        ],
+        "goldenRule": "Ne forcez jamais l'engagement de Leona tant que Morgana peut couvrir la cible avec E ; faites d'abord dépenser sa protection ou son Q, puis engagez."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G07#1",
+      "matchupId": "L61-G07",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:17:27.274Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:17:27.286Z",
+          "durationMs": 27404,
+          "outcome": "success",
+          "inputTokens": 3978,
+          "outputTokens": 6038,
+          "totalTokens": 10016,
+          "reasoningTokens": 5167
+        }
+      ],
+      "completedAt": "2026-10-05T15:17:54.690Z",
+      "durationMs": 27404,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Ziggs",
+          "allySupport": "Swain",
+          "enemyCarry": "Jinx",
+          "enemySupport": "Leona",
+          "patch": "26.19"
+        },
+        "lanePlan": "Harcèlement à distance avec Q et E de Ziggs et E de Swain pour user Jinx, tout en gardant la vague près de votre côté pour limiter les angles d'engage de Leona. Ne forcez pas avant qu'un E de Leona soit manqué ou que Ziggs puisse utiliser W pour se désengager.",
+        "threatResponseWindow": {
+          "threat": "La menace principale est l'engage de Leona via E puis Q, suivi des dégâts de Jinx, surtout si Swain ou Ziggs avance sans vague protectrice.",
+          "response": "Répondez en reculant vers vos minions, en gardant W de Ziggs pour créer de la distance et E de Swain pour immobiliser une Leona trop profonde.",
+          "window": "Après que Leona a utilisé E sans toucher, ou quand son Q n'est plus disponible, Ziggs peut poser E et Swain peut avancer pour E sans craindre l'engage immédiat.",
+          "winCondition": "Gagner la lane en conservant une avance de harcèlement, en punissant un engage raté de Leona et en prenant le contrôle de la vague pour sécuriser les objectifs."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, harcelez avec Q de Ziggs et E de Swain en restant derrière vos minions, car Leona peut déjà E pour ouvrir un engage.",
+          "level2": "Au niveau 2, la menace monte avec Q de Leona après E ; gardez W de Ziggs pour le désengagement et ne prenez pas d'échange sans avantage de vague.",
+          "level3": "Au niveau 3, Jinx ajoute W et E, donc évitez les positions sans minions et les couloirs où E de Jinx peut immobiliser."
+        },
+        "wavePlan": "Gardez d'abord la vague légèrement de votre côté pour que Leona ne puisse pas courir sur vous, puis poussez après avoir forcé un E de Leona manqué ou obtenu un avantage de points de vie. Ne laissez pas Ziggs seul sous tour ennemie sans vision.",
+        "targetPriority": {
+          "primaryTarget": "Jinx",
+          "explanation": "Jinx est la principale source de dégâts et de montée en puissance ; la harceler la force à reculer et réduit sa pression, mais ne l'ouvrez pas tant que Leona peut punir votre avancée."
+        },
+        "postLevel6": "Au niveau 6, Leona R et Jinx R ajoutent une menace d'engage et d'exécution à distance ; gardez W de Ziggs pour le désengagement et utilisez R de Swain dans un combat rapproché déjà engagé, pas pour initier.",
+        "roamPlan": "Swain peut se déplacer vers la voie du milieu ou un objectif après avoir poussé une vague et si Ziggs est en sécurité ; utilisez E de Swain pour piéger, mais ne laissez pas Ziggs seul contre Leona et Jinx sans flash.",
+        "cheatSheet": [
+          "Harceler avec Q de Ziggs et E de Swain sans franchir la ligne de minions.",
+          "Garder W de Ziggs pour le désengagement quand Leona E.",
+          "Punir un E de Leona manqué avec E de Swain et les mines de Ziggs.",
+          "Éviter les positions groupées : E de Jinx et R de Leona punissent les couloirs serrés.",
+          "Au niveau 6, échanger seulement si Leona R ou Jinx R est indisponible."
+        ],
+        "goldenRule": "Ne forcez jamais l'engage ; laissez Leona gaspiller E ou R, puis punissez avec le harcèlement de Ziggs et le contrôle de Swain avant qu'elle ne puisse réengager."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G07#2",
+      "matchupId": "L61-G07",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:17:56.713Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:17:56.723Z",
+          "durationMs": 15479,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:18:12.202Z",
+      "durationMs": 15479,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.threat"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.threat",
+          "subject": "leona:E",
+          "knowledgeId": "ability-leona-e-mechanics"
+        },
+        {
+          "code": "UNSUPPORTED_COOLDOWN_RESET",
+          "category": "IMPOSSIBLE_INTERACTION",
+          "severity": "error",
+          "path": "wavePlan"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "targetPriority.explanation"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "targetPriority.explanation",
+          "subject": "swain:E",
+          "knowledgeId": "ability-swain-e-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G07#3",
+      "matchupId": "L61-G07",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:18:14.219Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:18:14.227Z",
+          "durationMs": 17855,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:18:32.082Z",
+      "durationMs": 17855,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.threat"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.threat",
+          "subject": "leona:E",
+          "knowledgeId": "ability-leona-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level1"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level1",
+          "subject": "ziggs:Q",
+          "knowledgeId": "ability-ziggs-q-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G07#4",
+      "matchupId": "L61-G07",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:18:34.104Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:18:34.115Z",
+          "durationMs": 20115,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:18:54.230Z",
+      "durationMs": 20115,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.threat"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.threat",
+          "subject": "leona:Q",
+          "knowledgeId": "ability-leona-q-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level2"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level2",
+          "subject": "leona:Q",
+          "knowledgeId": "ability-leona-q-mechanics"
+        },
+        {
+          "code": "ABILITY_TARGETING_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "postLevel6"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G07#5",
+      "matchupId": "L61-G07",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Swain",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Leona",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:18:56.255Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:18:56.265Z",
+          "durationMs": 16709,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:19:12.974Z",
+      "durationMs": 16709,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G08#1",
+      "matchupId": "L61-G08",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:19:14.998Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:19:15.006Z",
+          "durationMs": 24817,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:19:39.823Z",
+      "durationMs": 24817,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.response"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.response",
+          "subject": "ziggs:W",
+          "knowledgeId": "ability-ziggs-w-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level1"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level1",
+          "subject": "morgana:Q",
+          "knowledgeId": "ability-morgana-q-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 21
+      }
+    },
+    {
+      "id": "L61-G08#2",
+      "matchupId": "L61-G08",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:19:41.849Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:19:41.859Z",
+          "durationMs": 26849,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:20:08.708Z",
+      "durationMs": 26849,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "lanePlan",
+          "subject": "morgana:E",
+          "knowledgeId": "ability-morgana-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.winCondition"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.winCondition",
+          "subject": "morgana:E",
+          "knowledgeId": "ability-morgana-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "postLevel6"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "postLevel6",
+          "subject": "caitlyn:R",
+          "knowledgeId": "ability-caitlyn-r-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "cheatSheet.0"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "cheatSheet.0",
+          "subject": "morgana:E",
+          "knowledgeId": "ability-morgana-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "cheatSheet.3"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "cheatSheet.3",
+          "subject": "caitlyn:R",
+          "knowledgeId": "ability-caitlyn-r-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 21
+      }
+    },
+    {
+      "id": "L61-G08#3",
+      "matchupId": "L61-G08",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:20:10.724Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:20:10.737Z",
+          "durationMs": 16550,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:20:27.287Z",
+      "durationMs": 16550,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "lanePlan",
+          "subject": "morgana:E",
+          "knowledgeId": "ability-morgana-e-mechanics"
+        },
+        {
+          "code": "ABILITY_SLOT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "cheatSheet.1"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 21
+      }
+    },
+    {
+      "id": "L61-G08#4",
+      "matchupId": "L61-G08",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:20:29.310Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:20:29.320Z",
+          "durationMs": 18567,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:20:47.887Z",
+      "durationMs": 18567,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 21
+      }
+    },
+    {
+      "id": "L61-G08#5",
+      "matchupId": "L61-G08",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Caitlyn",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Morgana",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:20:49.914Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:20:49.925Z",
+          "durationMs": 23459,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:21:13.384Z",
+      "durationMs": 23459,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.response"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "threatResponseWindow.response",
+          "subject": "lux:E",
+          "knowledgeId": "ability-lux-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level2"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level2",
+          "subject": "lux:W",
+          "knowledgeId": "ability-lux-w-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "wavePlan"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "wavePlan",
+          "subject": "morgana:E",
+          "knowledgeId": "ability-morgana-e-mechanics"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "targetPriority.explanation",
+          "subject": "morgana:E",
+          "knowledgeId": "ability-morgana-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "postLevel6"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "postLevel6",
+          "subject": "lux:R",
+          "knowledgeId": "ability-lux-r-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 21
+      }
+    },
+    {
+      "id": "L61-G09#1",
+      "matchupId": "L61-G09",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:21:15.405Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:21:15.413Z",
+          "durationMs": 22826,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:21:38.239Z",
+      "durationMs": 22826,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level2",
+          "subject": "jinx:W",
+          "knowledgeId": "ability-jinx-w-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G09#2",
+      "matchupId": "L61-G09",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:21:40.261Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:21:40.270Z",
+          "durationMs": 16923,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:21:57.193Z",
+      "durationMs": 16923,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "cheatSheet.1",
+          "subject": "lux:W",
+          "knowledgeId": "ability-lux-w-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G09#3",
+      "matchupId": "L61-G09",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:21:59.212Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:21:59.223Z",
+          "durationMs": 18745,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:22:17.968Z",
+      "durationMs": 18745,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_NAME_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.threat"
+        },
+        {
+          "code": "ABILITY_NAME_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "postLevel6"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G09#4",
+      "matchupId": "L61-G09",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:22:19.992Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:22:20.003Z",
+          "durationMs": 20062,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:22:40.065Z",
+      "durationMs": 20062,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_NAME_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "threatResponseWindow.threat"
+        },
+        {
+          "code": "ABILITY_NAME_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "postLevel6"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G09#5",
+      "matchupId": "L61-G09",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Jinx",
+        "allySupport": "Lux",
+        "enemyCarry": "Ziggs",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:22:42.087Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:22:42.098Z",
+          "durationMs": 22991,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:23:05.089Z",
+      "durationMs": 22991,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "cheatSheet.2",
+          "subject": "lux:W",
+          "knowledgeId": "ability-lux-w-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G10#1",
+      "matchupId": "L61-G10",
+      "repetition": 1,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Morgana",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:23:07.104Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:23:07.112Z",
+          "durationMs": 22746,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:23:29.858Z",
+      "durationMs": 22746,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "UNSUPPORTED_COOLDOWN_RESET",
+          "category": "IMPOSSIBLE_INTERACTION",
+          "severity": "error",
+          "path": "wavePlan"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "targetPriority.explanation"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "targetPriority.explanation",
+          "subject": "swain:E",
+          "knowledgeId": "ability-swain-e-mechanics"
+        },
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "cheatSheet.1"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "cheatSheet.1",
+          "subject": "morgana:W",
+          "knowledgeId": "ability-morgana-w-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G10#2",
+      "matchupId": "L61-G10",
+      "repetition": 2,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Morgana",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:23:31.871Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:23:31.884Z",
+          "durationMs": 31859,
+          "outcome": "success",
+          "inputTokens": 3973,
+          "outputTokens": 6338,
+          "totalTokens": 10311,
+          "reasoningTokens": 5408
+        }
+      ],
+      "completedAt": "2026-10-05T15:24:03.743Z",
+      "durationMs": 31859,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Ziggs",
+          "allySupport": "Morgana",
+          "enemyCarry": "Jinx",
+          "enemySupport": "Swain",
+          "patch": "26.19"
+        },
+        "lanePlan": "Jouer une lane de poke et de disengage avec Ziggs et Morgana, en refusant les all-in tant que Swain E est disponible. Utiliser Morgana E pour couvrir l’engage de Swain ou le root de Jinx E, puis punir dès que Swain E manque.",
+        "threatResponseWindow": {
+          "threat": "Swain E root puis attirance et Jinx E root créent la principale menace d’engage, avec Swain R qui prolonge les combats par son drain et son slow.",
+          "response": "Morgana E peut absorber le root de Swain E ou de Jinx E et des dégâts magiques, tandis que Ziggs W et E servent à repousser et ralentir pour casser la poursuite.",
+          "window": "Après un Swain E manqué, ou pendant que Morgana E tient, avancer avec Ziggs Q et chercher Morgana Q pour convertir en pression.",
+          "winCondition": "Gagner la lane en harcelant, en gardant la vague contrôlée et en refusant les combats prolongés dans Swain R, puis en convertissant une capture de Morgana Q en dégâts de Ziggs ou en pression de tour."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, rester derrière les minions pour éviter Swain E et Jinx E, pendant que Ziggs poke avec Q et que Morgana garde E pour couvrir le premier contrôle.",
+          "level2": "Au niveau 2, jouer autour de Morgana Q et du poke de Ziggs, sans rester dans l’axe de Swain E, et utiliser Ziggs W pour créer de la distance si Swain avance.",
+          "level3": "Au niveau 3, la lane devient plus punitive avec les kits complets : ne pas s’engager tant que Morgana E n’est pas disponible pour couvrir l’engage de Swain."
+        },
+        "wavePlan": "Garder d’abord la vague de notre côté tant que Swain E et Morgana E sont incertains, en laissant Ziggs poke sans s’exposer. Après un Swain E manqué ou une Morgana Q réussie, pousser pour poser la pression et utiliser Ziggs W sur la tourelle vulnérable quand c’est sûr.",
+        "targetPriority": {
+          "primaryTarget": "Jinx",
+          "explanation": "Jinx est la principale source de dégâts à empêcher de farmer et de scaler ; la cibler quand elle s’expose après l’échec d’un sort clé de Swain, sinon harceler Swain sans gaspiller Morgana E."
+        },
+        "postLevel6": "Au niveau 6, éviter les combats prolongés dans Swain R ; kiter avec Ziggs W et E et utiliser Morgana R pour ralentir puis étourdir, tandis que Ziggs R zone ou finit les cibles basses et que Morgana E couvre les contrôles clés.",
+        "roamPlan": "Morgana peut roam après avoir poussé la vague et posé la vision, mais seulement si Ziggs peut tenir la lane sans être exposé à Swain E et Jinx E. Sinon, rester en lane pour couvrir Ziggs et chercher la capture de Morgana Q.",
+        "cheatSheet": [
+          "Morgana E : garder pour l’engage de Swain E ou le root de Jinx E, pas pour du poke.",
+          "Ziggs : poke avec Q, garder W et E pour disengage quand Swain avance.",
+          "Ne pas prolonger les trades dans Swain R ; kite avec ralentissements et Ziggs W.",
+          "Chercher Morgana Q pour convertir en dégâts de Ziggs et pression de tour.",
+          "Surveiller Jinx : éviter de lui donner un kill ou une destruction de structure qui déclenche Get Excited!."
+        ],
+        "goldenRule": "Ne pas forcer tant que Swain E est disponible et que Morgana E ne peut pas couvrir ; jouer poke et disengage, puis punir dès que Swain E manque."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G10#3",
+      "matchupId": "L61-G10",
+      "repetition": 3,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Morgana",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "success",
+      "startedAt": "2026-10-05T15:24:05.757Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:24:05.766Z",
+          "durationMs": 20865,
+          "outcome": "success",
+          "inputTokens": 3973,
+          "outputTokens": 4246,
+          "totalTokens": 8219,
+          "reasoningTokens": 3368
+        }
+      ],
+      "completedAt": "2026-10-05T15:24:26.631Z",
+      "durationMs": 20865,
+      "analysis": {
+        "matchup": {
+          "allyCarry": "Ziggs",
+          "allySupport": "Morgana",
+          "enemyCarry": "Jinx",
+          "enemySupport": "Swain",
+          "patch": "26.19"
+        },
+        "lanePlan": "Ziggs et Morgana jouent le poke à distance maximale en gardant la vague de leur côté pour refuser l'angle d'engage de Swain. On use Jinx au Q Bouncing Bomb tout en réservant Black Shield pour couvrir une tentative de catch.",
+        "threatResponseWindow": {
+          "threat": "La menace principale est le catch de Swain, dont le E Nevermove enracine et ramène la cible vers lui, ouvrant sur les dégâts de suivi de Jinx et son W Zap.",
+          "response": "Garder la distance, placer Black Shield de Morgana sur la cible de l'engage et punir un Swain trop avancé avec le Q Dark Binding de Morgana et le poke de Ziggs.",
+          "window": "Fenêtre favorable après un E Nevermove de Swain manqué : avancer et presser le poke sur Jinx pendant que la menace de catch est réduite.",
+          "winCondition": "Survivre à la phase de lane sans offrir de catch, user Jinx au poke et convertir la pression de vague en contrôle durable de la lane."
+        },
+        "earlyLevels": {
+          "level1": "Au niveau 1, Ziggs poke au Q Bouncing Bomb à portée max pendant que Morgana garde Q Dark Binding pour punir un Swain qui avance.",
+          "level2": "Au niveau 2, Ziggs peut menacer avec W Satchel Charge pour créer de la distance, et Morgana choisit entre Black Shield contre l'engage et W Tormented Shadow pour la pression.",
+          "level3": "Au niveau 3, les kits complets sont disponibles des deux côtés : on ne trade qu'après un E Nevermove raté et on évite de rester à portée du Q et de la menace de Jinx."
+        },
+        "wavePlan": "Garder d'abord la vague près de notre côté pour priver Swain de l'espace d'engage et Jinx de la poursuite, puis pousser après une fenêtre favorable (Swain sans E, Jinx en recul) pour forcer la tourelle et libérer le poke de Ziggs.",
+        "targetPriority": {
+          "primaryTarget": "Jinx",
+          "explanation": "Jinx est la source de dégâts soutenus et l'objectif de scale : la burst sur elle évite son snowball et la prive de son harcèlement. Swain récupère via son passif et son R, ce qui en fait une mauvaise première cible tant qu'il peut se sustain."
+        },
+        "postLevel6": "Au niveau 6, Ziggs gagne R Mega Inferno Bomb pour le poke à longue portée et la gestion de vague, Morgana gagne R Soul Shackles pour chercher un engage à deux, mais Swain R Demonic Ascension en fait une cible difficile à burst : on privilégie les échanges courts et le poke plutôt que les combats prolongés.",
+        "roamPlan": "Morgana peut roamer vers le mid ou la jungle quand la vague de Ziggs est poussée et qu'il reste en sécurité, mais éviter de laisser Ziggs seul face à la portée d'engage de Swain.",
+        "cheatSheet": [
+          "Ziggs poke au Q Bouncing Bomb à portée max et se dégage avec W Satchel Charge.",
+          "Garder Q Dark Binding de Morgana pour punir un Swain qui avance.",
+          "Réserver Black Shield de Morgana pour couvrir la cible du catch de Swain.",
+          "Ne pas rester dans l'axe du E Nevermove de Swain ; ne trader qu'après son échec.",
+          "Focus Jinx en premier et fuir le combat prolongé sous Swain R."
+        ],
+        "goldenRule": "Gagner par le poke et la vague, jamais par l'engage : si Swain touche son catch, on réagit avec Black Shield au lieu de forcer."
+      },
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G10#4",
+      "matchupId": "L61-G10",
+      "repetition": 4,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Morgana",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:24:28.647Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:24:28.656Z",
+          "durationMs": 26797,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:24:55.454Z",
+      "durationMs": 26797,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "UNSUPPORTED_COOLDOWN_RESET",
+          "category": "IMPOSSIBLE_INTERACTION",
+          "severity": "error",
+          "path": "wavePlan"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    },
+    {
+      "id": "L61-G10#5",
+      "matchupId": "L61-G10",
+      "repetition": 5,
+      "input": {
+        "allyCarry": "Ziggs",
+        "allySupport": "Morgana",
+        "enemyCarry": "Jinx",
+        "enemySupport": "Swain",
+        "patch": "26.19"
+      },
+      "sentinel": true,
+      "status": "invalid_analysis",
+      "startedAt": "2026-10-05T15:24:57.467Z",
+      "mechanicalCoverage": {
+        "goldenTruthVersion": "mechanical-golden-v1",
+        "fullyCovered": true,
+        "missing": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "startedAt": "2026-10-05T15:24:57.479Z",
+          "durationMs": 19816,
+          "outcome": "invalid_analysis"
+        }
+      ],
+      "completedAt": "2026-10-05T15:25:17.295Z",
+      "durationMs": 19816,
+      "error": {
+        "code": "INVALID_ANALYSIS_RESPONSE"
+      },
+      "violations": [
+        {
+          "code": "ABILITY_EFFECT_MISMATCH",
+          "category": "INVALID_ABILITY_EFFECT",
+          "severity": "error",
+          "path": "earlyLevels.level3"
+        },
+        {
+          "code": "KNOWLEDGE_CONTRADICTION",
+          "category": "KNOWLEDGE_CONTRADICTION",
+          "severity": "error",
+          "path": "earlyLevels.level3",
+          "subject": "ziggs:W",
+          "knowledgeId": "ability-ziggs-w-mechanics"
+        }
+      ],
+      "knowledgeCoverage": {
+        "status": "full",
+        "coveredChampions": 4,
+        "totalChampions": 4,
+        "relevantKnowledgeCount": 24
+      }
+    }
+  ]
+}

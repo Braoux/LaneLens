@@ -74,6 +74,9 @@ export function parseEvaluationCorpus(raw: string): EvaluationCorpus {
   }
   const patch = requiredString(value.patch, 'patch');
   const matchups = value.matchups.map(parseMatchup);
+  const fullCoverageGate = isRecord(value.rules) && value.rules.fullCoverageGate !== undefined
+    ? requiredString(value.rules.fullCoverageGate, 'rules.fullCoverageGate')
+    : undefined;
   const ids = new Set<string>();
   for (const matchup of matchups) {
     if (ids.has(matchup.id)) throw new EvaluationCorpusError(`Corpus invalide : ID dupliqué ${matchup.id}.`);
@@ -98,6 +101,7 @@ export function parseEvaluationCorpus(raw: string): EvaluationCorpus {
     corpusVersion,
     patch,
     frozen: value.frozen,
+    ...(fullCoverageGate === undefined ? {} : { fullCoverageGate }),
     matchups: Object.freeze(matchups),
   });
 }

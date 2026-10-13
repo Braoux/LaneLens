@@ -1,0 +1,267 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "1.0.0",
+  "name": "LAN-061 Golden Benchmark",
+  "patch": "26.19",
+  "frozen": true,
+  "description": "Golden benchmark réduit et volontairement maîtrisé pour mesurer la qualité du pipeline fact-grounded LAN-061. Les 10 cas sont tous des sentinelles et couvrent exactement une fois chacune des 10 paires possibles entre les 5 supports sélectionnés.",
+  "rules": {
+    "expectedMatchups": 10,
+    "expectedSentinels": 10,
+    "doNotEditInPlace": "Après établissement de la baseline, toute modification de composition doit créer une nouvelle corpusVersion.",
+    "fullCoverageGate": "Ce corpus ne peut servir de benchmark LAN-061 final que lorsque chaque matchup satisfait le gate de couverture mécanique complète défini par LAN-061.",
+    "selectionPrinciple": "Chaque paire non ordonnée de supports parmi Galio, Leona, Lux, Morgana et Swain apparaît exactement une fois. Les trois carries Caitlyn, Jinx et Ziggs sont répartis sur les 10 cas sans mirror.",
+    "rolePool": {
+      "carries": ["Caitlyn", "Jinx", "Ziggs"],
+      "supports": ["Galio", "Leona", "Lux", "Morgana", "Swain"]
+    }
+  },
+  "stats": {
+    "matchups": 10,
+    "sentinels": 10,
+    "uniqueChampions": 8,
+    "champions": [
+      "Caitlyn",
+      "Galio",
+      "Jinx",
+      "Leona",
+      "Lux",
+      "Morgana",
+      "Swain",
+      "Ziggs"
+    ],
+    "carryAppearances": {
+      "Caitlyn": 6,
+      "Jinx": 7,
+      "Ziggs": 7
+    },
+    "supportAppearances": {
+      "Galio": 4,
+      "Leona": 4,
+      "Lux": 4,
+      "Morgana": 4,
+      "Swain": 4
+    },
+    "supportPairCoverage": {
+      "covered": 10,
+      "possible": 10
+    },
+    "carryPairDistribution": {
+      "Caitlyn-Jinx": 3,
+      "Caitlyn-Ziggs": 3,
+      "Jinx-Ziggs": 4
+    }
+  },
+  "matchups": [
+    {
+      "id": "L61-G01",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jinx",
+        "support": "Galio"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Leona"
+      },
+      "tags": [
+        "scaling",
+        "range",
+        "engage",
+        "peel",
+        "hard-cc"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Galio vs Leona. Vérifie ownership et enchaînements de CC, engage/contre-engage, repositionnement de Caitlyn et sécurité de Jinx."
+    },
+    {
+      "id": "L61-G02",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Caitlyn",
+        "support": "Galio"
+      },
+      "enemy": {
+        "carry": "Ziggs",
+        "support": "Lux"
+      },
+      "tags": [
+        "range",
+        "poke",
+        "waveclear",
+        "zone-control",
+        "peel"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Galio vs Lux. Oppose range/peel à double poke et waveclear; vérifie boucliers, contrôles, repositionnement et absence d'interactions inventées."
+    },
+    {
+      "id": "L61-G03",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jinx",
+        "support": "Morgana"
+      },
+      "enemy": {
+        "carry": "Ziggs",
+        "support": "Galio"
+      },
+      "tags": [
+        "anti-engage",
+        "shield",
+        "waveclear",
+        "zone-control",
+        "scaling"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Morgana vs Galio. Teste Black Shield face aux contrôles, la distinction dégâts/CC, la zone de contrôle de Galio et le disengage de Ziggs."
+    },
+    {
+      "id": "L61-G04",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Caitlyn",
+        "support": "Swain"
+      },
+      "enemy": {
+        "carry": "Jinx",
+        "support": "Galio"
+      },
+      "tags": [
+        "catch",
+        "range",
+        "scaling",
+        "engage",
+        "target-priority"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Swain vs Galio. Vérifie root/pull, taunt/knock-up, attribution correcte des capacités et décisions de cible après un sort de catch manqué."
+    },
+    {
+      "id": "L61-G05",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ziggs",
+        "support": "Leona"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Lux"
+      },
+      "tags": [
+        "engage",
+        "poke",
+        "range",
+        "waveclear",
+        "all-in"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Leona vs Lux. Mesure la capacité à raisonner sur hard engage contre double portée/poke, sans inventer de propriétés aux sorts de contrôle."
+    },
+    {
+      "id": "L61-G06",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jinx",
+        "support": "Leona"
+      },
+      "enemy": {
+        "carry": "Caitlyn",
+        "support": "Morgana"
+      },
+      "tags": [
+        "engage",
+        "anti-engage",
+        "shield",
+        "range",
+        "scaling"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Leona vs Morgana. Cas canonique Black Shield contre engage; doit distinguer protection conditionnelle, cible de l'engage, root/stun et repositionnement de Caitlyn."
+    },
+    {
+      "id": "L61-G07",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ziggs",
+        "support": "Swain"
+      },
+      "enemy": {
+        "carry": "Jinx",
+        "support": "Leona"
+      },
+      "tags": [
+        "catch",
+        "engage",
+        "waveclear",
+        "zone-control",
+        "scaling"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Swain vs Leona. Compare deux menaces d'engage/catch différentes et teste les fenêtres après cooldown sans supposer de reset ou d'effet inexistant."
+    },
+    {
+      "id": "L61-G08",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Caitlyn",
+        "support": "Lux"
+      },
+      "enemy": {
+        "carry": "Ziggs",
+        "support": "Morgana"
+      },
+      "tags": [
+        "poke",
+        "anti-engage",
+        "shield",
+        "waveclear",
+        "range"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Lux vs Morgana. Teste poke et contrôle face à Black Shield, avec forte pression de portée et waveclear; interdit de transformer le shield en immunité générale."
+    },
+    {
+      "id": "L61-G09",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Jinx",
+        "support": "Lux"
+      },
+      "enemy": {
+        "carry": "Ziggs",
+        "support": "Swain"
+      },
+      "tags": [
+        "poke",
+        "catch",
+        "waveclear",
+        "scaling",
+        "zone-control"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Lux vs Swain. Oppose poke/bind à catch/root-pull avec deux carries aux profils de portée différents; vérifie la bonne attribution des fenêtres de menace."
+    },
+    {
+      "id": "L61-G10",
+      "patch": "26.19",
+      "ally": {
+        "carry": "Ziggs",
+        "support": "Morgana"
+      },
+      "enemy": {
+        "carry": "Jinx",
+        "support": "Swain"
+      },
+      "tags": [
+        "anti-engage",
+        "catch",
+        "shield",
+        "waveclear",
+        "scaling"
+      ],
+      "sentinel": true,
+      "sentinelRationale": "Morgana vs Swain. Vérifie Black Shield face au root/pull de Swain, les fenêtres de catch et la manière dont Ziggs peut conserver la distance sans inventer de mécanique."
+    }
+  ]
+}

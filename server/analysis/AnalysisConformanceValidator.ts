@@ -74,7 +74,7 @@ const CC_TERMS = [
 
 const PROTECTION_VERBS = [
   'block', 'bloqu', 'negate', 'annul', 'ignore', 'immune', 'immunis', 'prevent',
-  'empech', 'cancel',
+  'empech', 'cancel', 'neutralis', 'protege',
 ] as const;
 
 const ABILITY_INTERACTION_VERBS = [
@@ -201,12 +201,34 @@ function fields(analysis: MatchupAnalysis): readonly AnalysisTextField[] {
   ];
 }
 
+function mechanicalFragments(field: AnalysisTextField): readonly AnalysisTextField[] {
+  const fragments = field.text
+    .split(/[.?;]+|[—–]+|,\s*(?=(?:et|mais|tandis que|pendant que|alors que|puis)\b)/giu)
+    .map((text) => text.trim())
+    .filter((text) => text.length > 0);
+  return fragments.length > 0
+    ? fragments.map((text) => ({ ...field, text }))
+    : [field];
+}
+
 function includesTerm(text: string, terms: readonly string[]): boolean {
   return terms.some((term) => text.includes(term));
 }
 
 function abilityFacts(ability: AbilityGameplayFact): string {
   return normalize(ability.facts.join(' '));
+}
+
+function withoutAbilityNames(
+  text: string,
+  mentions: readonly AbilityMention[],
+): string {
+  let normalized = normalize(text);
+  for (const { ability } of mentions) {
+    const abilityName = normalize(ability.name);
+    if (abilityName.length >= 3) normalized = normalized.replaceAll(abilityName, ' ');
+  }
+  return normalize(normalized);
 }
 
 function uniqueMentions(mentions: readonly AbilityMention[]): readonly AbilityMention[] {
@@ -232,7 +254,7 @@ function mentionsIn(text: string, context: GameplayContext): readonly AbilityMen
       }
     }
 
-    const slotPattern = new RegExp(`\\b${escapeRegExp(championName)}(?: s)?(?:\\s+(?:utilise|lance|avec|son|sa|place|pose)){0,3}\\s+(p|passif|passive|q|a|w|z|e|r|ult|ulti|ultime|ultimate)\\b`, 'gu');
+    const slotPattern = new RegExp(`\\b${escapeRegExp(championName)}(?: s)?(?:\\s+(?:utilise|lance|son|sa|place|pose)){0,3}\\s+(p|passif|passive|q|a|w|z|e|r|ult|ulti|ultime|ultimate)\\b`, 'gu');
     for (const match of normalized.matchAll(slotPattern)) {
       const slot = SLOT_ALIASES[match[1] ?? ''];
       const ability = champion.abilities.find((candidate) => candidate.slot === slot);
@@ -262,7 +284,10 @@ function addViolation(
   details?: Pick<AnalysisConformanceViolation, 'subject' | 'knowledgeId'>,
 ): void {
   if (!violations.some(
-    (violation) => violation.code === code && violation.path === path,
+    (violation) => violation.code === code
+      && violation.path === path
+      && violation.subject === details?.subject
+      && violation.knowledgeId === details?.knowledgeId,
   )) {
     violations.push(Object.freeze({
       code,
@@ -274,24 +299,49 @@ function addViolation(
   }
 }
 
+function mechanicEvidence(
+  mention: AbilityMention,
+  facts: readonly KnowledgeEntry[],
+): KnowledgeEntry | undefined {
+  return facts.find((entry) =>
+    entry.mechanic?.complete === true
+    && normalizeChampionKey(entry.mechanic.championKey)
+      === normalizeChampionKey(mention.champion.champion)
+    && entry.mechanic.slot === mention.ability.slot);
+}
+
+function evidenceDetails(
+  mention: AbilityMention,
+  facts: readonly KnowledgeEntry[],
+): Pick<AnalysisConformanceViolation, 'subject' | 'knowledgeId'> | undefined {
+  const evidence = mechanicEvidence(mention, facts);
+  return evidence === undefined
+    ? undefined
+    : { subject: evidence.subject, knowledgeId: evidence.id };
+}
+
 function validateKnowledgeContradictions(
   field: AnalysisTextField,
   mentions: readonly AbilityMention[],
   facts: readonly KnowledgeEntry[],
   violations: AnalysisConformanceViolation[],
 ): void {
+  const text = withoutAbilityNames(field.text, mentions);
+  const interactionClaim = includesTerm(text, ABILITY_INTERACTION_VERBS);
   const declaredEffects = EFFECT_PATTERNS
-    .filter(([, pattern]) => pattern.test(normalize(field.text)))
+    .filter(([effect, pattern]) =>
+      pattern.test(text)
+      && !(interactionClaim && [
+        'stun', 'root', 'slow', 'knock-up', 'displacement', 'silence', 'fear', 'charm', 'taunt',
+      ].includes(effect)))
     .map(([effect]) => effect);
-  const mechanics = mentions.flatMap(({ champion, ability }) => facts.filter((entry) =>
-      entry.mechanic?.complete === true
-      && entry.mechanic.effects !== undefined
-      && normalizeChampionKey(entry.mechanic.championKey) === normalizeChampionKey(champion.champion)
-      && entry.mechanic.slot === ability.slot));
-  const unsupported = declaredEffects.find((effect) => !mechanics.some(
-    ({ mechanic }) => mechanic?.effects?.includes(effect) === true,
-  ));
-  const evidence = mechanics[0];
+  const modeledMentions = mentions.filter(({ ability }) => ability.effects !== undefined);
+  if (modeledMentions.length !== 1) return;
+  const [mention] = modeledMentions;
+  const evidence = mention === undefined ? undefined : mechanicEvidence(mention, facts);
+  const unsupported = declaredEffects.find(
+    (effect) => mention?.ability.effects?.includes(effect) !== true,
+  );
   if (unsupported !== undefined && evidence !== undefined) {
     addViolation(violations, 'KNOWLEDGE_CONTRADICTION', field.path, 'error', {
       subject: evidence.subject,
@@ -300,9 +350,14 @@ function validateKnowledgeContradictions(
   }
 }
 
+function isNegatedInteraction(text: string): boolean {
+  return /\bne\b.{0,30}\b(?:block|bloqu|annul|empech|absorb|neutralis|protege)\w*\b.{0,30}\b(?:pas|jamais)\b|\bne\b.{0,20}\bpeut\b.{0,10}\b(?:pas|jamais)\b.{0,20}\b(?:block|bloqu|annul|empech|absorb|neutralis|protege)\w*\b|\bsans compter sur\b.{0,80}\b(?:block|bloqu|annul|empech|absorb|neutralis|protege)\w*\b|\b(?:does not|doesn t|cannot)\b.{0,20}\b(?:block|negate|prevent|absorb)\b/u.test(text);
+}
+
 function validateExplicitAssociations(
   field: AnalysisTextField,
   context: GameplayContext,
+  facts: readonly KnowledgeEntry[],
   violations: AnalysisConformanceViolation[],
 ): void {
   const text = normalize(field.text);
@@ -315,22 +370,34 @@ function validateExplicitAssociations(
     const abilityName = normalize(mention.ability.name);
     let abilityIndex = text.indexOf(abilityName);
     while (abilityName.length >= 3 && abilityIndex >= 0) {
-      const prefix = text.slice(Math.max(0, abilityIndex - 60), abilityIndex);
+      const prefix = text.slice(Math.max(0, abilityIndex - 80), abilityIndex);
       const namedChampion = context.champions.find((champion) => {
         const championName = escapeRegExp(normalize(champion.champion));
         return new RegExp(
-          `\\b${championName}(?: s)?(?:\\s+(?:uses?|utilise|lance|avec|son|sa))?(?:\\s+(?:p|passif|passive|q|a|w|z|e|r|ult|ulti|ultime|ultimate))?\\s*[(:-]?\\s*$`,
+          `\\b${championName}(?: s)?(?:\\s+(?:uses?|utilise|lance|active|place|pose|son|sa)(?:\\s+(?:p|passif|passive|q|a|w|z|e|r|ult|ulti|ultime|ultimate))?|\\s+(?:p|passif|passive|q|a|w|z|e|r|ult|ulti|ultime|ultimate))\\s*[(:-]?\\s*$`,
           'u',
         ).test(prefix);
       });
       if (namedChampion && normalize(namedChampion.champion) !== normalize(mention.champion.champion)) {
-        addViolation(violations, 'ABILITY_CHAMPION_MISMATCH', field.path);
+        addViolation(
+          violations,
+          'ABILITY_CHAMPION_MISMATCH',
+          field.path,
+          'error',
+          evidenceDetails(mention, facts),
+        );
       }
 
       const slotMatch = prefix.match(/\b(p|passif|passive|q|a|w|z|e|r|ult|ulti|ultime|ultimate)\s*[(:-]?\s*$/u);
       const statedSlot = slotMatch ? SLOT_ALIASES[slotMatch[1] ?? ''] : undefined;
       if (statedSlot && statedSlot !== mention.ability.slot) {
-        addViolation(violations, 'ABILITY_SLOT_MISMATCH', field.path);
+        addViolation(
+          violations,
+          'ABILITY_SLOT_MISMATCH',
+          field.path,
+          'error',
+          evidenceDetails(mention, facts),
+        );
       }
       abilityIndex = text.indexOf(abilityName, abilityIndex + abilityName.length);
     }
@@ -371,13 +438,40 @@ function validateAvailability(
   }
 }
 
+function validateExplicitLearnedAbilityCount(
+  field: AnalysisTextField,
+  context: GameplayContext,
+  violations: AnalysisConformanceViolation[],
+): void {
+  if (field.level === undefined || field.level > 3) return;
+  const text = normalize(field.text);
+  for (const champion of context.champions) {
+    const championName = escapeRegExp(normalize(champion.champion));
+    const claimPattern = new RegExp(
+      `\\b${championName}\\b.{0,24}\\b(?:a deja|dispose de|possede|has|has already)\\b(.{0,120}?)(?=\\b(?:mais|tandis que|pendant que|alors que|donc|sinon|ne pas)\\b|$)`,
+      'gu',
+    );
+    for (const match of text.matchAll(claimPattern)) {
+      const slots = new Set(
+        [...(match[1] ?? '').matchAll(/\b(q|a|w|z|e)\b/gu)]
+          .map((slotMatch) => SLOT_ALIASES[slotMatch[1] ?? ''])
+          .filter((slot): slot is AbilitySlot => slot !== undefined),
+      );
+      if (slots.size > field.level) {
+        addViolation(violations, 'ABILITY_UNAVAILABLE_AT_LEVEL', field.path);
+      }
+    }
+  }
+}
+
 function validateAbilityEffects(
   field: AnalysisTextField,
   mentions: readonly AbilityMention[],
+  facts: readonly KnowledgeEntry[],
   violations: AnalysisConformanceViolation[],
 ): void {
   if (mentions.length === 0) return;
-  const text = normalize(field.text);
+  const text = withoutAbilityNames(field.text, mentions);
   const interactionClaim = includesTerm(text, ABILITY_INTERACTION_VERBS);
   const declared = EFFECT_PATTERNS
     .filter(([effect, pattern]) =>
@@ -393,7 +487,15 @@ function validateAbilityEffects(
       modeledMentions.length > 0
       && !modeledMentions.some(({ ability }) => ability.effects?.includes(effect))
     ) {
-      addViolation(violations, 'ABILITY_EFFECT_MISMATCH', field.path);
+      addViolation(
+        violations,
+        'ABILITY_EFFECT_MISMATCH',
+        field.path,
+        'error',
+        modeledMentions.length === 1 && modeledMentions[0] !== undefined
+          ? evidenceDetails(modeledMentions[0], facts)
+          : undefined,
+      );
     }
   }
 
@@ -408,15 +510,27 @@ function validateAbilityEffects(
 function validateTargeting(
   field: AnalysisTextField,
   mentions: readonly AbilityMention[],
+  facts: readonly KnowledgeEntry[],
   violations: AnalysisConformanceViolation[],
 ): void {
   const text = normalize(field.text);
   const impliesPlacedZone = /\b(?:place|pose|depose|zone au sol|au sol|a un endroit|en retrait)\b/u.test(text);
-  if (
-    impliesPlacedZone
-    && mentions.some(({ ability }) => ability.castModel === 'self' || ability.castModel === 'self-centered')
-  ) {
-    addViolation(violations, 'ABILITY_TARGETING_MISMATCH', field.path);
+  const incompatible = mentions.filter(
+    ({ ability }) => ability.castModel === 'self' || ability.castModel === 'self-centered',
+  );
+  const compatible = mentions.filter(
+    ({ ability }) => ability.castModel !== undefined
+      && ability.castModel !== 'self'
+      && ability.castModel !== 'self-centered',
+  );
+  if (impliesPlacedZone && incompatible.length === 1 && compatible.length === 0) {
+    addViolation(
+      violations,
+      'ABILITY_TARGETING_MISMATCH',
+      field.path,
+      'error',
+      incompatible[0] === undefined ? undefined : evidenceDetails(incompatible[0], facts),
+    );
   }
 }
 
@@ -427,7 +541,8 @@ function validateAbilityInteractions(
   patchFacts: readonly string[],
 ): void {
   if (mentions.length < 2) return;
-  const text = normalize(field.text);
+  const text = withoutAbilityNames(field.text, mentions);
+  if (isNegatedInteraction(text)) return;
   const verbs = ABILITY_INTERACTION_VERBS.filter((verb) => text.includes(verb));
   if (verbs.length === 0) return;
   const trustedFacts = [
@@ -449,6 +564,7 @@ function validateCrowdControl(
   patchFacts: readonly string[],
 ): void {
   const text = normalize(field.text);
+  if (isNegatedInteraction(text)) return;
   const ccTerms = CC_TERMS.filter((term) => text.includes(term));
   if (/\bknocks?\b.{0,30}\bback\b/u.test(text)) ccTerms.push('knockback');
   if (/\bknocks?\b.{0,30}\bup\b/u.test(text)) ccTerms.push('knock up');
@@ -478,9 +594,10 @@ function validateCooldownMechanics(
   patchFacts: readonly string[],
 ): void {
   const text = normalize(field.text);
+  const explicitCooldownClaim = /\b(?:reset\w*|reinitialis\w*|refund\w*|rembours\w*|refresh\w*|rafraich\w*|restore)\b.{0,60}\b(?:cooldown|delai de recuperation)\b|\b(?:cooldown|delai de recuperation)\b.{0,60}\b(?:reset\w*|reinitialis\w*|refund\w*|rembours\w*|refresh\w*|rafraich\w*)\b|\brend (?:le|son) cooldown\b/u.test(text);
+  if (!explicitCooldownClaim) return;
   const terms = RESET_TERMS.filter((term) => text.includes(term));
   if (terms.length === 0) return;
-  if (mentions.length === 0 && !/\b(?:cooldown|delai de recuperation)\b/u.test(text)) return;
   const supported = mentions.some(({ ability }) => {
     const facts = abilityFacts(ability);
     return terms.some((term) => facts.includes(term));
@@ -540,8 +657,8 @@ export class AnalysisConformanceFailure extends Error {
   readonly violationCodes: readonly AnalysisConformanceCode[];
   readonly violationPaths: readonly string[];
 
-  constructor(violations: readonly AnalysisConformanceViolation[]) {
-    super('Gameplay conformance validation failed.');
+  constructor(violations: readonly AnalysisConformanceViolation[], options?: ErrorOptions) {
+    super('Gameplay conformance validation failed.', options);
     this.name = 'AnalysisConformanceFailure';
     this.violations = Object.freeze(violations.map((violation) => Object.freeze({ ...violation })));
     this.violationCodes = Object.freeze([...new Set(violations.map(({ code }) => code))]);
@@ -573,31 +690,34 @@ export class AnalysisConformanceValidator {
       ? [...contextOrKnowledge.officialFacts, ...contextOrKnowledge.derivedMechanics]
       : [];
     const violations: AnalysisConformanceViolation[] = [];
-    for (const field of fields(analysis)) {
-      const mentions = mentionsIn(field.text, context);
-      const fieldText = normalize(field.text);
-      const patchFacts = (patchContext?.facts ?? [])
-        .filter((fact) => {
-          const subject = normalize(fact.subject);
-          if (fieldText.includes(subject)) return true;
-          return mentions.some(({ champion, ability }) => {
-            const championName = normalize(champion.champion);
-            const abilityName = normalize(ability.name);
-            return subject.includes(championName)
-              && (subject.includes(abilityName) || new RegExp(`\\b${ability.slot.toLocaleLowerCase('en-US')}\\b`, 'u').test(subject));
-          });
-        })
-        .map((fact) => normalize(`${fact.subject} ${fact.text}`));
-      validateExplicitAssociations(field, context, violations);
-      validateAvailability(field, mentions, violations);
-      validateAbilityEffects(field, mentions, violations);
-      validateKnowledgeContradictions(field, mentions, blockingKnowledge, violations);
-      validateTargeting(field, mentions, violations);
-      validateAbilityInteractions(field, mentions, violations, patchFacts);
-      validateCrowdControl(field, mentions, violations, patchFacts);
-      validateCooldownMechanics(field, mentions, violations, patchFacts);
-      validateExactValues(field, mentions, violations, patchFacts);
-      validateLethal(field, violations);
+    for (const sourceField of fields(analysis)) {
+      for (const field of mechanicalFragments(sourceField)) {
+        const mentions = mentionsIn(field.text, context);
+        const fieldText = normalize(field.text);
+        const patchFacts = (patchContext?.facts ?? [])
+          .filter((fact) => {
+            const subject = normalize(fact.subject);
+            if (fieldText.includes(subject)) return true;
+            return mentions.some(({ champion, ability }) => {
+              const championName = normalize(champion.champion);
+              const abilityName = normalize(ability.name);
+              return subject.includes(championName)
+                && (subject.includes(abilityName) || new RegExp(`\\b${ability.slot.toLocaleLowerCase('en-US')}\\b`, 'u').test(subject));
+            });
+          })
+          .map((fact) => normalize(`${fact.subject} ${fact.text}`));
+        validateExplicitAssociations(field, context, blockingKnowledge, violations);
+        validateAvailability(field, mentions, violations);
+        validateExplicitLearnedAbilityCount(field, context, violations);
+        validateAbilityEffects(field, mentions, blockingKnowledge, violations);
+        validateKnowledgeContradictions(field, mentions, blockingKnowledge, violations);
+        validateTargeting(field, mentions, blockingKnowledge, violations);
+        validateAbilityInteractions(field, mentions, violations, patchFacts);
+        validateCrowdControl(field, mentions, violations, patchFacts);
+        validateCooldownMechanics(field, mentions, violations, patchFacts);
+        validateExactValues(field, mentions, violations, patchFacts);
+        validateLethal(field, violations);
+      }
     }
 
     const waveGuidance = normalize(`${analysis.lanePlan} ${analysis.wavePlan} ${analysis.threatResponseWindow.winCondition}`);

@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import type { MatchupAnalysisProvider } from '../MatchupAnalysisProvider.js';
 import type { MatchupAnalysisProviderRequest } from '../types.js';
+import { parseProviderJson } from '../UnparsedProviderOutput.js';
 import { loadOpenAIConfig } from './openai-config.js';
 import type { OpenAIConfig } from './openai-config.js';
 import {
@@ -104,11 +105,7 @@ export class OpenAIProvider implements MatchupAnalysisProvider {
       return null;
     }
 
-    try {
-      return JSON.parse(response.outputText) as unknown;
-    } catch {
-      return null;
-    }
+    return parseProviderJson(response.outputText);
   }
 }
 

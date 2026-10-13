@@ -1,5 +1,6 @@
 import type { MatchupAnalysisProvider } from './MatchupAnalysisProvider.js';
 import { MatchupAnalysisService } from './MatchupAnalysisService.js';
+import { TargetedAnalysisRepairService } from './TargetedAnalysisRepairService.js';
 import { createGeminiProvider } from './providers/GeminiProvider.js';
 import { loadGeminiConfig } from './providers/gemini-config.js';
 import type { GeminiConfig } from './providers/gemini-config.js';
@@ -37,6 +38,7 @@ export interface AnalysisRuntimeOptions {
 
 export interface AnalysisRuntime {
   readonly service: MatchupAnalysisService;
+  readonly repairService: TargetedAnalysisRepairService;
   readonly provider: AIProviderName;
   readonly model: string;
   readonly knowledgeBaseVersion: string | null;
@@ -102,6 +104,7 @@ export function createAnalysisRuntime(
     : new KnowledgeResolver(repository);
   return Object.freeze({
     service: new MatchupAnalysisService(provider, undefined, knowledgeResolver),
+    repairService: new TargetedAnalysisRepairService(provider, undefined, knowledgeResolver),
     provider: providerName,
     model,
     knowledgeBaseVersion: repository?.version ?? null,

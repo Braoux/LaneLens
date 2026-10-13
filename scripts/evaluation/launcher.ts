@@ -21,10 +21,17 @@ import {
 } from '../../server/analysis/providers/ai-provider-config.js';
 import { loadEvaluationCorpus, selectCorpusMatchups } from './corpus.js';
 import { loadEvaluationRun, runFiles } from './result-writer.js';
+import { loadRepairRun } from './repair-result-writer.js';
+import type { RepairResult } from './repair-types.js';
 import type { CorpusMatchup, EvaluationMode, EvaluationResult } from './types.js';
 import { KnowledgeResolver } from '../../server/knowledge/KnowledgeResolver.js';
 import { StaticKnowledgeRepository } from '../../server/knowledge/StaticKnowledgeRepository.js';
 import { KNOWLEDGE_BASE_VERSION } from '../../server/knowledge/data/knowledge.js';
+import { effectiveRepeat, resultMatchupId } from './observation-plan.js';
+import {
+  assertMechanicalCoverageGate,
+} from './mechanical-coverage.js';
+import type { MechanicalCoverageGateResult } from '../../server/knowledge/MechanicalCoverageGate.js';
 
 const CONFIG_RELATIVE_PATH = '.lanelens-evaluation/launcher.json';
 const DEFAULT_RESULTS_RELATIVE_PATH = '.lanelens-evaluation/runs';
@@ -54,10 +61,32 @@ export interface EvaluationRunInfo {
   readonly provider: string;
   readonly model: string;
   readonly knowledgeBaseVersion: string | null;
+  readonly repeat: number;
   readonly startedAt: string;
   readonly updatedAt: string;
   readonly completed: number;
   readonly total: number;
+  readonly remaining: number;
+  readonly success: number;
+  readonly failed: number;
+  readonly isComplete: boolean;
+  readonly resultsPath: string;
+  readonly summaryPath: string;
+}
+
+export interface RepairRunInfo {
+  readonly directory: string;
+  readonly name: string;
+  readonly runId: string;
+  readonly sourceRunId: string;
+  readonly provider: string;
+  readonly model: string;
+  readonly maxRepairs: 1 | 2;
+  readonly startedAt: string;
+  readonly updatedAt: string;
+  readonly completed: number;
+  readonly total: number;
+  readonly ineligible: number;
   readonly remaining: number;
   readonly success: number;
   readonly failed: number;
@@ -75,6 +104,14 @@ export interface LauncherExecutionRequest {
   readonly resumeDirectory?: string;
   readonly matchupId?: string;
   readonly knowledgeBaseVersion: string | null;
+  readonly repeat?: number;
+}
+
+export interface RepairLauncherRequest {
+  readonly sourceDirectory: string;
+  readonly outputDirectory?: string;
+  readonly resumeDirectory?: string;
+  readonly maxRepairs?: 1 | 2;
 }
 
 export interface KnowledgeCoveragePreflight {
@@ -90,8 +127,13 @@ export interface EvaluationConfigurationSummary {
   readonly provider: string;
   readonly model: string;
   readonly knowledgeBaseVersion: string | null;
+  readonly repeat: number;
+  readonly selectedMatchups: number;
   readonly outputDirectory: string;
   readonly coverage?: KnowledgeCoveragePreflight;
+  readonly mechanicalCoverage?: MechanicalCoverageGateResult;
+  readonly repairPasses?: 0 | 1 | 2;
+  readonly repairOutputDirectory?: string;
 }
 
 export const CURRENT_KNOWLEDGE_BASE_VERSION = KNOWLEDGE_BASE_VERSION;
@@ -193,9 +235,10 @@ async function latestMtime(paths: readonly string[]): Promise<string> {
 
 export async function readRunInfo(directory: string): Promise<EvaluationRunInfo> {
   const loaded = await loadEvaluationRun(directory);
-  const total = loaded.run.selectedIds.length;
+  const repeat = effectiveRepeat(loaded.run);
+  const total = loaded.run.selectedIds.length * repeat;
   const completedResults = loaded.results.filter(
-    (result) => loaded.run.selectedIds.includes(result.id) && terminal(result),
+    (result) => loaded.run.selectedIds.includes(resultMatchupId(result)) && terminal(result),
   );
   const completed = completedResults.length;
   const success = completedResults.filter(({ status }) => status === 'success').length;
@@ -209,6 +252,7 @@ export async function readRunInfo(directory: string): Promise<EvaluationRunInfo>
     provider: loaded.run.provider,
     model: loaded.run.model,
     knowledgeBaseVersion: loaded.run.knowledgeBaseVersion ?? null,
+    repeat,
     startedAt: loaded.run.startedAt,
     updatedAt,
     completed,
@@ -222,7 +266,7 @@ export async function readRunInfo(directory: string): Promise<EvaluationRunInfo>
   });
 }
 
-async function findRunDirectories(root: string, maxDepth: number): Promise<string[]> {
+async function findDirectoriesContaining(root: string, maxDepth: number, filename: string): Promise<string[]> {
   if (maxDepth < 0) return [];
   let entries;
   try {
@@ -230,10 +274,10 @@ async function findRunDirectories(root: string, maxDepth: number): Promise<strin
   } catch {
     return [];
   }
-  if (entries.some((entry) => entry.isFile() && entry.name === 'run.json')) return [root];
+  if (entries.some((entry) => entry.isFile() && entry.name === filename)) return [root];
   const nested = await Promise.all(entries
     .filter((entry) => entry.isDirectory() && !entry.isSymbolicLink())
-    .map((entry) => findRunDirectories(resolve(root, entry.name), maxDepth - 1)));
+    .map((entry) => findDirectoriesContaining(resolve(root, entry.name), maxDepth - 1, filename)));
   return nested.flat();
 }
 
@@ -241,7 +285,7 @@ export async function discoverEvaluationRuns(
   roots: readonly string[],
 ): Promise<readonly EvaluationRunInfo[]> {
   const directories = new Set((await Promise.all(
-    roots.map((root) => findRunDirectories(resolve(root), 3)),
+    roots.map((root) => findDirectoriesContaining(resolve(root), 3, 'run.json')),
   )).flat());
   const runs = await Promise.all([...directories].map(async (directory) => {
     try {
@@ -279,7 +323,85 @@ export function buildEvaluationArguments(request: LauncherExecutionRequest): rea
     args.push('--id', request.matchupId);
   }
   if (request.knowledgeBaseVersion) args.push('--knowledge-base-version', request.knowledgeBaseVersion);
+  if ((request.repeat ?? 1) !== 1) args.push('--repeat', String(request.repeat));
   return args;
+}
+
+export function buildRepairArguments(request: RepairLauncherRequest): readonly string[] {
+  const args = ['--source', resolve(request.sourceDirectory)];
+  if (request.resumeDirectory !== undefined) {
+    if (request.outputDirectory !== undefined) {
+      throw new EvaluationLauncherError('Les dossiers de sortie et de reprise du repair sont incompatibles.');
+    }
+    args.push('--resume', resolve(request.resumeDirectory));
+  } else {
+    if (request.outputDirectory === undefined) {
+      throw new EvaluationLauncherError('Le dossier de sortie du repair est requis.');
+    }
+    args.push('--output', resolve(request.outputDirectory));
+  }
+  if (request.maxRepairs !== undefined) args.push('--max-repairs', String(request.maxRepairs));
+  return args;
+}
+
+function repairTerminal(result: RepairResult): boolean {
+  return result.status !== 'in_progress';
+}
+
+export async function readRepairRunInfo(directory: string): Promise<RepairRunInfo> {
+  const loaded = await loadRepairRun(directory);
+  const total = loaded.run.selectedIds.length;
+  const completedResults = loaded.results.filter(repairTerminal);
+  const completed = completedResults.length;
+  const success = completedResults.filter(({ status }) => status === 'success').length;
+  const updatedAt = await latestMtime([loaded.files.run, loaded.files.results, loaded.files.summary]);
+  return Object.freeze({
+    directory: loaded.files.directory,
+    name: basename(loaded.files.directory),
+    runId: loaded.run.runId,
+    sourceRunId: loaded.run.sourceRunId,
+    provider: loaded.run.provider,
+    model: loaded.run.model,
+    maxRepairs: loaded.run.maxRepairs,
+    startedAt: loaded.run.startedAt,
+    updatedAt,
+    completed,
+    total,
+    ineligible: loaded.run.ineligibleObservations?.length ?? 0,
+    remaining: Math.max(0, total - completed),
+    success,
+    failed: completedResults.length - success,
+    isComplete: completed >= total && loaded.run.completedAt !== null,
+    resultsPath: loaded.files.results,
+    summaryPath: loaded.files.summary,
+  });
+}
+
+export async function discoverRepairRuns(roots: readonly string[]): Promise<readonly RepairRunInfo[]> {
+  const directories = new Set((await Promise.all(
+    roots.map((root) => findDirectoriesContaining(resolve(root), 3, 'repair-run.json')),
+  )).flat());
+  const runs = await Promise.all([...directories].map(async (directory) => {
+    try {
+      return await readRepairRunInfo(directory);
+    } catch {
+      return undefined;
+    }
+  }));
+  return Object.freeze(runs
+    .filter((run): run is RepairRunInfo => run !== undefined)
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)));
+}
+
+export function latestIncompleteRepairRun(runs: readonly RepairRunInfo[]): RepairRunInfo | undefined {
+  return runs.find(({ isComplete }) => !isComplete);
+}
+
+export async function preflightMechanicalCoverage(
+  corpusPath: string,
+): Promise<MechanicalCoverageGateResult | undefined> {
+  const loaded = await loadEvaluationCorpus(resolve(corpusPath));
+  return assertMechanicalCoverageGate(loaded.corpus);
 }
 
 export function assertSupportedKnowledgeBaseVersion(version: string | null): void {
@@ -355,10 +477,22 @@ export function formatEvaluationConfiguration(config: EvaluationConfigurationSum
     '',
     `Corpus          : ${config.corpusFile}`,
     `Mode            : ${formatEvaluationMode(config.mode)}`,
+    `Matchups        : ${config.selectedMatchups}`,
+    `Répétitions     : ${config.repeat}`,
+    `Observations    : ${config.selectedMatchups * config.repeat}`,
     `Provider        : ${config.provider}`,
     `Modèle          : ${config.model}`,
     knowledge,
     `Résultats       : ${config.outputDirectory}`,
+    `Repair ciblé   : ${config.repairPasses === undefined || config.repairPasses === 0
+      ? 'DÉSACTIVÉ'
+      : `${config.repairPasses} passe(s) après le run`}`,
+    config.repairOutputDirectory === undefined ? '' : `Résultats repair: ${config.repairOutputDirectory}`,
+    config.mechanicalCoverage === undefined ? '' : [
+      'Mechanical coverage gate',
+      `- couverture : ${config.mechanicalCoverage.coveredMatchups}/${config.mechanicalCoverage.totalMatchups} FULL`,
+      `- golden truth : ${config.mechanicalCoverage.goldenTruthVersion}`,
+    ].join('\n'),
     coverage,
     '',
   ].join('\n');
@@ -457,6 +591,19 @@ export async function createRunOutputPath(options: {
     ? 'pre-kb'
     : `kb-${options.knowledgeBaseVersion.replaceAll(/[^a-zA-Z0-9-]+/gu, '-')}`;
   const output = resolve(options.resultsRoot, `${mode}-${timestamp}-${suffix}`);
+  await assertNewOutputPath(output);
+  return output;
+}
+
+export async function createRepairOutputPath(options: {
+  readonly resultsRoot: string;
+  readonly maxRepairs: 1 | 2;
+  readonly now?: Date;
+  readonly id?: string;
+}): Promise<string> {
+  const timestamp = (options.now ?? new Date()).toISOString().replaceAll(/[:.]/gu, '-');
+  const suffix = options.id ?? randomUUID();
+  const output = resolve(options.resultsRoot, `repair-${options.maxRepairs}-pass-${timestamp}-${suffix}`);
   await assertNewOutputPath(output);
   return output;
 }

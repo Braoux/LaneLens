@@ -2,6 +2,11 @@ import type { MatchupAnalysisInput } from './types.js';
 import type { AppLocale } from '../../shared/locale.js';
 import type { GameplayContext } from '../gameplay-context/types.js';
 import type { KnowledgeEntry, ResolvedKnowledgeContext } from '../knowledge/types.js';
+import type { MatchupAnalysis } from './types.js';
+import {
+  targetedRepairPaths,
+  type AnalysisRepairViolation,
+} from './TargetedAnalysisRepair.js';
 
 const LANGUAGE_INSTRUCTIONS: Record<AppLocale, readonly string[]> = {
   'fr-FR': [
@@ -83,5 +88,37 @@ export function buildMatchupAnalysisInstructions(
     'Le contexte Data Dragon ci-dessous décrit les kits statiques et reste distinct du patch joueur :',
     ...gameplayFacts(knowledgeContext.gameplay),
     'Retourne une valeur respectant le contrat MatchupAnalysis fourni par LaneLens.',
+  ].join('\n');
+}
+
+export function buildMatchupAnalysisRepairInstructions(
+  input: MatchupAnalysisInput,
+  knowledgeContext: ResolvedKnowledgeContext,
+  candidate: MatchupAnalysis,
+  violations: readonly AnalysisRepairViolation[],
+): string {
+  const paths = targetedRepairPaths(violations.map(({ path }) => path));
+  const feedback = violations.map((violation) => ({
+    code: violation.code,
+    path: violation.path,
+    category: violation.category ?? 'OTHER',
+    ...(violation.subject === undefined ? {} : { subject: violation.subject }),
+    ...(violation.knowledgeId === undefined ? {} : { knowledgeId: violation.knowledgeId }),
+  }));
+  const trustedKnowledge = [...knowledgeContext.officialFacts, ...knowledgeContext.derivedMechanics]
+    .filter((entry) => violations.some((violation) =>
+      violation.knowledgeId === entry.id
+      || (violation.subject !== undefined && entry.subject === violation.subject)))
+    .map(({ id, subject, statement }) => ({ id, subject, statement }));
+  return [
+    buildMatchupAnalysisInstructions(input, knowledgeContext),
+    '',
+    'TARGETED REPAIR — corrige uniquement les champs explicitement autorisés ci-dessous.',
+    'Retourne le contrat MatchupAnalysis complet.',
+    'Tous les champs hors de la liste autorisée doivent rester strictement identiques à la candidate.',
+    `Champs autorisés: ${JSON.stringify(paths)}`,
+    `Violations du validator: ${JSON.stringify(feedback)}`,
+    `Facts KB fiables directement associés: ${JSON.stringify(trustedKnowledge)}`,
+    `Candidate originale: ${JSON.stringify(candidate)}`,
   ].join('\n');
 }

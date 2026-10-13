@@ -5,25 +5,27 @@ import type {
 } from './MatchupAnalysisProvider.js';
 import { buildMatchupAnalysisInstructions } from './prompt.js';
 import type { MatchupAnalysis, MatchupAnalysisInput } from './types.js';
-import { assertValidMatchupAnalysisInput, validateMatchupAnalysis } from './validation.js';
+import { assertValidMatchupAnalysisInput } from './validation.js';
 import { AnalysisLanguageValidator } from './AnalysisLanguageValidator.js';
-import {
-  AnalysisConformanceFailure,
-  AnalysisConformanceValidator,
-} from './AnalysisConformanceValidator.js';
+import { AnalysisConformanceValidator } from './AnalysisConformanceValidator.js';
 import { KnowledgeResolver } from '../knowledge/KnowledgeResolver.js';
 import { StaticKnowledgeRepository } from '../knowledge/StaticKnowledgeRepository.js';
 import type { KnowledgeContextResolver } from '../knowledge/types.js';
+import { AnalysisCandidateProcessor } from './AnalysisCandidateProcessor.js';
 
 export class MatchupAnalysisService {
+  private readonly processor: AnalysisCandidateProcessor;
+
   constructor(
-    private readonly provider: MatchupAnalysisProvider,
-    private readonly languageValidator = new AnalysisLanguageValidator(),
+    provider: MatchupAnalysisProvider,
+    languageValidator = new AnalysisLanguageValidator(),
     private readonly knowledgeResolver: KnowledgeContextResolver = new KnowledgeResolver(
       new StaticKnowledgeRepository(),
     ),
-    private readonly conformanceValidator = new AnalysisConformanceValidator(),
-  ) {}
+    conformanceValidator = new AnalysisConformanceValidator(),
+  ) {
+    this.processor = new AnalysisCandidateProcessor(provider, languageValidator, conformanceValidator);
+  }
 
   async analyze(
     input: MatchupAnalysisInput,
@@ -44,30 +46,6 @@ export class MatchupAnalysisService {
 
     providerOptions?.onKnowledgeCoverage?.(knowledgeContext.coverage, knowledgeContext.version);
     const instructions = buildMatchupAnalysisInstructions(input, knowledgeContext);
-    let providerResponse: unknown;
-
-    try {
-      providerResponse = await this.provider.analyze({ input, instructions }, providerOptions);
-    } catch (error) {
-      throw new MatchupAnalysisError('ANALYSIS_PROVIDER_UNAVAILABLE', { cause: error });
-    }
-
-    const analysis = validateMatchupAnalysis(providerResponse, input);
-    const conformance = this.conformanceValidator.validate(
-      analysis,
-      knowledgeContext,
-      input.patchContext,
-    );
-    if (!conformance.valid) {
-      throw new MatchupAnalysisError('INVALID_ANALYSIS_RESPONSE', {
-        cause: new AnalysisConformanceFailure(
-          conformance.violations.filter(({ severity }) => severity === 'error'),
-        ),
-      });
-    }
-    if (!this.languageValidator.validate(analysis, input.locale).valid) {
-      throw new MatchupAnalysisError('INVALID_ANALYSIS_RESPONSE');
-    }
-    return analysis;
+    return this.processor.generateAndValidate(input, instructions, knowledgeContext, providerOptions);
   }
 }

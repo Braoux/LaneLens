@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { MatchupAnalysisError } from '../server/analysis/errors.js';
+import { UnparsedProviderOutput } from '../server/analysis/UnparsedProviderOutput.js';
 import { MatchupAnalysisService } from '../server/analysis/MatchupAnalysisService.js';
 import type { MatchupAnalysis, MatchupAnalysisInput } from '../server/analysis/types.js';
 import {
@@ -255,7 +256,13 @@ test('valid structured output is returned without rewriting matchup fields', asy
 test('refusal, absent output, empty output, and malformed JSON return controlled invalid data', async () => {
   for (const outputText of [undefined, null, '', '{not-json']) {
     const provider = new OpenAIProvider(new FakeResponsesClient({ outputText }), 'gpt-6-sol');
-    assert.equal(await provider.analyze(providerRequest), null);
+    const output = await provider.analyze(providerRequest);
+    if (outputText === '{not-json') {
+      assert.ok(output instanceof UnparsedProviderOutput);
+      assert.equal(output.rawText, outputText);
+    } else {
+      assert.equal(output, null);
+    }
 
     await assert.rejects(
       new MatchupAnalysisService(provider).analyze(input),

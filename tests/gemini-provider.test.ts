@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { MatchupAnalysisError } from '../server/analysis/errors.js';
+import { UnparsedProviderOutput } from '../server/analysis/UnparsedProviderOutput.js';
 import { MatchupAnalysisService } from '../server/analysis/MatchupAnalysisService.js';
 import type { MatchupAnalysis, MatchupAnalysisInput } from '../server/analysis/types.js';
 import {
@@ -280,7 +281,13 @@ test('blocked, absent, empty, and malformed Gemini output return controlled inva
       'gemini-3.8-flash',
       30_000,
     );
-    assert.equal(await provider.analyze(providerRequest), null);
+    const output = await provider.analyze(providerRequest);
+    if (outputText === '{not-json') {
+      assert.ok(output instanceof UnparsedProviderOutput);
+      assert.equal(output.rawText, outputText);
+    } else {
+      assert.equal(output, null);
+    }
 
     await assert.rejects(
       new MatchupAnalysisService(provider).analyze(input),

@@ -16,7 +16,9 @@ Le menu propose :
 3. la sélection numérotée d’un run existant ;
 4. les sentinelles uniquement ;
 5. un matchup précis, par exemple `LLC-009` ;
-6. les informations du dernier run, sans appel provider ni consommation de tokens.
+6. les informations du dernier run, sans appel provider ni consommation de tokens ;
+7. le repair ciblé d’un run terminé ;
+8. la reprise du dernier repair interrompu.
 
 Le fichier `.cmd` ne contient aucune logique d’évaluation ni aucun secret. Il vérifie seulement la présence de Node et de `tsx`, puis démarre `scripts/evaluation/interactive-runner.ts`.
 
@@ -27,7 +29,30 @@ Chaque nouveau run demande explicitement l’un des deux modes :
 1. **Baseline pré-KB — Knowledge Base désactivée** ;
 2. **Évaluation avec Knowledge Base — `lan-032-kb-v1`**.
 
-Aucun défaut silencieux n’est appliqué. Avant confirmation, le launcher affiche le corpus, le mode de sélection, le provider, le modèle, l’état et la version KB ainsi que le dossier de résultats. En mode KB, il résout localement la couverture attendue sur toute la sélection, sans appel LLM. Il bloque le lancement si tous les matchups ont une couverture `none`.
+Aucun défaut silencieux n’est appliqué. Chaque nouveau run demande aussi le
+nombre de répétitions expérimentales, avec `1` par défaut. Avant confirmation,
+le launcher affiche le corpus, le mode de sélection, le nombre de matchups, les
+répétitions, le total d'observations, le provider, le modèle, l’état et la
+version KB ainsi que le dossier de résultats. En mode KB, il résout localement
+la couverture attendue sur toute la sélection, sans appel LLM. Il bloque le
+lancement si tous les matchups ont une couverture `none`.
+
+Chaque nouveau run demande ensuite si le repair ciblé doit être :
+
+- désactivé ;
+- limité à une passe ;
+- limité à deux passes.
+
+Ce choix est affiché dans le récapitulatif avant confirmation. Le runner termine
+d’abord toutes les observations initiales. Si le run contient ensuite des
+analyses invalides réparables, le launcher invoque le composant métier de repair
+et écrit une expérimentation distincte dans un dossier `repair-<passes>-pass-*`.
+La génération initiale et ses résultats ne sont jamais remplacés. Si aucune
+analyse n’est invalide, aucun appel de repair n’est effectué.
+
+Lorsqu'un corpus déclare `fullCoverageGate`, le launcher exécute aussi le gate
+mécanique sur le corpus complet avant la confirmation et avant tout appel LLM.
+Un seul matchup incomplet bloque le run et affiche les mécaniques manquantes.
 
 La confirmation `[o/N]` intervient après ce résumé et avant le démarrage du runner. « Post-KB » ne désigne jamais un dossier nommé manuellement : cela signifie que `run.json` contient une `knowledgeBaseVersion` non nulle réellement chargée par le runtime.
 
@@ -57,20 +82,49 @@ Avant toute composition du provider, le launcher vérifie :
 - l’accès en écriture au dossier de sortie ou au run repris.
 - la compatibilité de la version KB du run avec le runtime local ;
 - la couverture locale attendue lorsque la KB est activée.
+- le mechanical coverage gate lorsqu'il est requis par le corpus ;
+- le nombre positif de répétitions et le total d'observations.
 
 Les valeurs des secrets ne sont jamais affichées. Une erreur de configuration produit un message actionnable puis revient au menu.
 
-La reprise affiche l’état et la version KB enregistrés, puis appelle le runner existant avec `--resume`. Elle conserve donc l’identité, les métadonnées, la version KB et les tentatives du run, et ne rejoue pas les cas terminés. Il n’existe aucun choix permettant de transformer une baseline en run KB, ou l’inverse, pendant une reprise.
+Le choix **Réparer un run terminé** exécute un préflight local avant la
+confirmation : le run doit être complet. Les analyses invalides possédant leur
+candidate structurée et les violations exactes du validator sont sélectionnées.
+Si le run n'est pas découvert automatiquement, le launcher demande son chemin.
+Il accepte le dossier du run ou le chemin de l'un de ses fichiers standards
+`run.json`, `results.json` ou `summary.json`. Cette saisie manuelle reste aussi
+disponible lorsque la liste automatique contient déjà d'autres runs.
+Les autres sont affichées avec leurs données manquantes, puis ignorées sans
+empêcher le repair des cas complets. L’opération est refusée avant tout appel
+provider uniquement si aucun cas n’est réparable. Le nombre maximal d’appels
+affiché distingue les passes de repair des retries techniques.
+Pendant l’exécution, le repair réutilise le même loader que l’évaluation :
+spinner, pourcentage, compteur d’analyses terminées, observation courante,
+numéro de passe et tentative technique sont actualisés en direct.
+
+Une expérimentation interrompue est détectée grâce à `repair-run.json`. Sa
+reprise retrouve le run source par son identifiant, conserve le nombre de passes,
+les hashes et la configuration initiale, puis ignore les observations de repair
+déjà terminées.
+
+La reprise affiche l’état, la version KB et le nombre de répétitions enregistrés,
+puis appelle le runner existant avec `--resume`. Elle conserve donc l’identité,
+les métadonnées, la version KB, la golden truth, les répétitions et les
+tentatives du run, et ne rejoue pas les observations terminées. Il n’existe
+aucun choix permettant de transformer une baseline en run KB, de changer
+`repeat`, ou de modifier le corpus pendant une reprise.
 
 ## Pendant et après l’exécution
 
 Le launcher affiche le nom du run, son provider et son état avant de laisser le runner présenter sa progression. Après une fin normale, il rappelle :
 
-- les cas terminés et restants ;
+- les observations terminées et restantes ;
 - les succès et échecs ;
 - les chemins de `results.json` et `summary.json`.
 
-Après une interruption, relancer le fichier puis choisir **Reprendre la dernière évaluation incomplète**.
+Après une interruption, relancer le fichier puis choisir **Reprendre la dernière
+évaluation incomplète** ou **Reprendre le dernier repair incomplet** selon
+l’étape interrompue.
 
 ## Validation du launcher
 
