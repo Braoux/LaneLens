@@ -68,7 +68,7 @@ présenté. Une violation détectée uniquement après rendu reste un rejet fina
 - les violations initiales, chemins invalides et assertions insuffisantes.
 
 L'estimation de coût reste `null` tant qu'aucune grille de prix fiable n'est
-injectée. Une donnée absente n'est pas reconstruite.
+injectée. De même, l'absence de métadonnées de tokens se traduit par `null`, jamais par un faux total nul. Les compteurs d'appels fonctionnels reflètent les invocations effectuées, sans inclure implicitement les retries réseau.
 
 ## Bornage des appels
 
