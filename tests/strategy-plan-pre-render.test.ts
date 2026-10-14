@@ -206,3 +206,45 @@ test('pre-render keeps patch mismatches non-repairable', async () => {
   assert.equal(result.valid, false);
   assert.equal(diagnostic?.repairable, false);
 });
+
+test('adversarial: citing the correct ability does not excuse a known false mechanical effect', async () => {
+  const pack = await factPack();
+  const result = new StrategyPlanPreRenderValidator().validate(plan({
+    laneApproach: grounded(
+      'Leona E (Zenith Blade) stuns all nearby enemies.',
+      ['ally:support'],
+      ['ability:leona:e'],
+    ),
+  }), pack);
+  assert.equal(result.valid, false);
+  assert.ok(codes(result).includes('ABILITY_EFFECT_MISMATCH'));
+  assert.equal(result.assertions.find(({ path }) => path === 'laneApproach')?.mechanicalValidation, 'invalid');
+});
+
+test('adversarial: a valid and relevant fact cannot justify casting an unavailable ability', async () => {
+  const result = new StrategyPlanPreRenderValidator().validate(plan({
+    earlyLevels: {
+      ...plan().earlyLevels,
+      level3: grounded(
+        'At level 3, Leona R (Solar Flare) stuns Caitlyn.',
+        ['ally:support', 'enemy:carry'],
+        ['ability:leona:r'],
+      ),
+    },
+  }), await factPack());
+  assert.equal(result.valid, false);
+  assert.ok(result.diagnostics.some(({ path, code }) => (
+    path === 'earlyLevels.level3' && code === 'ABILITY_UNAVAILABLE_AT_LEVEL'
+  )));
+});
+
+test('grounding labels do not bypass deterministic mechanic checks', async () => {
+  const result = new StrategyPlanPreRenderValidator().validate(plan({
+    earlyLevels: {
+      ...plan().earlyLevels,
+      level2: strategic('At level 2 Leona R (Solar Flare) stuns Caitlyn.'),
+    },
+  }), await factPack());
+  assert.equal(result.valid, false);
+  assert.ok(codes(result).includes('ABILITY_UNAVAILABLE_AT_LEVEL'));
+});
