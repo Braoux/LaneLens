@@ -35,6 +35,9 @@ export interface PipelineTokenMetrics {
   readonly reasoningTokens: number;
 }
 
+/** Null means the provider did not report complete token usage. */
+export type ReportedTokenMetrics = PipelineTokenMetrics | null;
+
 export interface FactGroundedPipelineMetrics {
   readonly factPackMs: number;
   readonly strategyGenerationMs: number;
@@ -49,9 +52,9 @@ export interface FactGroundedPipelineMetrics {
     readonly maximumPerAnalysis: number;
   };
   readonly tokens: {
-    readonly strategyGeneration: PipelineTokenMetrics;
-    readonly repair: PipelineTokenMetrics;
-    readonly total: PipelineTokenMetrics;
+    readonly strategyGeneration: ReportedTokenMetrics;
+    readonly repair: ReportedTokenMetrics;
+    readonly total: ReportedTokenMetrics;
   };
   readonly estimatedCost: null;
   readonly quality: {
@@ -97,26 +100,19 @@ export interface FactGroundedPipelineResult {
   readonly metrics: FactGroundedPipelineMetrics;
 }
 
-const ZERO_TOKENS: PipelineTokenMetrics = Object.freeze({
-  inputTokens: 0,
-  outputTokens: 0,
-  totalTokens: 0,
-  reasoningTokens: 0,
-});
-
-function addTokens(
-  current: PipelineTokenMetrics,
-  metadata: ProviderRetryMetadata | undefined,
-): PipelineTokenMetrics {
+function tokensFromMetadata(metadata: ProviderRetryMetadata | undefined): ReportedTokenMetrics {
+  if (metadata?.inputTokens === undefined || metadata.outputTokens === undefined
+    || metadata.totalTokens === undefined) return null;
   return Object.freeze({
-    inputTokens: current.inputTokens + (metadata?.inputTokens ?? 0),
-    outputTokens: current.outputTokens + (metadata?.outputTokens ?? 0),
-    totalTokens: current.totalTokens + (metadata?.totalTokens ?? 0),
-    reasoningTokens: current.reasoningTokens + (metadata?.reasoningTokens ?? 0),
+    inputTokens: metadata.inputTokens,
+    outputTokens: metadata.outputTokens,
+    totalTokens: metadata.totalTokens,
+    reasoningTokens: metadata.reasoningTokens ?? 0,
   });
 }
 
-function sumTokens(left: PipelineTokenMetrics, right: PipelineTokenMetrics): PipelineTokenMetrics {
+function sumTokens(left: ReportedTokenMetrics, right: ReportedTokenMetrics): ReportedTokenMetrics {
+  if (left === null || right === null) return null;
   return Object.freeze({
     inputTokens: left.inputTokens + right.inputTokens,
     outputTokens: left.outputTokens + right.outputTokens,
@@ -137,20 +133,21 @@ function metrics(
   timings: MutableTimings,
   totalMs: number,
   maxRepairs: 0 | 1 | 2,
-  strategyGenerationTokens: PipelineTokenMetrics,
+  strategyGenerationTokens: ReportedTokenMetrics,
   repair: StrategyPlanRepairResult | undefined,
   initialValidation: StrategyPlanPreRenderResult | undefined,
   render: ConstrainedRenderResult | undefined,
+  generationCalls: number,
 ): FactGroundedPipelineMetrics {
-  const repairTokens = repair?.attempts.reduce(
-    (total, attempt) => addTokens(total, attempt.providerMetadata),
-    ZERO_TOKENS,
-  ) ?? ZERO_TOKENS;
+  const repairTokens = repair?.attempts.reduce<ReportedTokenMetrics>(
+    (total, attempt) => sumTokens(total, tokensFromMetadata(attempt.providerMetadata)),
+    { inputTokens: 0, outputTokens: 0, totalTokens: 0, reasoningTokens: 0 },
+  ) ?? { inputTokens: 0, outputTokens: 0, totalTokens: 0, reasoningTokens: 0 };
   return Object.freeze({
     ...timings,
     totalMs,
     providerCalls: Object.freeze({
-      strategyGeneration: 1,
+      strategyGeneration: generationCalls,
       functionalRepairs: repair?.calls ?? 0,
       renderer: 0 as const,
       maximumPerAnalysis: 1 + maxRepairs,
@@ -216,7 +213,8 @@ export class ExperimentalFactGroundedPipeline {
     const factPackStarted = performance.now();
     const factPack = this.factPackBuilder.build(request);
     timings.factPackMs = performance.now() - factPackStarted;
-    let generationTokens = ZERO_TOKENS;
+    let generationTokens: ReportedTokenMetrics = null;
+    let generationCalls = 0;
     let initialPlan: MatchupStrategyPlan | undefined;
     // Assigned after provider generation; kept optional for generation-error artifacts.
     // eslint-disable-next-line prefer-const
@@ -245,13 +243,15 @@ export class ExperimentalFactGroundedPipeline {
         repair,
         initialValidation,
         extra.render,
+        generationCalls,
       ),
     });
 
     const generationStarted = performance.now();
     try {
+      generationCalls += 1;
       const generated = await this.generationService.generateCandidate(factPack, {
-        onMetadata(metadata) { generationTokens = addTokens(generationTokens, metadata); },
+        onMetadata(metadata) { generationTokens = tokensFromMetadata(metadata); },
       });
       initialPlan = generated.plan;
     } catch (error) {
