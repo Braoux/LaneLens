@@ -61,8 +61,7 @@ Chaque assertion reçoit un statut :
 - `not-applicable` : recommandation stratégique ne revendiquant pas de preuve
   mécanique.
 
-`supported` ne signifie pas que la stratégie est optimale. Il signifie seulement
-que les propriétés mécaniques reconnues ne contredisent pas les facts cités.
+**Attention : `supported` est un statut de contrôle limité, pas une preuve de vérité.** Il signifie que les références sont applicables et qu'aucune contradiction n'a été reconnue par les règles déterministes actuellement implémentées. Il ne prouve **ni** la véracité de toute la phrase en langage naturel, **ni** la validité d'une déduction non modélisée, **ni** la qualité ou l'optimalité stratégique. Une référence lexicalement pertinente peut soutenir une conclusion incorrecte que les règles ne savent pas encore détecter.
 
 Une recommandation conditionnelle comme « avancer après que Leona a raté E »
 reste admissible en `strategic-only`. Le validateur ne décide pas si cette action
