@@ -56,7 +56,7 @@ export interface StrategyPlanAssertionValidation {
   readonly path: string;
   readonly grounding: StrategyGroundingState;
   readonly referenceValidation: 'valid' | 'invalid' | 'not-required' | 'insufficient';
-  readonly /** 'supported' means no violation detected by implemented rules, NOT semantic proof or optimal strategy. */
+  /** 'supported' means no violation detected by implemented rules, NOT semantic proof or optimal strategy. */
   readonly mechanicalValidation: 'supported' | 'invalid' | 'insufficient' | 'not-applicable';
   readonly factIds: readonly string[];
 }
