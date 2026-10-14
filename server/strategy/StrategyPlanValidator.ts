@@ -269,7 +269,7 @@ export class StrategyPlanValidator {
     });
     return Object.freeze({
       valid: issues.length === 0,
-      ...(issues.length === 0 ? { plan } : {}),
+      plan,
       issues: Object.freeze(issues.map((issue) => Object.freeze(issue))),
       assertions: Object.freeze(assertions),
     });

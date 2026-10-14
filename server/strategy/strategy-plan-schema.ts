@@ -15,7 +15,7 @@ function strictObject(properties: Readonly<Record<string, JsonSchema>>): JsonSch
   });
 }
 
-const assertionSchema = strictObject({
+export const STRATEGY_ASSERTION_JSON_SCHEMA: JsonSchema = strictObject({
   text: stringSchema,
   grounding: Object.freeze({
     type: 'string',
@@ -31,20 +31,20 @@ export const MATCHUP_STRATEGY_PLAN_JSON_SCHEMA: JsonSchema = strictObject({
   planVersion: Object.freeze({ type: 'string', const: 'matchup-strategy-plan-v1' }),
   matchupId: stringSchema,
   patch: stringSchema,
-  laneApproach: assertionSchema,
+  laneApproach: STRATEGY_ASSERTION_JSON_SCHEMA,
   threatResponseWindow: strictObject({
-    threat: assertionSchema,
-    response: assertionSchema,
-    tradeWindow: assertionSchema,
-    winCondition: assertionSchema,
+    threat: STRATEGY_ASSERTION_JSON_SCHEMA,
+    response: STRATEGY_ASSERTION_JSON_SCHEMA,
+    tradeWindow: STRATEGY_ASSERTION_JSON_SCHEMA,
+    winCondition: STRATEGY_ASSERTION_JSON_SCHEMA,
   }),
   earlyLevels: strictObject({
-    level1: assertionSchema,
-    level2: assertionSchema,
-    level3: assertionSchema,
+    level1: STRATEGY_ASSERTION_JSON_SCHEMA,
+    level2: STRATEGY_ASSERTION_JSON_SCHEMA,
+    level3: STRATEGY_ASSERTION_JSON_SCHEMA,
   }),
-  wavePlan: assertionSchema,
-  targetPriority: assertionSchema,
-  postLevel6: assertionSchema,
-  roamPlan: assertionSchema,
+  wavePlan: STRATEGY_ASSERTION_JSON_SCHEMA,
+  targetPriority: STRATEGY_ASSERTION_JSON_SCHEMA,
+  postLevel6: STRATEGY_ASSERTION_JSON_SCHEMA,
+  roamPlan: STRATEGY_ASSERTION_JSON_SCHEMA,
 });

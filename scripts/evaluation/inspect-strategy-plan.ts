@@ -7,7 +7,10 @@ import { MatchupFactPackBuilder } from '../../server/knowledge/MatchupFactPackBu
 import type { MatchupFactPack } from '../../server/knowledge/MatchupFactPack.js';
 import { strategyAssertions, type MatchupStrategyPlan } from '../../server/strategy/MatchupStrategyPlan.js';
 import { StrategyPlanGenerationError } from '../../server/strategy/StrategyPlanGenerationService.js';
-import { StrategyPlanValidator } from '../../server/strategy/StrategyPlanValidator.js';
+import {
+  StrategyPlanPreRenderValidator,
+  type StrategyPlanPreRenderResult,
+} from '../../server/strategy/StrategyPlanPreRenderValidator.js';
 import { loadEvaluationCorpus } from './corpus.js';
 import { findDefaultFullCoverageCorpus } from './mechanical-coverage.js';
 
@@ -77,7 +80,7 @@ function diagnosticArtifact(
   mode: 'fixture' | 'provider',
   pack: MatchupFactPack,
   plan: MatchupStrategyPlan | undefined,
-  validation: ReturnType<StrategyPlanValidator['validate']>,
+  validation: StrategyPlanPreRenderResult,
   provider?: {
     readonly name: string;
     readonly model: string;
@@ -121,7 +124,7 @@ export async function inspectStrategyPlan(
   const matchup = loaded.corpus.matchups.find(({ id }) => id === args.id);
   if (matchup === undefined) throw new Error(`ID de matchup inexistant : ${args.id}`);
   const pack = new MatchupFactPackBuilder().build(matchup);
-  const validator = new StrategyPlanValidator();
+  const validator = new StrategyPlanPreRenderValidator();
   let artifact;
   if (args.fixture !== undefined) {
     const candidate = JSON.parse(await readFile(resolve(args.fixture), 'utf8')) as unknown;
