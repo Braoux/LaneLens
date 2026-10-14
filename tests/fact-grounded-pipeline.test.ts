@@ -109,7 +109,7 @@ test('experimental pipeline repairs one assertion, renders deterministically, an
   assert.equal(result.metrics.providerCalls.functionalRepairs, 1);
   assert.equal(result.metrics.providerCalls.renderer, 0);
   assert.equal(result.metrics.providerCalls.maximumPerAnalysis, 3);
-  assert.equal(result.metrics.tokens.total.totalTokens, 190);
+  assert.equal(result.metrics.tokens.total?.totalTokens, 190);
   assert.equal(result.metrics.estimatedCost, null);
   assert.equal(result.metrics.quality.initialPlanValid, false);
   assert.equal(result.metrics.quality.planValidAfterRepair, true);
@@ -137,6 +137,8 @@ test('experimental pipeline distinguishes parsing failure and final language rej
   const parsing = await pipeline(malformed).run(await request(), options);
   assert.equal(parsing.status, 'generation_error');
   assert.equal(parsing.error?.phase, 'parsing');
+  assert.equal(parsing.metrics.tokens.total, null);
+  assert.equal(parsing.metrics.providerCalls.strategyGeneration, 1);
 
   const english: StructuredOutputProvider = {
     async generateStructured() {
